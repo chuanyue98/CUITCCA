@@ -45,6 +45,15 @@ def createIndexZh(index_name):
     index.storage_context.persist(index_save_directory + index_name)
 
 
+def init():
+    """
+    创建所需文件夹
+    :return:
+    """
+    if not os.path.exists(index_save_directory):
+        os.makedirs(index_save_directory)
+
+
 def createIndex(index_name):
     """
     创建索引

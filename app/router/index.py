@@ -1,6 +1,6 @@
 import shutil
 
-from fastapi import APIRouter, Form, File, UploadFile, status, Depends, Path
+from fastapi import APIRouter, Form, File, UploadFile, status, Depends
 from starlette.responses import JSONResponse
 
 from app.handlers.handler import *
@@ -10,8 +10,14 @@ index_app = APIRouter()
 
 
 async def startup_event():
-    """启动时加载一次索引"""
+    # 启动时加载一次索引
     loadAllIndexes(index_save_directory)
+    # 创建所需目录
+    import os
+    # 检查和创建目录
+    for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
 
 @index_app.on_event("startup")
