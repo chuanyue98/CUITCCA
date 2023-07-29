@@ -1,0 +1,14 @@
+fastapi==0.97.0
+fastapi-socketio==0.0.10
+llama-index==0.7.4
+openai==0.27.8
+openapi-schema-pydantic==1.2.4
+openpyxl==3.1.2
+pdf2image==1.16.3
+pydantic==1.10.11
+pypdf==3.12.1
+python-dotenv==1.0.0
+spacy==3.6.0
+tiktoken==0.4.0
+uvicorn==0.22.0
+zh-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/zh_core_web_sm-3.6.0/zh_core_web_sm-3.6.0-py3-none-any.whl#sha256=252fea460a4e63b0d5d81ee2e2339dc69fb21b6b17e2e5c35df75f5cb6ca33d7
