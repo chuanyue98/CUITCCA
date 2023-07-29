@@ -13,7 +13,6 @@ from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.llms import OpenAI
 from llama_index.node_parser import SimpleNodeParser
 
-
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 openai.api_base = os.environ.get('OPENAI_API_BASE')
@@ -64,7 +63,7 @@ def loadAllIndexes(index_save_directory):
     :param index_save_directory: 索引保存目录
     :return:
     """
-    index_save_directory = os.path.join(PROJECT_ROOT,index_save_directory)
+    index_save_directory = os.path.join(PROJECT_ROOT, index_save_directory)
     for index_dir_name in get_subfolders_list(index_save_directory):
         # 获取索引目录的完整路径
         index_dir_path = os.path.join(index_save_directory, index_dir_name)
@@ -99,7 +98,7 @@ def insert_into_index(index, doc_file_path):
     # 生成summary maxRecursion
     # index.summary = summary_index(index)
     index.summary = index.index_id
-    index.storage_context.persist(persist_dir=os.path.join(PROJECT_ROOT,index_save_directory,index.index_id))
+    index.storage_context.persist(persist_dir=os.path.join(PROJECT_ROOT, index_save_directory, index.index_id))
 
 
 def get_all_docs(index_):
@@ -136,7 +135,6 @@ def updateNodeById(index, id, text):
     index.update_ref_doc(doc, update_kwargs={"delete_kwargs": {'delete_from_docstore': True}})
 
 
-# 更新node
 def updateById(index_, id_, text):
     """
     通过node_id，更新node中的内容 会删除doc中所有node再重新添加，node_id会变化
@@ -184,7 +182,7 @@ def compose_indices_to_graph():
         loadAllIndexes(index_save_directory)
     summaries = []
     storage_contexts = []
-    llm = OpenAI(temperature=0,max_tokens=512)
+    llm = OpenAI(temperature=0, max_tokens=512)
     for i in indexes:
         summaries.append(i.summary)
     graph = ComposableGraph.from_indices(
@@ -208,7 +206,9 @@ def compose_indices_to_graph():
         query_engine=graph.as_query_engine(),
         condense_question_prompt=custom_prompt,
         text_qa_template=QA_PROMPT_TMPL,
-        verbose=True
+        verbose=True,
+        chat_mode="condense_question",
+        streaming=True
     )
     return chat_engine
 
@@ -241,19 +241,29 @@ def get_subfolders_list(root_dir: str) -> list:
     遍历指定目录下的所有子目录，并将子目录名称存储在一个列表中返回。
     """
     subfolders_list = []
-    dir = os.path.join(PROJECT_ROOT,root_dir)
+    dir = os.path.join(PROJECT_ROOT, root_dir)
     for dirpath, dirnames, filenames in os.walk(dir):
         for dirname in dirnames:
             subfolders_list.append(dirname)
     return subfolders_list
 
-def get_history_msg(chat_engine:BaseChatEngine):
+
+def get_history_msg(chat_engine: BaseChatEngine):
     """
     获取对话记录
     :param chat_engine:
     :return:
     """
     return chat_engine.chat_history
+
+
+def get_index_by_name(index_name):
+    index: VectorStoreIndex = None
+    for i in indexes:
+        if i.index_id == index_name:
+            index = i
+            break
+    return index
 
 
 if __name__ == "__main__":
