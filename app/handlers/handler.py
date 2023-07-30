@@ -13,6 +13,8 @@ from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.llms import OpenAI
 from llama_index.node_parser import SimpleNodeParser
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 openai.api_base = os.environ.get('OPENAI_API_BASE')
@@ -20,7 +22,10 @@ index_save_directory = os.environ.get('INDEX_SAVE_DIRECTORY')
 SAVE_PATH = os.environ.get('SAVE_PATH')
 LOAD_PATH = os.environ.get('LOAD_PATH')
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+index_save_directory = os.path.join(PROJECT_ROOT, index_save_directory)
+SAVE_PATH = os.path.join(PROJECT_ROOT, SAVE_PATH)
+LOAD_PATH = os.path.join(PROJECT_ROOT, LOAD_PATH)
+
 indexes = []
 
 QA_PROMPT_TMPL = ("下面是有关内容\n" "---------------------\n"
@@ -63,7 +68,7 @@ def createIndex(index_name):
     index = VectorStoreIndex([])
     index.set_index_id(index_name)
     logging.info(f"index保存位置: {index_save_directory + index_name}")
-    index.storage_context.persist(index_save_directory + index_name)
+    index.storage_context.persist(os.path.join(index_save_directory,index_name))
 
 
 def loadAllIndexes(index_save_directory):
@@ -72,7 +77,6 @@ def loadAllIndexes(index_save_directory):
     :param index_save_directory: 索引保存目录
     :return:
     """
-    index_save_directory = os.path.join(PROJECT_ROOT, index_save_directory)
     for index_dir_name in get_subfolders_list(index_save_directory):
         # 获取索引目录的完整路径
         index_dir_path = os.path.join(index_save_directory, index_dir_name)
@@ -107,7 +111,7 @@ def insert_into_index(index, doc_file_path):
     # 生成summary maxRecursion
     # index.summary = summary_index(index)
     index.summary = index.index_id
-    index.storage_context.persist(persist_dir=os.path.join(PROJECT_ROOT, index_save_directory, index.index_id))
+    index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
 
 
 def get_all_docs(index_):
@@ -173,7 +177,7 @@ def deleteDocById(index, id):
 
 
 def saveIndex(index):
-    index.storage_context.persist(index_save_directory + index.index_id)
+    index.storage_context.persist(os.path.join(index_save_directory + index.index_id))
 
 
 def printnodes(index):
