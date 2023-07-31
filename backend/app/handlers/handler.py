@@ -13,7 +13,7 @@ from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.indices.base import BaseIndex
 from llama_index.node_parser import SimpleNodeParser
 
-from app.configs.config import Prompts
+from configs.config import Prompts
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

@@ -1,8 +1,7 @@
 
 from fastapi import FastAPI
 
-from app.router.response import response_app
-from router import index_app
+from router import response_app,index_app
 
 app = FastAPI()
 
