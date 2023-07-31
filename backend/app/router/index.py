@@ -3,8 +3,8 @@ import shutil
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends
 from starlette.responses import JSONResponse
 
-from app.handlers.handler import *
-from app.dependencies import get_index
+from handlers.handler import *
+from dependencies import get_index
 
 index_app = APIRouter()
 

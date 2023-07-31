@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Form
 from llama_index import get_response_synthesizer
 
-from app.configs.config import ResponseMode,PromptType
-from app.dependencies import get_index
-from app.handlers.handler import get_prompt_by_name
+from configs.config import ResponseMode,PromptType
+from dependencies import get_index
+from handlers.handler import get_prompt_by_name
 
 response_app = APIRouter()
 
