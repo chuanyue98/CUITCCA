@@ -1,11 +1,13 @@
 
 from fastapi import FastAPI
 
+from app.router.response import response_app
 from router import index_app
 
 app = FastAPI()
 
 app.include_router(index_app, prefix='/index', tags=['index'])
+app.include_router(response_app, prefix='/response', tags=['response'])
 
 
 @app.get("/")

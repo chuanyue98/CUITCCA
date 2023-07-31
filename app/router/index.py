@@ -50,8 +50,6 @@ async def create_index(index_name: str = Form()):
     :param index_name: 索引名称
     :return:
     """
-    if index_name in get_subfolders_list(index_save_directory):
-        return JSONResponse(content={'error': 'index already exist'}, status_code=status.HTTP_400_BAD_REQUEST)
     createIndex(index_name)
     loadAllIndexes(index_save_directory)
     return index_name
@@ -81,19 +79,18 @@ def delete_index(index_name: str = Form()):
         loadAllIndexes(index_save_directory)
         return {"status": "deleted"}
     else:
-        return JSONResponse(content={'status': 'error', 'message': 'index not exist'},
+        return JSONResponse(content={'status': 'detail', 'message': 'index not exist'},
                             status_code=status.HTTP_404_NOT_FOUND)
-
 
 
 @index_app.post("/{index_name}/query")
 async def query_index(index=Depends(get_index), query: str = Form()):
-    engine = index.as_query_engine(text_qa_template=QA_PROMPT_TMPL)
+    engine = index.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT))
     return await engine.aquery(query)
 
 
 @index_app.post("/{index_name}/update")
-async def insert_doc(nodeId, index=Depends(get_index), text=Form()):
+async def insert_doc(nodeId, index=Depends(get_index), text: str=Form()):
     """
     将文档插入到索引中
     :param index_name: 索引名称
@@ -101,12 +98,16 @@ async def insert_doc(nodeId, index=Depends(get_index), text=Form()):
     :param text: 更新内容
     :return:
     """
-    updateById(index, nodeId, text)
-    return {"status": "updated"}, 200
+    try:
+        updateById(index, nodeId, text)
+    except ValueError:
+        return JSONResponse(content={'status': 'detail', 'message': 'node_id not exist'},
+                           status_code=status.HTTP_404_NOT_FOUND)
+    return JSONResponse(content={"status": "updated"})
 
 
 @index_app.post("/{index_name}/uploadFile")
-async def upload_file(index = Depends(get_index), file: UploadFile = File(...)):
+async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
     """
     上传文件到索引中
     :param index: 索引
@@ -128,7 +129,7 @@ async def upload_file(index = Depends(get_index), file: UploadFile = File(...)):
         insert_into_index(index, LOAD_PATH)
     except Exception as e:
         logging.error(f"Error while handling file: {str(e)}")  # Log the error
-        return JSONResponse(content={"status": "error", "message": "Error while handling file: {}".format(str(e))},
+        return JSONResponse(content={"status": "detail", "message": "Error while handling file: {}".format(str(e))},
                             status_code=status.HTTP_400_BAD_REQUEST)
     finally:
         # Always cleanup the temp file
@@ -138,15 +139,26 @@ async def upload_file(index = Depends(get_index), file: UploadFile = File(...)):
 
 
 @index_app.post("/{index_name}/delete")
-async def delete_doc(doc_id,index=Depends(get_index)):
+async def delete_doc(doc_id, index=Depends(get_index)):
     deleteDocById(index, doc_id)
     return {"status": "deleted"}
 
 
-@index_app.post("/{index_name}/summary")
-async def set_summary(index = Depends(get_index), summary: str = Form()):
+@index_app.post("/{index_name}/get_summary")
+async def set_summary(index=Depends(get_index), ):
+    return {"summary": index.summary}
+
+
+@index_app.post("/{index_name}/set_summary")
+async def set_summary(index=Depends(get_index), summary: str = Form()):
     index.summary = summary
     return {"status": "ok", "summary": index.summary}
+
+
+@index_app.post("/{index_name}/generate_summary")
+async def set_summary(index=Depends(get_index)):
+    summary = summary_index(index)
+    return {"status": "ok", "summary": summary}
 
 
 # @index_app.post("/{index_name}/insertdocs")
@@ -156,19 +168,20 @@ async def set_summary(index = Depends(get_index), summary: str = Form()):
 #     return {"status":"ok"}
 
 @index_app.post("/{index_name}/insertdoc")
-async def insert_docs(text,index = Depends(get_index)):
+async def insert_docs(text, index=Depends(get_index)):
     doc = Document(text=text)
     index.insert(doc)
     return {"status": "ok"}
 
 
 @index_app.post("/{index_name}/save")
-async def save_index(index = Depends(get_index)):
+async def save_index(index=Depends(get_index)):
     saveIndex(index)
     return {"status": "ok"}
 
 
 graph = None
+
 
 @index_app.post("/graph_query")
 async def query_graph(query: str = Form()):
@@ -182,14 +195,10 @@ async def query_graph(query: str = Form()):
 async def query_graph():
     global graph
     if graph is None:
-        return JSONResponse(content={"status": "error", "message": "No query graph available"},
+        return JSONResponse(content={"status": "detail", "message": "No query graph available"},
                             status_code=status.HTTP_404_NOT_FOUND)
     return get_history_msg(graph)
 
 
-
-
 if __name__ == '__main__':
-    loadAllIndexes(index_save_directory)
-    index = get_index_by_name('t')
-    print(index.index_id)
+    print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

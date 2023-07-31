@@ -10,8 +10,10 @@ from llama_index import VectorStoreIndex, Document, load_index_from_storage, Sto
     SimpleDirectoryReader, LLMPredictor, ComposableGraph, ListIndex, Prompt
 from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
-from llama_index.llms import OpenAI
+from llama_index.indices.base import BaseIndex
 from llama_index.node_parser import SimpleNodeParser
+
+from app.configs.config import Prompts
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -68,7 +70,7 @@ def createIndex(index_name):
     index = VectorStoreIndex([])
     index.set_index_id(index_name)
     logging.info(f"index保存位置: {index_save_directory + index_name}")
-    index.storage_context.persist(os.path.join(index_save_directory,index_name))
+    index.storage_context.persist(os.path.join(index_save_directory, index_name))
 
 
 def loadAllIndexes(index_save_directory):
@@ -172,7 +174,6 @@ def deleteDocById(index, id):
     :return:
     """
     id = id.replace("\\\\", "\\")
-    print(f"updating id {id}")
     index.delete_ref_doc(id, delete_from_docstore=True)
 
 
@@ -186,16 +187,14 @@ def printnodes(index):
     print("---------")
 
 
-def compose_indices_to_graph():
+def compose_indices_to_graph() -> BaseChatEngine:
     """
     将index合成为graph
-    :return: graph
+    :return: chat_engine
     """
     if indexes is None:
         loadAllIndexes(index_save_directory)
     summaries = []
-    storage_contexts = []
-    llm = OpenAI(temperature=0, max_tokens=512)
     for i in indexes:
         summaries.append(i.summary)
     graph = ComposableGraph.from_indices(
@@ -240,7 +239,7 @@ def summary_index(index):
     return summary_str
 
 
-def query_index(index, query_str):
+def query_index(index: BaseIndex, query_str):
     """
     查询文档获取响应
     :return: respoonse
@@ -277,6 +276,12 @@ def get_index_by_name(index_name):
             index = i
             break
     return index
+
+
+def get_prompt_by_name(prompt_type):
+    """获取Prompt"""
+    return Prompt(getattr(Prompts, prompt_type.value))
+
 
 
 if __name__ == "__main__":
