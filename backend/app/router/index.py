@@ -1,6 +1,7 @@
 import shutil
 
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends
+from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
 from starlette.responses import JSONResponse
 
 from handlers.handler import *
@@ -50,6 +51,8 @@ async def create_index(index_name: str = Form()):
     :param index_name: 索引名称
     :return:
     """
+    if index_name in get_subfolders_list(index_save_directory):
+        return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(index_name)
     loadAllIndexes(index_save_directory)
     return index_name
@@ -85,7 +88,7 @@ def delete_index(index_name: str = Form()):
 
 @index_app.post("/{index_name}/query")
 async def query_index(index=Depends(get_index), query: str = Form()):
-    engine = index.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT))
+    engine = index.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT),node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
     return await engine.aquery(query)
 
 
@@ -140,6 +143,10 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
 
 @index_app.post("/{index_name}/delete")
 async def delete_doc(doc_id, index=Depends(get_index)):
+    documents = get_all_docs(index)
+    doc_ids = list(set(doc["doc_id"] for doc in documents))
+    if doc_id not in doc_ids:
+        return {"status": "not found"}
     deleteDocById(index, doc_id)
     return {"status": "deleted"}
 
@@ -178,26 +185,6 @@ async def insert_docs(text, index=Depends(get_index)):
 async def save_index(index=Depends(get_index)):
     saveIndex(index)
     return {"status": "ok"}
-
-
-graph = None
-
-
-@index_app.post("/graph_query")
-async def query_graph(query: str = Form()):
-    global graph
-    if graph is None:
-        graph = compose_indices_to_graph()
-    return await graph.achat(query)
-
-
-@index_app.post("/graph_query_history")
-async def query_graph():
-    global graph
-    if graph is None:
-        return JSONResponse(content={"status": "detail", "message": "No query graph available"},
-                            status_code=status.HTTP_404_NOT_FOUND)
-    return get_history_msg(graph)
 
 
 if __name__ == '__main__':
