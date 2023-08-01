@@ -1,5 +1,7 @@
 import shutil
+from typing import List
 
+import aiofiles
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
 from starlette.responses import JSONResponse
@@ -119,7 +121,7 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
     """
     filepath = None
     try:
-        filename = file.filename  # Generate a safe filename
+        filename = file.filename
         filepath = os.path.join(LOAD_PATH, filename)
         savepath = os.path.join(SAVE_PATH, filename)
         file_bytes = await file.read()
@@ -127,8 +129,6 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
             f.write(file_bytes)
         with open(savepath, 'wb') as f:
             f.write(file_bytes)
-        logging.info("File {} has been saved to {}".format(filename, savepath))
-        logging.info("filepath{}".format(LOAD_PATH))
         insert_into_index(index, LOAD_PATH)
     except Exception as e:
         logging.error(f"Error while handling file: {str(e)}")  # Log the error
@@ -138,6 +138,43 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
         # Always cleanup the temp file
         if filepath is not None and os.path.exists(filepath):
             os.remove(filepath)
+    return {"status": "inserted"}
+
+
+
+@index_app.post("/{index_name}/uploadFiles")
+async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(...)):
+    """
+    上传文件
+    :param index_name: 索引名称
+    :param files: List of file objects
+    :return:
+    """
+    filepaths = []
+    try:
+        for file in files:
+            filename = file.filename
+            filepath = os.path.join(LOAD_PATH, filename)
+            savepath = os.path.join(SAVE_PATH, filename)
+            file_bytes = await file.read()
+            async with aiofiles.open(filepath, 'wb') as f:
+                await f.write(file_bytes)
+            async with aiofiles.open(savepath, 'wb') as f:
+                await f.write(file_bytes)
+
+            filepaths.append(filepath)
+        # TODO 每上传一个文件，通知前端)
+        insert_into_index(index, LOAD_PATH)
+
+    except Exception as e:
+        return JSONResponse(content={"status": "detail", "message": f"Error while handling file: {str(e)}"},
+                            status_code=status.HTTP_400_BAD_REQUEST)
+    finally:
+        # Always cleanup the temp files
+        for filepath in filepaths:
+            if filepath is not None and os.path.exists(filepath):
+                os.remove(filepath)
+
     return {"status": "inserted"}
 
 
@@ -186,6 +223,10 @@ async def save_index(index=Depends(get_index)):
     saveIndex(index)
     return {"status": "ok"}
 
+@index_app.post("/{index_name}/getfile")
+async def get_file(index_name):
+    convert_index_to_file(index_name,f"{index_name}.txt")
+    return {"status": "ok"}
 
 if __name__ == '__main__':
     print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

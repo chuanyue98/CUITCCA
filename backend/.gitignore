@@ -3,3 +3,8 @@
 .env
 /o/
 /.idea/
+/load/
+/indexes/
+/.venv/
+/venv/
+/indexes/

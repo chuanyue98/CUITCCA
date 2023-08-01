@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from dotenv import load_dotenv
@@ -23,10 +24,12 @@ openai.api_base = os.environ.get('OPENAI_API_BASE')
 index_save_directory = os.environ.get('INDEX_SAVE_DIRECTORY')
 SAVE_PATH = os.environ.get('SAVE_PATH')
 LOAD_PATH = os.environ.get('LOAD_PATH')
+FILE_PATH = os.environ.get('FILE_PATH')
 
 index_save_directory = os.path.join(PROJECT_ROOT, index_save_directory)
 SAVE_PATH = os.path.join(PROJECT_ROOT, SAVE_PATH)
 LOAD_PATH = os.path.join(PROJECT_ROOT, LOAD_PATH)
+FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
 
 indexes = []
 
@@ -283,7 +286,57 @@ def get_prompt_by_name(prompt_type):
     return Prompt(getattr(Prompts, prompt_type.value))
 
 
+def convert_index_to_file(index_name, file_name):
+    """通过索引名称将索引中的文本提取出来，存入一个txt文件中"""
+    path = os.path.join(index_save_directory,index_name,'docstore.json')
+    out_path = os.path.join(FILE_PATH, file_name)
+    if not os.path.exists(FILE_PATH):
+        os.makedirs(FILE_PATH)
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    text_list = []
+    for node_id, node_data in data['docstore/data'].items():
+        node_text = node_data['__data__']['text']
+        if node_text is not None:
+            # 去除空格和换行符
+            node_text = node_text.strip().replace('\n', '').replace('\r', '')
+            text_list.append(node_text)
+
+    with open(out_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(text_list))
+
+
+def citf(index, name):
+    """将index转换为file"""
+    path = os.path.join(FILE_PATH, name)
+    if not os.path.exists(FILE_PATH):
+        os.makedirs(FILE_PATH)
+    data = index.docstore.docs
+    text_list = []
+    for node_id, node_data in data.items():
+        for key, value in node_data:
+            if key == 'text':
+                node_text = value
+                # 去除空格和换行符
+                node_text = node_text.strip().replace('\n', '').replace('\r', '')
+                text_list.append(node_text)
+
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(text_list))
+
 
 if __name__ == "__main__":
     loadAllIndexes(index_save_directory)
-    print(indexes)
+    index = get_index_by_name('t1')
+    import time
+    start_time = time.time()
+    convert_index_to_file('t1','t1.txt')
+    time1 = time.time()-start_time
+    start_time = time.time()
+    citf(index, 't2.txt')
+    time2 = time.time() - start_time
+    print(time1)
+    print(time2)
+
+
