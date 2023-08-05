@@ -6,7 +6,7 @@ from fastapi import APIRouter, Form, File, UploadFile, status, Depends
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
 from starlette.responses import JSONResponse
 
-from handlers.handler import *
+from handlers.llama_handler import *
 from dependencies import get_index
 
 index_app = APIRouter()
@@ -212,8 +212,8 @@ async def set_summary(index=Depends(get_index)):
 #     return {"status":"ok"}
 
 @index_app.post("/{index_name}/insertdoc")
-async def insert_docs(text, index=Depends(get_index)):
-    doc = Document(text=text)
+async def insert_docs(text, index=Depends(get_index),doc_id = Form(None)):
+    doc = Document(text=text,doc_id=doc_id)
     index.insert(doc)
     return {"status": "ok"}
 

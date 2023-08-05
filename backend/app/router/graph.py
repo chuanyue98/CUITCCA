@@ -2,7 +2,7 @@ from fastapi import APIRouter, Form
 from starlette import status
 from starlette.responses import JSONResponse
 
-from handlers.handler import compose_indices_to_graph, get_history_msg
+from handlers.llama_handler import compose_indices_to_graph, get_history_msg, compose
 
 graph_app = APIRouter()
 
@@ -19,6 +19,14 @@ async def create_graph():
 
 @graph_app.post("/query")
 async def query_graph(query: str = Form()):
+    global graph
+    if graph is None:
+        graph = compose_indices_to_graph()
+    return await graph.achat(query)
+
+@graph_app.post("/query_stream")
+async def query_graph_stream(query: str = Form()):
+    """未实现=-="""
     global graph
     if graph is None:
         graph = compose_indices_to_graph()

@@ -12,6 +12,7 @@ from llama_index import VectorStoreIndex, Document, load_index_from_storage, Sto
 from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.indices.base import BaseIndex
+from llama_index.indices.query.base import BaseQueryEngine
 from llama_index.node_parser import SimpleNodeParser
 
 from configs.config import Prompts
@@ -33,26 +34,13 @@ FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
 
 indexes = []
 
-QA_PROMPT_TMPL = ("下面是有关内容\n" "---------------------\n"
-                  "{context_str}" "\n---------------------\n"
-                  "根据这些信息，请回答问题: {query_str}\n"
-                  "如果问题中提到图片，回答的内容有url,请使用markdown格式输出图片"
-                  "如果您不知道的话，请回答不知道\n")
-
-QA_PROMPT_TMPL = Prompt(QA_PROMPT_TMPL)
-
-
-def createIndexZh(index_name):
-    global index
-    llm_predictor = LLMPredictor(
-        llm=ChatOpenAI(temperature=0.1, model_name="gpt-3.5-turbo-16k", max_tokens=1024, openai_api_key=openai.api_key))
-    text_splitter = SpacyTextSplitter(pipeline="zh_core_web_sm", chunk_size=512)
-    parser = SimpleNodeParser(text_splitter=text_splitter)
-    documents = SimpleDirectoryReader('./data', filename_as_id=True).load_data()
-    nodes = parser.get_nodes_from_documents(documents)
-    service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
-    index = VectorStoreIndex(nodes, service_context=service_context)
-    index.storage_context.persist(index_save_directory + index_name)
+# QA_PROMPT_TMPL = ("下面是有关内容\n" "---------------------\n"
+#                   "{context_str}" "\n---------------------\n"
+#                   "根据这些信息，请回答问题: {query_str}\n"
+#                   "如果问题中提到图片，回答的内容有url,请使用markdown格式输出图片"
+#                   "如果您不知道的话，请回答不知道\n")
+#
+# QA_PROMPT_TMPL = Prompt(QA_PROMPT_TMPL)
 
 
 def init():
@@ -88,11 +76,6 @@ def loadAllIndexes(index_save_directory):
         storage_context = StorageContext.from_defaults(persist_dir=index_dir_path)
         index = load_index_from_storage(storage_context)
         indexes.append(index)
-
-
-def insert_doc(index, text, id=None):
-    doc = Document(text=text, doc_id=id)
-    index.insert(doc)
 
 
 def insert_into_index(index, doc_file_path):
@@ -149,8 +132,9 @@ def get_doc_by_id(index, doc_id):
 def updateNodeById(index, id, text):
     node = index.docstore.get_node(node_id=id)
     node.set_content(text)
-    doc = Document(doc_id=node.ref_doc_id, text=node.get_content())
+    doc = Document(id=node.ref_doc_id, text=node.get_content())
     index.update_ref_doc(doc, update_kwargs={"delete_kwargs": {'delete_from_docstore': True}})
+    index.delete_ref_doc(id, delete_from_docstore=True)
 
 
 def updateById(index_, id_, text):
@@ -205,27 +189,33 @@ def compose_indices_to_graph() -> BaseChatEngine:
         indexes,
         index_summaries=summaries,
     )
-    custom_prompt = Prompt("""\
-    给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, \
-    将消息改写成一个独立问题，以捕捉对话中的所有相关上下文。\
-
-    <Chat History> 
-    {chat_history}
-    
-    <Follow Up Message>
-    {question}
-
-    <Standalone question>
-    """)
     chat_engine = CondenseQuestionChatEngine.from_defaults(
-        query_engine=graph.as_query_engine(),
-        condense_question_prompt=custom_prompt,
-        text_qa_template=QA_PROMPT_TMPL,
+        query_engine=graph.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT)),
+        condense_question_prompt=Prompt(Prompts.CONDENSE_QUESTION_PROMPT),
         verbose=True,
         chat_mode="condense_question",
-        streaming=True
     )
     return chat_engine
+
+
+def compose() -> BaseQueryEngine:
+    """
+        将index合成为graph
+        :return: chat_engine
+        """
+    if indexes is None:
+        loadAllIndexes(index_save_directory)
+    summaries = []
+    for i in indexes:
+        summaries.append(i.summary)
+    graph = ComposableGraph.from_indices(
+        ListIndex,
+        indexes,
+        index_summaries=summaries,
+    )
+
+    query_engine = graph.as_query_engine(streaming=True)
+    return query_engine
 
 
 def summary_index(index):
@@ -247,7 +237,7 @@ def query_index(index: BaseIndex, query_str):
     查询文档获取响应
     :return: respoonse
     """
-    ret = index.as_query_engine(text_qa_template=QA_PROMPT_TMPL).query(query_str)
+    ret = index.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT)).query(query_str)
     return ret
 
 
@@ -288,7 +278,7 @@ def get_prompt_by_name(prompt_type):
 
 def convert_index_to_file(index_name, file_name):
     """通过索引名称将索引中的文本提取出来，存入一个txt文件中"""
-    path = os.path.join(index_save_directory,index_name,'docstore.json')
+    path = os.path.join(index_save_directory, index_name, 'docstore.json')
     out_path = os.path.join(FILE_PATH, file_name)
     if not os.path.exists(FILE_PATH):
         os.makedirs(FILE_PATH)
@@ -328,15 +318,4 @@ def citf(index, name):
 
 if __name__ == "__main__":
     loadAllIndexes(index_save_directory)
-    index = get_index_by_name('t1')
-    import time
-    start_time = time.time()
-    convert_index_to_file('t1','t1.txt')
-    time1 = time.time()-start_time
-    start_time = time.time()
-    citf(index, 't2.txt')
-    time2 = time.time() - start_time
-    print(time1)
-    print(time2)
-
-
+    graph = compose_indices_to_graph()

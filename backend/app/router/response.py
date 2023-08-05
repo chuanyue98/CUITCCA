@@ -3,7 +3,7 @@ from llama_index import get_response_synthesizer
 
 from configs.config import ResponseMode,PromptType
 from dependencies import get_index
-from handlers.handler import get_prompt_by_name
+from handlers.llama_handler import get_prompt_by_name
 
 response_app = APIRouter()
 

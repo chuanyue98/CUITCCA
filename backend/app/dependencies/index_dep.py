@@ -2,7 +2,7 @@ from fastapi import Path, HTTPException
 from llama_index.indices.base import BaseIndex
 from starlette import status
 
-from handlers.handler import get_index_by_name
+from handlers.llama_handler import get_index_by_name
 
 
 def get_index(index_name: str = Path()) -> BaseIndex:

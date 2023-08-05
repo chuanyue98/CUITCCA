@@ -20,7 +20,6 @@ class ResponseMode(str, Enum):
     其中 N 是节点的总数。
     """
 
-
     SIMPLE_SUMMARIZE = "simple_summarize"
     """
     将所有文本块合并成一个，然后进行 LLM 调用。如果合并后的文本块超过上下文窗口大小，\
@@ -55,6 +54,10 @@ class PromptType(str, Enum):
        使用 QA 提示生成答案。
     """
     QA_PROMPT = 'QA_PROMPT'
+    """
+        使用 condense_question_prompt 提示生成答案。
+    """
+    CONDENSE_QUESTION_PROMPT = 'CONDENSE_QUESTION_PROMPT'
 
 
 class Prompts(str, Enum):
@@ -63,3 +66,15 @@ class Prompts(str, Enum):
                  "根据这些信息，请回答问题: {query_str}\n"
                  "如果问题中提到图片，回答的内容有url,请使用markdown格式输出图片"
                  "如果您不知道的话，请回答不知道\n")
+    CONDENSE_QUESTION_PROMPT = ("""\
+                            给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, \
+                            将消息改写成一个独立问题，以捕捉对话中的所有相关上下文。\
+                        
+                            <Chat History> 
+                            {chat_history}
+                            
+                            <Follow Up Message>
+                            {question}
+                        
+                            <Standalone question>
+                            """)

@@ -2,13 +2,10 @@ from fastapi import FastAPI
 
 from router import response_app, index_app, graph_app
 
-from fastapi_amis_admin.admin.settings import Settings
-from fastapi_amis_admin.admin.site import AdminSite
+
 
 app = FastAPI()
 
-# site = AdminSite(settings=Settings(database_url_async='sqlite+aiosqlite:///admisadmin.db'))
-# site.mount_app(app)
 
 app.include_router(index_app, prefix='/index', tags=['index'])
 app.include_router(graph_app, prefix='/graph', tags=['graph'])
