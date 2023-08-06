@@ -26,11 +26,11 @@ async def query_graph(query: str = Form()):
 
 @graph_app.post("/query_stream")
 async def query_graph_stream(query: str = Form()):
-    """未实现=-="""
     global graph
     if graph is None:
         graph = compose_indices_to_graph()
-    return await graph.achat(query)
+    res = await graph.astream_chat(query)
+    return res.response_gen
 
 
 @graph_app.post("/query_history")

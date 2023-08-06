@@ -190,7 +190,7 @@ def compose_indices_to_graph() -> BaseChatEngine:
         index_summaries=summaries,
     )
     chat_engine = CondenseQuestionChatEngine.from_defaults(
-        query_engine=graph.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT)),
+        query_engine=graph.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT),streaming=True),
         condense_question_prompt=Prompt(Prompts.CONDENSE_QUESTION_PROMPT),
         verbose=True,
         chat_mode="condense_question",

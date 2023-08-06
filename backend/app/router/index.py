@@ -93,6 +93,15 @@ async def query_index(index=Depends(get_index), query: str = Form()):
     engine = index.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT),node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
     return await engine.aquery(query)
 
+@index_app.post("/{index_name}/query_stream")
+async def query_stream(index: BaseIndex = Depends(get_index), query: str = Form()):
+    """
+    Streaming not supported for async
+    """
+    engine = index.as_query_engine(streaming=True,text_qa_template=Prompt(Prompts.QA_PROMPT),node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
+    res =  engine.query(query)
+    return res.response_gen
+
 
 @index_app.post("/{index_name}/update")
 async def insert_doc(nodeId, index=Depends(get_index), text: str=Form()):
