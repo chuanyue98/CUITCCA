@@ -3,9 +3,12 @@ from typing import List
 
 import aiofiles
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends
+from llama_index import Document
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
+from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT
 from handlers.llama_handler import *
 from dependencies import get_index
 
@@ -42,7 +45,7 @@ async def index():
 @index_app.get("/index/list")
 def get_index_list():
     path = os.path.join(PROJECT_ROOT, index_save_directory)
-    list = get_subfolders_list(path)
+    list = get_folders_list(path)
     return JSONResponse(content={'indexes': list})
 
 
@@ -53,7 +56,7 @@ async def create_index(index_name: str = Form()):
     :param index_name: 索引名称
     :return:
     """
-    if index_name in get_subfolders_list(index_save_directory):
+    if index_name in get_folders_list(index_save_directory):
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(index_name)
     loadAllIndexes(index_save_directory)
@@ -78,7 +81,7 @@ def delete_index(index_name: str = Form()):
     :param index_name: 索引名称
     :return:
     """
-    if index_name in get_subfolders_list(index_save_directory):
+    if index_name in get_folders_list(index_save_directory):
         index_path = os.path.join(index_save_directory, index_name)
         shutil.rmtree(index_path)
         loadAllIndexes(index_save_directory)
@@ -104,7 +107,7 @@ async def query_stream(index: BaseIndex = Depends(get_index), query: str = Form(
 
 
 @index_app.post("/{index_name}/update")
-async def insert_doc(nodeId, index=Depends(get_index), text: str=Form()):
+async def update_doc(nodeId, index=Depends(get_index), text: str=Form()):
     """
     将文档插入到索引中
     :param index_name: 索引名称
@@ -113,7 +116,7 @@ async def insert_doc(nodeId, index=Depends(get_index), text: str=Form()):
     :return:
     """
     try:
-        updateById(index, nodeId, text)
+        updateNodeById(index, nodeId, text)
     except ValueError:
         return JSONResponse(content={'status': 'detail', 'message': 'node_id not exist'},
                            status_code=status.HTTP_404_NOT_FOUND)
@@ -172,7 +175,7 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
                 await f.write(file_bytes)
 
             filepaths.append(filepath)
-        # TODO 每上传一个文件，通知前端)
+        # TODO 每上传一个文件，通知前端..
         insert_into_index(index, LOAD_PATH)
 
     except Exception as e:
@@ -187,18 +190,39 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
     return {"status": "inserted"}
 
 
-@index_app.post("/{index_name}/delete")
+@index_app.post("/{index_name}/deleteDoc")
 async def delete_doc(doc_id, index=Depends(get_index)):
+    """
+    根据文档id删除文档
+    :param doc_id:
+    :param index:
+    :return:
+    """
     documents = get_all_docs(index)
     doc_ids = list(set(doc["doc_id"] for doc in documents))
     if doc_id not in doc_ids:
-        return {"status": "not found"}
+        return JSONResponse(content={"status": "detail", "message": f"doc_id: not found"},
+                            status_code=status.HTTP_400_BAD_REQUEST)
     deleteDocById(index, doc_id)
     return {"status": "deleted"}
 
+@index_app.post("/{index_name}/deleteNode")
+async def delete_node(node_id, index=Depends(get_index)):
+    """
+    根据节点id删除节点
+    :param node_id:
+    :param index:
+    :return:
+    """
+    try:
+        deleteNodeById(index, node_id)
+        return {"status": "deleted"}
+    except Exception as e:
+        return JSONResponse(content={"status": "detail", "message": f"node_id: not found"},
+                            status_code=status.HTTP_400_BAD_REQUEST)
 
-@index_app.post("/{index_name}/get_summary")
-async def set_summary(index=Depends(get_index), ):
+@index_app.get("/{index_name}/get_summary")
+async def get_summary(index=Depends(get_index)):
     return {"summary": index.summary}
 
 
@@ -214,15 +238,13 @@ async def set_summary(index=Depends(get_index)):
     return {"status": "ok", "summary": summary}
 
 
-# @index_app.post("/{index_name}/insertdocs")
-# async def insert_docs(index_name,path):
-#     index = get_index_by_name(index_name)
-#     insert_into_index(index,"path")
-#     return {"status":"ok"}
-
 @index_app.post("/{index_name}/insertdoc")
 async def insert_docs(text, index=Depends(get_index),doc_id = Form(None)):
-    doc = Document(text=text,doc_id=doc_id)
+    if doc_id is None:
+        doc = Document(text=text)
+    else:
+        doc_id = doc_id.replace("\\\\", "\\")
+        doc = Document(text=text,doc_id=doc_id)
     index.insert(doc)
     return {"status": "ok"}
 

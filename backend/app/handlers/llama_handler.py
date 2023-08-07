@@ -1,46 +1,23 @@
 import json
 import os
 import re
-from dotenv import load_dotenv
 import logging
 
 import openai
 from langchain.chat_models import ChatOpenAI
-from langchain.text_splitter import SpacyTextSplitter
-from llama_index import VectorStoreIndex, Document, load_index_from_storage, StorageContext, ServiceContext, \
+from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, \
     SimpleDirectoryReader, LLMPredictor, ComposableGraph, ListIndex, Prompt
 from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.indices.base import BaseIndex
 from llama_index.indices.query.base import BaseQueryEngine
-from llama_index.node_parser import SimpleNodeParser
 
 from configs.config import Prompts
-
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-load_dotenv()
-openai.api_key = os.environ.get("OPENAI_API_KEY")
-openai.api_base = os.environ.get('OPENAI_API_BASE')
-index_save_directory = os.environ.get('INDEX_SAVE_DIRECTORY')
-SAVE_PATH = os.environ.get('SAVE_PATH')
-LOAD_PATH = os.environ.get('LOAD_PATH')
-FILE_PATH = os.environ.get('FILE_PATH')
-
-index_save_directory = os.path.join(PROJECT_ROOT, index_save_directory)
-SAVE_PATH = os.path.join(PROJECT_ROOT, SAVE_PATH)
-LOAD_PATH = os.path.join(PROJECT_ROOT, LOAD_PATH)
-FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
+from configs.load_env import index_save_directory, FILE_PATH
+from utils.llama import get_nodes_from_file
+from utils.file import get_folders_list
 
 indexes = []
-
-# QA_PROMPT_TMPL = ("下面是有关内容\n" "---------------------\n"
-#                   "{context_str}" "\n---------------------\n"
-#                   "根据这些信息，请回答问题: {query_str}\n"
-#                   "如果问题中提到图片，回答的内容有url,请使用markdown格式输出图片"
-#                   "如果您不知道的话，请回答不知道\n")
-#
-# QA_PROMPT_TMPL = Prompt(QA_PROMPT_TMPL)
 
 
 def init():
@@ -70,12 +47,14 @@ def loadAllIndexes(index_save_directory):
     :param index_save_directory: 索引保存目录
     :return:
     """
-    for index_dir_name in get_subfolders_list(index_save_directory):
+    for index_dir_name in get_folders_list(index_save_directory):
         # 获取索引目录的完整路径
         index_dir_path = os.path.join(index_save_directory, index_dir_name)
         storage_context = StorageContext.from_defaults(persist_dir=index_dir_path)
         index = load_index_from_storage(storage_context)
         indexes.append(index)
+
+
 
 
 def insert_into_index(index, doc_file_path):
@@ -89,11 +68,8 @@ def insert_into_index(index, doc_file_path):
     # 使用中文解析器解析文档
     llm_predictor = LLMPredictor(
         llm=ChatOpenAI(temperature=0.1, model_name="gpt-3.5-turbo-16k", max_tokens=1024, openai_api_key=openai.api_key))
-    text_splitter = SpacyTextSplitter(pipeline="zh_core_web_sm", chunk_size=512)
-    parser = SimpleNodeParser(text_splitter=text_splitter)
-    documents = SimpleDirectoryReader(doc_file_path, filename_as_id=True).load_data()
-    nodes = parser.get_nodes_from_documents(documents)
     service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
+    nodes = get_nodes_from_file(doc_file_path)
     index.insert_nodes(nodes, context=service_context)
 
     # 生成summary maxRecursion
@@ -119,39 +95,24 @@ def get_all_docs(index_):
     return documents
 
 
-def get_doc_by_id(index, doc_id):
+def updateNodeById(index_, id_, text):
     """
-    通过node_id获取所在的Doc
-    :param doc_id: 文档id
-    :param index: 索引
-    :return: 文档列表
-    """
-    return [doc for doc in get_all_docs(index) if doc['doc_id'] == doc_id]
-
-
-def updateNodeById(index, id, text):
-    node = index.docstore.get_node(node_id=id)
-    node.set_content(text)
-    doc = Document(id=node.ref_doc_id, text=node.get_content())
-    index.update_ref_doc(doc, update_kwargs={"delete_kwargs": {'delete_from_docstore': True}})
-    index.delete_ref_doc(id, delete_from_docstore=True)
-
-
-def updateById(index_, id_, text):
-    """
-    通过node_id，更新node中的内容 会删除doc中所有node再重新添加，node_id会变化
     :param index_: 索引
     :param id_: node_id
     :param text: 更改后的内容
     :return:
     """
-    node = index_.docstore.get_node(node_id=id_)
-    doc_id = node.ref_doc_id
-    docs = get_doc_by_id(index_, doc_id)
-    documents = [Document(id_=doc_id, text=text if node['node_id'] == id_ else node['text']) for node in docs]
-    deleteDocById(index_, doc_id)
-    for doc in documents:
-        index_.insert(doc)
+    node = index_.docstore.docs[id_]
+    node.set_content(text)
+    index_.docstore.add_documents([node])
+
+def deleteNodeById(index_, id_,):
+    """
+    :param index_: 索引
+    :param id_: node_id
+    :return:
+    """
+    index_.docstore.delete_document(id_)
 
 
 def deleteDocById(index, id):
@@ -166,12 +127,6 @@ def deleteDocById(index, id):
 
 def saveIndex(index):
     index.storage_context.persist(os.path.join(index_save_directory + index.index_id))
-
-
-def printnodes(index):
-    for doc in get_all_docs(index):
-        print(doc, end="\n")
-    print("---------")
 
 
 def compose_indices_to_graph() -> BaseChatEngine:
@@ -190,7 +145,7 @@ def compose_indices_to_graph() -> BaseChatEngine:
         index_summaries=summaries,
     )
     chat_engine = CondenseQuestionChatEngine.from_defaults(
-        query_engine=graph.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT),streaming=True),
+        query_engine=graph.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT), streaming=True),
         condense_question_prompt=Prompt(Prompts.CONDENSE_QUESTION_PROMPT),
         verbose=True,
         chat_mode="condense_question",
@@ -239,18 +194,6 @@ def query_index(index: BaseIndex, query_str):
     """
     ret = index.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT)).query(query_str)
     return ret
-
-
-def get_subfolders_list(root_dir: str) -> list:
-    """
-    遍历指定目录下的所有子目录，并将子目录名称存储在一个列表中返回。
-    """
-    subfolders_list = []
-    dir = os.path.join(PROJECT_ROOT, root_dir)
-    for dirpath, dirnames, filenames in os.walk(dir):
-        for dirname in dirnames:
-            subfolders_list.append(dirname)
-    return subfolders_list
 
 
 def get_history_msg(chat_engine: BaseChatEngine):
@@ -318,4 +261,4 @@ def citf(index, name):
 
 if __name__ == "__main__":
     loadAllIndexes(index_save_directory)
-    graph = compose_indices_to_graph()
+
