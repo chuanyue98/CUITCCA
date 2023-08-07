@@ -13,17 +13,11 @@ def xlsx_to_csv(input_file, output_file):
     data_frame.to_csv(output_file, index=False)
 
 
-import win32com.client
-
+from docx import Document
 
 def convert_doc_to_docx(doc_file, docx_file):
-    ### path
-    word = win32com.client.Dispatch("Word.Application")
-    doc = word.Documents.Open(doc_file)
-    doc.SaveAs(docx_file, 16)  # 文件格式参数为16表示保存为DOCX
-    doc.Close()
-    word.Quit()
-
+   doc = Document(doc_file)
+   doc.save(docx_file)
 
 def get_folders_list(root_dir: str) -> list:
     """
