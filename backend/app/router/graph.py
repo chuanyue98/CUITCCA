@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, Depends
 from starlette import status
 from starlette.responses import JSONResponse
 
-from handlers.llama_handler import compose_indices_to_graph, get_history_msg, compose
+from dependencies import role_required, get_current_active_user
+from handlers.auth import oauth2_scheme
+from handlers.llama_handler import compose_indices_to_graph, get_history_msg
 
-graph_app = APIRouter()
+graph_app = APIRouter(default=role_required(allowed_roles=["admin"]))
 
 graph = None
 
@@ -22,7 +24,8 @@ async def query_graph(query: str = Form()):
     global graph
     if graph is None:
         graph = compose_indices_to_graph()
-    return await graph.achat(query)
+    res= await graph.achat(query)
+    return res.response
 
 @graph_app.post("/query_stream")
 async def query_graph_stream(query: str = Form()):

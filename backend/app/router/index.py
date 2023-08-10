@@ -5,7 +5,6 @@ import aiofiles
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends
 from llama_index import Document
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
-from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT
@@ -17,7 +16,7 @@ index_app = APIRouter()
 
 async def startup_event():
     # 启动时加载一次索引
-    loadAllIndexes(index_save_directory)
+    loadAllIndexes()
     # 创建所需目录
     import os
     # 检查和创建目录
@@ -38,7 +37,7 @@ async def index():
     加载索引
     :return:
     """
-    loadAllIndexes(index_save_directory)
+    loadAllIndexes()
     return {"status": "ok", "load": "ok"}
 
 
@@ -59,7 +58,7 @@ async def create_index(index_name: str = Form()):
     if index_name in get_folders_list(index_save_directory):
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(index_name)
-    loadAllIndexes(index_save_directory)
+    loadAllIndexes()
     return index_name
 
 
@@ -84,7 +83,7 @@ def delete_index(index_name: str = Form()):
     if index_name in get_folders_list(index_save_directory):
         index_path = os.path.join(index_save_directory, index_name)
         shutil.rmtree(index_path)
-        loadAllIndexes(index_save_directory)
+        loadAllIndexes()
         return {"status": "deleted"}
     else:
         return JSONResponse(content={'status': 'detail', 'message': 'index not exist'},

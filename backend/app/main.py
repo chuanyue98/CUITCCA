@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
-from router import response_app, index_app, graph_app, test_app
+from dependencies import access_stats
+from router import response_app, index_app, graph_app, test_app, manage_app
 
 app = FastAPI()
 
@@ -8,8 +9,21 @@ app = FastAPI()
 app.include_router(index_app, prefix='/index', tags=['index'])
 app.include_router(graph_app, prefix='/graph', tags=['graph'])
 app.include_router(response_app, prefix='/response', tags=['response'])
+app.include_router(manage_app, prefix='/auth', tags=['manage'])
 app.include_router(test_app, prefix='/test', tags=['test'])
 
+
+@app.middleware("http")
+async def access_stats_middleware(request, call_next):
+    # 更新总进站量
+    access_stats["total_visits"] += 1
+
+    # 更新用户访问次数和接口访问次数
+    access_stats["user_visits"][request.client.host] += 1
+    access_stats["endpoint_visits"][request.url.path] += 1
+
+    response = await call_next(request)
+    return response
 
 @app.get("/")
 def read_root():

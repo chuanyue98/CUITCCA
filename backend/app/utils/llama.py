@@ -14,3 +14,8 @@ def get_nodes_from_file(file_path):
     parser = SimpleNodeParser(text_splitter=text_splitter)
     documents = SimpleDirectoryReader(file_path, filename_as_id=True).load_data()
     return parser.get_nodes_from_documents(documents)
+
+if __name__ == '__main__':
+    nodes = get_nodes_from_file('../utils')
+    for  node in nodes:
+        print(node)

@@ -6,7 +6,7 @@ import logging
 import openai
 from langchain.chat_models import ChatOpenAI
 from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, \
-    SimpleDirectoryReader, LLMPredictor, ComposableGraph, ListIndex, Prompt
+    SimpleDirectoryReader, LLMPredictor, ComposableGraph, ListIndex, Prompt, QuestionAnswerPrompt
 from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.indices.base import BaseIndex
@@ -41,7 +41,7 @@ def createIndex(index_name):
     index.storage_context.persist(os.path.join(index_save_directory, index_name))
 
 
-def loadAllIndexes(index_save_directory):
+def loadAllIndexes():
     """
     加载索引数据
     :param index_save_directory: 索引保存目录
@@ -135,7 +135,7 @@ def compose_indices_to_graph() -> BaseChatEngine:
     :return: chat_engine
     """
     if indexes is None:
-        loadAllIndexes(index_save_directory)
+        loadAllIndexes()
     summaries = []
     for i in indexes:
         summaries.append(i.summary)
@@ -159,7 +159,7 @@ def compose() -> BaseQueryEngine:
         :return: chat_engine
         """
     if indexes is None:
-        loadAllIndexes(index_save_directory)
+        loadAllIndexes()
     summaries = []
     for i in indexes:
         summaries.append(i.summary)
@@ -258,7 +258,23 @@ def citf(index, name):
     with open(path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(text_list))
 
+def test(index):
+    """将index转换为file"""
+    data = index.docstore.docs
+    print(data)
+    text_list = []
+    for node_id, node_data in data.items():
+        for key, value in node_data:
+            if key == 'text':
+                node_text = value
+                # 去除空格和换行符
+                node_text = node_text.strip().replace('\n', '').replace('\r', '')
+                text_list.append(node_text)
+
+
 
 if __name__ == "__main__":
-    loadAllIndexes(index_save_directory)
+    loadAllIndexes()
+    index=get_index_by_name('t2')
+    test(index)
 

@@ -1,1 +1,2 @@
-from .index_dep import get_index
+from .index_dep import *
+from .manage import *
