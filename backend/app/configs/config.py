@@ -1,8 +1,5 @@
 from enum import Enum
 
-from llama_index import Prompt
-
-
 class ResponseMode(str, Enum):
     """响应生成器（和合成器）的响应模式。"""
     COMPACT = "compact"

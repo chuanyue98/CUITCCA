@@ -1,19 +1,50 @@
+import pickle
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import Depends, HTTPException, status, APIRouter
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
+from configs.load_env import access_stats_path
 from dependencies.manage import get_current_active_user, role_required, fake_users_db, get_current_user, access_stats
 from handlers.auth import authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from models.user import Token, User
 
 manage_app = APIRouter()
 
+@manage_app.on_event("startup")
+async def startup():
+    """加载access_stats"""
+    try:
+        with open(access_stats_path, "rb") as file:
+            access_stats_dict = pickle.load(file)
+
+            # 将普通字典转换为defaultdict
+            access_stats["total_visits"] = access_stats_dict["total_visits"]
+            access_stats["user_visits"] = defaultdict(int, access_stats_dict["user_visits"])
+            access_stats["endpoint_visits"] = defaultdict(int, access_stats_dict["endpoint_visits"])
+    except FileNotFoundError:
+        pass
+
+
+@manage_app.on_event("shutdown")
+def save_access_stats():
+    """保存access_stats"""
+    # 将defaultdict转换为普通字典
+    access_stats_dict = {
+        "total_visits": access_stats["total_visits"],
+        "user_visits": dict(access_stats["user_visits"]),
+        "endpoint_visits": dict(access_stats["endpoint_visits"])
+    }
+
+    with open(access_stats_path, "wb") as file:
+        pickle.dump(access_stats_dict, file)
+
 
 @manage_app.get("/stats")
 async def get_stats():
     return access_stats
+
 
 @manage_app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -40,6 +71,3 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 @role_required(['admin'])
 async def read_own_items(current_user: User = Depends(get_current_active_user)):
     return [{"item_id": "Foo", "owner": current_user.username}]
-
-
-

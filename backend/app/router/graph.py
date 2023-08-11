@@ -2,8 +2,7 @@ from fastapi import APIRouter, Form, Depends
 from starlette import status
 from starlette.responses import JSONResponse
 
-from dependencies import role_required, get_current_active_user
-from handlers.auth import oauth2_scheme
+from dependencies import role_required
 from handlers.llama_handler import compose_indices_to_graph, get_history_msg
 
 graph_app = APIRouter(default=role_required(allowed_roles=["admin"]))

@@ -4,6 +4,7 @@ from typing import List
 import aiofiles
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends
 from llama_index import Document
+from llama_index.indices.base import BaseIndex
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
 from starlette.responses import JSONResponse
 

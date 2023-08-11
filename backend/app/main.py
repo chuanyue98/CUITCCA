@@ -1,15 +1,15 @@
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 from dependencies import access_stats
 from router import response_app, index_app, graph_app, test_app, manage_app
 
 app = FastAPI()
 
-
 app.include_router(index_app, prefix='/index', tags=['index'])
 app.include_router(graph_app, prefix='/graph', tags=['graph'])
 app.include_router(response_app, prefix='/response', tags=['response'])
-app.include_router(manage_app, prefix='/auth', tags=['manage'])
+app.include_router(manage_app, prefix='/manage', tags=['manage'])
 app.include_router(test_app, prefix='/test', tags=['test'])
 
 
@@ -25,6 +25,17 @@ async def access_stats_middleware(request, call_next):
     response = await call_next(request)
     return response
 
+
+# 添加CORS中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 @app.get("/")
 def read_root():
     return {"Hello": "CUITCCA"}
@@ -32,4 +43,5 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run('main:app', host='127.0.0.1', port=8080,reload=True)
+
+    uvicorn.run('main:app', host='127.0.0.1', port=8080, reload=True)

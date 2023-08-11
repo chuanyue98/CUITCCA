@@ -1,3 +1,5 @@
+import json
+import os
 from collections import defaultdict
 from functools import wraps
 from typing import List
@@ -15,6 +17,7 @@ access_stats = {
     "user_visits": defaultdict(int),
     "endpoint_visits": defaultdict(int)
 }
+
 
 fake_users_db = {
     "admin": {

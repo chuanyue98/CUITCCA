@@ -1,21 +1,19 @@
 import json
+import logging
 import os
 import re
-import logging
 
-import openai
-from langchain.chat_models import ChatOpenAI
-from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, \
-    SimpleDirectoryReader, LLMPredictor, ComposableGraph, ListIndex, Prompt, QuestionAnswerPrompt
+from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, ComposableGraph, \
+    ListIndex, Prompt, LLMPredictor
 from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
-from llama_index.indices.base import BaseIndex
-from llama_index.indices.query.base import BaseQueryEngine
 
 from configs.config import Prompts
+from configs.embed_model import EmbedModelOption
+from configs.llm_predictor import LLMPredictorOption
 from configs.load_env import index_save_directory, FILE_PATH
-from utils.llama import get_nodes_from_file
 from utils.file import get_folders_list
+from utils.llama import get_nodes_from_file
 
 indexes = []
 
@@ -55,26 +53,28 @@ def loadAllIndexes():
         indexes.append(index)
 
 
-
-
-def insert_into_index(index, doc_file_path):
+def insert_into_index(index, doc_file_path, llm_predictor=None, embed_model=None):
     """
     通过文档路径插入index
     :param index: 索引
     :param doc_file_path: 文档路径
     :param input_files 文档列表
+    :param llm_predictor: 语言模型预测器
+    :param embed_model: 嵌入模型
     :return:
     """
-    # 使用中文解析器解析文档
-    llm_predictor = LLMPredictor(
-        llm=ChatOpenAI(temperature=0.1, model_name="gpt-3.5-turbo-16k", max_tokens=1024, openai_api_key=openai.api_key))
-    service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
+    # 使用自定义的 llm_predictor 或默认值
+    if llm_predictor is None:
+        llm_predictor =  LLMPredictorOption.GPT3_5.value
+    # 使用自定义的 embed_model 或默认值
+    if embed_model is None:
+        embed_model = EmbedModelOption.DEFAULT.value
+    service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=embed_model)
     nodes = get_nodes_from_file(doc_file_path)
     index.insert_nodes(nodes, context=service_context)
 
     # 生成summary maxRecursion
-    # index.summary = summary_index(index)
-    index.summary = index.index_id
+    index.summary = summary_index(index)
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
 
 
@@ -106,7 +106,8 @@ def updateNodeById(index_, id_, text):
     node.set_content(text)
     index_.docstore.add_documents([node])
 
-def deleteNodeById(index_, id_,):
+
+def deleteNodeById(index_, id_, ):
     """
     :param index_: 索引
     :param id_: node_id
@@ -121,7 +122,6 @@ def deleteDocById(index, id):
     :param id: 文档的id
     :return:
     """
-    id = id.replace("\\\\", "\\")
     index.delete_ref_doc(id, delete_from_docstore=True)
 
 
@@ -153,47 +153,18 @@ def compose_indices_to_graph() -> BaseChatEngine:
     return chat_engine
 
 
-def compose() -> BaseQueryEngine:
-    """
-        将index合成为graph
-        :return: chat_engine
-        """
-    if indexes is None:
-        loadAllIndexes()
-    summaries = []
-    for i in indexes:
-        summaries.append(i.summary)
-    graph = ComposableGraph.from_indices(
-        ListIndex,
-        indexes,
-        index_summaries=summaries,
-    )
-
-    query_engine = graph.as_query_engine(streaming=True)
-    return query_engine
-
-
 def summary_index(index):
     """
          生成 summary
     """
     summary = index.as_query_engine(response_mode="tree_summarize").query(
-        "文档描述"
+        "总结段落，生成文章摘要，要覆盖所有要点，方便后续检索，尽量完整而详细准确"
     )
     # 去掉换行符、制表符、多余的空格和其他非字母数字字符
     summary_str = re.sub(r"\s+", " ", str(summary))
     summary_str = re.sub(r"[^\w\s]", "", summary_str)
     logging.info(f"Summary: {summary_str}")
     return summary_str
-
-
-def query_index(index: BaseIndex, query_str):
-    """
-    查询文档获取响应
-    :return: respoonse
-    """
-    ret = index.as_query_engine(text_qa_template=Prompt(Prompts.QA_PROMPT)).query(query_str)
-    return ret
 
 
 def get_history_msg(chat_engine: BaseChatEngine):
@@ -258,23 +229,8 @@ def citf(index, name):
     with open(path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(text_list))
 
-def test(index):
-    """将index转换为file"""
-    data = index.docstore.docs
-    print(data)
-    text_list = []
-    for node_id, node_data in data.items():
-        for key, value in node_data:
-            if key == 'text':
-                node_text = value
-                # 去除空格和换行符
-                node_text = node_text.strip().replace('\n', '').replace('\r', '')
-                text_list.append(node_text)
-
-
 
 if __name__ == "__main__":
     loadAllIndexes()
-    index=get_index_by_name('t2')
+    index = get_index_by_name('t2')
     test(index)
-
