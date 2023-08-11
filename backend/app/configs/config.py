@@ -1,5 +1,8 @@
 from enum import Enum
 
+from llama_index import Prompt
+
+
 class ResponseMode(str, Enum):
     """响应生成器（和合成器）的响应模式。"""
     COMPACT = "compact"
@@ -57,13 +60,13 @@ class PromptType(str, Enum):
     CONDENSE_QUESTION_PROMPT = 'CONDENSE_QUESTION_PROMPT'
 
 
-class Prompts(str, Enum):
-    QA_PROMPT = ("下面是有关内容\n" "---------------------\n"
-                 "{context_str}" "\n---------------------\n"
-                 "根据这些信息，请回答问题: {query_str}\n"
-                 "如果问题中提到图片，回答的内容有url,请使用markdown格式输出图片"
-                 "如果您不知道的话，请回答不知道")
-    CONDENSE_QUESTION_PROMPT = ("""\
+class Prompts(Enum):
+    QA_PROMPT = Prompt("下面是有关内容\n" "---------------------\n"
+                       "{context_str}" "\n---------------------\n"
+                       "根据这些信息，请回答问题: {query_str}\n"
+                       "如果问题中提到图片，回答的内容有url,请使用markdown格式输出图片"
+                       "如果您不知道的话，请回答不知道")
+    CONDENSE_QUESTION_PROMPT = Prompt("""\
                             给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, \
                             将消息改写成一个独立问题，以捕捉对话中的所有相关上下文。\
                         
@@ -75,3 +78,6 @@ class Prompts(str, Enum):
                         
                             <Standalone question>
                             """)
+
+if __name__ == '__main__':
+    print(Prompts.QA_PROMPT)
