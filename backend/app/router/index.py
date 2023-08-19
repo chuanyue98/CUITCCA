@@ -3,14 +3,14 @@ from typing import List
 
 import aiofiles
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends
-from llama_index import Document
-from llama_index.indices.base import BaseIndex
+from llama_index.evaluation import ResponseEvaluator
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
 from starlette.responses import JSONResponse
 
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT
 from handlers.llama_handler import *
 from dependencies import get_index
+from utils.llama import formatted_pairs, generate_qa_batched
 
 index_app = APIRouter()
 
@@ -60,7 +60,7 @@ async def create_index(index_name: str = Form()):
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(index_name)
     loadAllIndexes()
-    return index_name
+    return JSONResponse(content={'status': 'success', 'msg': f'index {index_name} created'})
 
 
 @index_app.get("/{index_name}/info")
@@ -93,7 +93,13 @@ def delete_index(index_name: str = Form()):
 
 @index_app.post("/{index_name}/query")
 async def query_index(index=Depends(get_index), query: str = Form()):
-    engine = index.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
+    """
+    查询索引
+    :param index_name: 索引名称
+    :param query: 查询语句
+    :return:
+    """
+    engine = index.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value)
     return await engine.aquery(query)
 
 @index_app.post("/{index_name}/query_stream")
@@ -102,7 +108,7 @@ async def query_stream(index: BaseIndex = Depends(get_index), query: str = Form(
     Streaming not supported for async
     """
     engine = index.as_query_engine(streaming=True,text_qa_template=Prompts.QA_PROMPT.value,node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
-    res =  engine.query(query)
+    res = engine.query(query)
     return res.response_gen
 
 
@@ -112,7 +118,7 @@ async def update_doc(nodeId, index=Depends(get_index), text: str=Form()):
     将文档插入到索引中
     :param index_name: 索引名称
     :param nodeId: 文档id
-    :param text: 更新内容
+    :param text: 更新后的内容
     :return:
     """
     try:
@@ -190,6 +196,18 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
     return {"status": "inserted"}
 
 
+
+@index_app.post("{index_name}/upload_file_by_QA")
+async def upload_qa(index=Depends(get_index),file: UploadFile = File(...)):
+    contents = await file.read()
+    contents = contents.decode("utf-8")
+    # 分批生成 QA
+    qa_pairs = await generate_qa_batched(contents)
+    qa_data = formatted_pairs(qa_pairs)
+    embeddingQA(index,qa_data,'test')
+    return {"status": 'ok'}
+
+
 @index_app.post("/{index_name}/deleteDoc")
 async def delete_doc(doc_id, index=Depends(get_index)):
     """
@@ -223,23 +241,47 @@ async def delete_node(node_id, index=Depends(get_index)):
 
 @index_app.get("/{index_name}/get_summary")
 async def get_summary(index=Depends(get_index)):
+    """
+    获取索引的摘要信息
+    :param index: 索引名称
+    :return: 索引摘要
+    """
     return {"summary": index.summary}
 
 
 @index_app.post("/{index_name}/set_summary")
 async def set_summary(index=Depends(get_index), summary: str = Form()):
+    """
+    设置索引的摘要信息
+    :param index: 索引名称
+    :param summary: 摘要信息
+    :return: 索引摘要
+    """
     index.summary = summary
     return {"status": "ok", "summary": index.summary}
 
 
 @index_app.post("/{index_name}/generate_summary")
 async def set_summary(index=Depends(get_index)):
+    """
+    使用gpt生成索引的摘要信息
+    :param index: 索引名称
+    :return: 索引摘要
+    """
+    index.generate_summary()
     summary = summary_index(index)
     return {"status": "ok", "summary": summary}
 
 
 @index_app.post("/{index_name}/insertdoc")
 async def insert_docs(text, index=Depends(get_index),doc_id = Form(None)):
+    """
+    插入文档
+    :param text: 文本
+    :param index: 索引名称
+    :param doc_id: 文档id
+    :return: 插入状态
+    """
     if doc_id is None:
         doc = Document(text=text)
     else:
@@ -251,13 +293,33 @@ async def insert_docs(text, index=Depends(get_index),doc_id = Form(None)):
 
 @index_app.post("/{index_name}/save")
 async def save_index(index=Depends(get_index)):
+    """
+    保存索引
+    :param index: 索引名称
+    :return: 保存状态
+    """
+    index.save()
     saveIndex(index)
     return {"status": "ok"}
 
 @index_app.post("/{index_name}/getfile")
 async def get_file(index_name):
+    """
+    获取索引文件
+    :param index_name: 索引名称
+    :return:
+    """
     convert_index_to_file(index_name,f"{index_name}.txt")
     return {"status": "ok"}
+
+@index_app.post("/{index_name}/evaluator")
+async def evaluator(index=Depends(get_index), query: str = Form()):
+    service_context = ServiceContext.from_defaults(llm_predictor=LLMPredictorOption.DEFAULT.value)
+    evaluator = ResponseEvaluator(service_context=service_context)
+    query_engine = index.as_query_engine()
+    response = query_engine.query(query)
+    eval_result = evaluator.evaluate(response)
+    return eval_result
 
 if __name__ == '__main__':
     print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

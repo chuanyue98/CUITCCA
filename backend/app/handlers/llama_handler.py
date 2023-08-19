@@ -2,11 +2,13 @@ import json
 import logging
 import os
 import re
+import uuid
 
 from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, ComposableGraph, \
-    ListIndex, Prompt, LLMPredictor
+    ListIndex, Prompt, LLMPredictor, Document
 from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
+from llama_index.indices.base import BaseIndex
 
 from configs.config import Prompts
 from configs.embed_model import EmbedModelOption
@@ -17,14 +19,6 @@ from utils.llama import get_nodes_from_file
 
 indexes = []
 
-
-def init():
-    """
-    创建所需文件夹
-    :return:
-    """
-    if not os.path.exists(index_save_directory):
-        os.makedirs(index_save_directory)
 
 
 def createIndex(index_name):
@@ -76,6 +70,31 @@ def insert_into_index(index, doc_file_path, llm_predictor=None, embed_model=None
     # 生成summary maxRecursion
     index.summary = summary_index(index)
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
+
+
+def embeddingQA(index: BaseIndex, qa_pairs,id=uuid.uuid4()):
+    """
+    将拆分后的问答对插入索引
+    :param index: 索引
+    :param qa_pairs: 问答对
+    :param id: 文档id
+    :return:
+    """
+    # 使用自定义的 llm_predictor 或默认值
+    llm_predictor = LLMPredictorOption.GPT3_5.value
+    # 使用自定义的 embed_model 或默认值
+    embed_model = EmbedModelOption.DEFAULT.value
+    service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=embed_model)
+    for i in range(0, len(qa_pairs), 2):
+        q = qa_pairs[i]
+        a = qa_pairs[i + 1]
+        doc = Document(text=f"{q} {a}", id_=id)
+        index.insert(doc, service_context=service_context)
+    # 生成summary
+    index.summary = summary_index(index)
+    index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
+
+
 
 
 def get_all_docs(index_):
@@ -144,8 +163,21 @@ def compose_indices_to_graph() -> BaseChatEngine:
         indexes,
         index_summaries=summaries,
     )
+
+    custom_query_engines = {
+        index.index_id: index.as_query_engine(
+            child_branch_factor=2
+        )
+        for index in indexes
+    }
+
     chat_engine = CondenseQuestionChatEngine.from_defaults(
-        query_engine=graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value, streaming=True),
+        query_engine=graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
+                                           refine_template=Prompts.REFINE_PROMPT.value,
+                                           streaming=True,
+                                           similarity_top_k=3,
+                                           verbose=True,
+                                           custom_query_engines=custom_query_engines),
         condense_question_prompt=Prompts.CONDENSE_QUESTION_PROMPT.value,
         verbose=True,
         chat_mode="condense_question",
@@ -158,7 +190,7 @@ def summary_index(index):
          生成 summary
     """
     summary = index.as_query_engine(response_mode="tree_summarize").query(
-        "总结段落，生成文章摘要，要覆盖所有要点，方便后续检索，尽量完整而详细准确"
+        "总结，生成文章摘要，要覆盖所有要点，方便后续检索，尽量完整而详细准确"
     )
     # 去掉换行符、制表符、多余的空格和其他非字母数字字符
     summary_str = re.sub(r"\s+", " ", str(summary))

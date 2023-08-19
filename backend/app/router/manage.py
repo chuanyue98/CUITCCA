@@ -43,6 +43,9 @@ def save_access_stats():
 
 @manage_app.get("/stats")
 async def get_stats():
+    """
+    获取访问统计
+    """
     return access_stats
 
 

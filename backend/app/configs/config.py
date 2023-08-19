@@ -61,23 +61,28 @@ class PromptType(str, Enum):
 
 
 class Prompts(Enum):
-    QA_PROMPT = Prompt("下面是有关内容\n" "---------------------\n"
-                       "{context_str}" "\n---------------------\n"
-                       "根据这些信息，请回答问题: {query_str}\n"
-                       "如果问题中提到图片，回答的内容有url,请使用markdown格式输出图片"
-                       "如果您不知道的话，请回答不知道")
+    QA_PROMPT = Prompt("以下是有关内容。\n" 
+                       "---------------------\n"
+                       "{context_str}"
+                       "\n---------------------\n"
+                       "根据这些信息，请回答问题: {query_str}"
+                       )
     CONDENSE_QUESTION_PROMPT = Prompt("""\
                             给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, \
                             将消息改写成一个独立问题，以捕捉对话中的所有相关上下文。\
-                        
                             <Chat History> 
                             {chat_history}
-                            
                             <Follow Up Message>
                             {question}
-                        
                             <Standalone question>
                             """)
+    REFINE_PROMPT = Prompt("""原始问题如下: {query_str} 
+                            我们已经提供了一个现有的答案: {existing_answer} 
+                            我们有机会通过下面的一些更多上下文来完善现有的答案（仅在需要时）。
+                            {context_msg}
+                            利用新的上下文和您自己的知识，更新或重复现有的答案。
+                            """)
+
 
 if __name__ == '__main__':
     print(Prompts.QA_PROMPT)
