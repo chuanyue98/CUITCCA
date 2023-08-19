@@ -26,6 +26,13 @@ async def access_stats_middleware(request, call_next):
     return response
 
 
+# 设置允许的来源（即允许跨域请求的域名）
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    # 添加其他需要允许的域名
+]
+
 # 添加CORS中间件
 app.add_middleware(
     CORSMiddleware,
