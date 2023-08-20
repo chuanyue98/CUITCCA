@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Form
 from starlette import status
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, StreamingResponse
 
 from dependencies import role_required
 from handlers.llama_handler import compose_indices_to_graph, get_history_msg
@@ -27,7 +27,7 @@ async def query_graph_stream(query: str = Form()):
     if graph is None:
         graph = compose_indices_to_graph()
     res = await graph.astream_chat(query)
-    return res.response_gen
+    return StreamingResponse(res.response_gen, media_type="text/plain")
 
 @graph_app.post("/query_sources")
 async def query_sources():
