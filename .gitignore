@@ -4,3 +4,4 @@
 !/backend/app/
 !/backend/.env
 !/backend/requirements.txt
+backend.log
