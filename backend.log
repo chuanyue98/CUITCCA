@@ -1,0 +1,18 @@
+INFO:     Will watch for changes in these directories: ['E:\\demo\\CUITCCA']
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+INFO:     Started reloader process [25932] using WatchFiles
+INFO:     Started server process [16708]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:62538 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62538 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62539 - "GET /index/index/list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62550 - "GET /index/tt/info HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:62550 - "GET /index/ttt/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62553 - "POST /index/create HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62553 - "POST /index/create HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62553 - "POST /index/create HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62553 - "POST /index/create HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62553 - "POST /index/create HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62553 - "POST /index/create HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62553 - "GET /index/index/list HTTP/1.1" 200 OK
