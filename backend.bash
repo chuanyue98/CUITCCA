@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 检测8080端口是否被使用
+# 检测8000端口是否被使用
 check_port() {
-  echo "Checking if port 8080 is in use..."
-  if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null ; then
-    echo "Port 8080 is already in use. Closing the application..."
-    kill $(lsof -t -i:8080)
+  echo "Checking if port 8000 is in use..."
+  if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
+    echo "Port 8000 is already in use. Closing the application..."
+    kill $(lsof -t -i:8000)
   fi
 }
 
