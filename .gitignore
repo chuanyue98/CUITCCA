@@ -1,0 +1,6 @@
+/data/
+/.idea/
+/backend/*
+!/backend/app/
+!/backend/.env
+!/backend/requirements.txt
