@@ -30,6 +30,7 @@ def extract_content_after_backslash(string):
     parts = string.split('\\')
     return parts[-1]
 
+
 def formatted_pairs(qa_data: str):
     "将字符串中的QA对格式化，返回列表"
     pattern = r'(?:Q: |A: )'
@@ -37,7 +38,8 @@ def formatted_pairs(qa_data: str):
     qa_pairs = [pair.strip() for pair in qa_pairs if pair.strip()]
     return qa_pairs
 
-async def generate_qa_batched(contents: str):
+
+async def generate_qa_batched(contents: str, prompt: str = None):
     """
     生成QA对
     :param contents:
@@ -47,11 +49,11 @@ async def generate_qa_batched(contents: str):
     contents = contents.strip()
     textSplitter = SpacyTextSplitter(pipeline="zh_core_web_sm", chunk_size=1024)
     contents = textSplitter.split_text(contents)
-
+    if prompt is None:
+        prompt = "我会发送一段长文本"
     messages = [
-        ChatMessage(role="system", content="""你是出题人.
-我会发送一段长文本
-从中提取出 25 个问题和答案. 答案详细完整. 按下面格式返回:
+        ChatMessage(role="system", content=f"""你是出题人.
+{prompt}从中提取出 25 个问题和答案. 答案详细完整. 按下面格式返回:
 Q:
 A:
 Q:

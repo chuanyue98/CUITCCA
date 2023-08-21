@@ -4,11 +4,13 @@ from datetime import timedelta
 
 from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
+from starlette.requests import Request
 
-from configs.load_env import access_stats_path
+from configs.load_env import access_stats_path, FEEDBACK_PATH
 from dependencies.manage import get_current_active_user, role_required, fake_users_db, get_current_user, access_stats
 from handlers.auth import authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
-from models.user import Token, User
+from models.user import Token, User, Feedback
+from utils.file import save_feedback_to_file
 
 manage_app = APIRouter()
 
@@ -47,6 +49,20 @@ async def get_stats():
     获取访问统计
     """
     return access_stats
+
+
+@manage_app.post("/feedback")
+def create_feedback(feedback: Feedback, request: Request):
+    """
+    创建反馈
+    """
+    # 获取客户端的IP地址
+    client_ip = request.client.host
+
+    # 将问题反馈数据保存到本地文件
+    save_feedback_to_file(feedback, client_ip)
+
+    return {"message": "Feedback received"}
 
 
 @manage_app.post("/token", response_model=Token)

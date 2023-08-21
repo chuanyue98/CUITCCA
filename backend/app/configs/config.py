@@ -69,7 +69,7 @@ class Prompts(Enum):
                        )
     CONDENSE_QUESTION_PROMPT = Prompt("""\
                             给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, \
-                            将消息改写成一个独立问题，以捕捉对话中的所有相关上下文。\
+                            将消息改写成一个独立问题仅补充后续留言不改变后续留言意思。\
                             <Chat History> 
                             {chat_history}
                             <Follow Up Message>
@@ -80,7 +80,7 @@ class Prompts(Enum):
                             我们已经提供了一个现有的答案: {existing_answer} 
                             我们有机会通过下面的一些更多上下文来完善现有的答案（仅在需要时）。
                             {context_msg}
-                            利用新的上下文和您自己的知识，更新或重复现有的答案。
+                            利用新的上下文和您自己的知识，更新或重复现有的答案,如果答案不符，请直接回答我不知道。
                             """)
 
 

@@ -6,9 +6,10 @@ import uuid
 
 from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, ComposableGraph, \
     ListIndex, Prompt, LLMPredictor, Document
-from llama_index.chat_engine import CondenseQuestionChatEngine
+from llama_index.chat_engine import CondenseQuestionChatEngine, ContextChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.indices.base import BaseIndex
+from llama_index.indices.query.base import BaseQueryEngine
 
 from configs.config import Prompts
 from configs.embed_model import EmbedModelOption
@@ -72,7 +73,7 @@ def insert_into_index(index, doc_file_path, llm_predictor=None, embed_model=None
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
 
 
-def embeddingQA(index: BaseIndex, qa_pairs,id=uuid.uuid4()):
+def embeddingQA(index: BaseIndex, qa_pairs,id=str(uuid.uuid4())):
     """
     将拆分后的问答对插入索引
     :param index: 索引
@@ -177,12 +178,46 @@ def compose_indices_to_graph() -> BaseChatEngine:
                                            streaming=True,
                                            similarity_top_k=3,
                                            verbose=True,
+                                           system_prompt="你是成都信息工程大学校园小助手，只回答校园相关问题，若问题相关，回答sorry",
                                            custom_query_engines=custom_query_engines),
         condense_question_prompt=Prompts.CONDENSE_QUESTION_PROMPT.value,
         verbose=True,
         chat_mode="condense_question",
     )
     return chat_engine
+
+
+def compose_graph_query_egine() -> BaseQueryEngine:
+    """
+    将index合成为graph
+    :return: chat_engine
+    """
+    if indexes is None:
+        loadAllIndexes()
+    summaries = []
+    for i in indexes:
+        summaries.append(i.summary)
+    graph = ComposableGraph.from_indices(
+        ListIndex,
+        indexes,
+        index_summaries=summaries,
+    )
+
+    custom_query_engines = {
+        index.index_id: index.as_query_engine(
+            child_branch_factor=2
+        )
+        for index in indexes
+    }
+
+    query_engine = graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
+                                       refine_template=Prompts.REFINE_PROMPT.value,
+                                       streaming=True,
+                                       similarity_top_k=3,
+                                       verbose=True,
+                                       system_prompt="你是成都信息工程大学校园小助手，只回答校园相关问题，若问题相关，回答sorry",
+                                       custom_query_engines=custom_query_engines)
+    return query_engine
 
 
 def summary_index(index):

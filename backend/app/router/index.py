@@ -198,13 +198,13 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
 
 
 @index_app.post("{index_name}/upload_file_by_QA")
-async def upload_qa(index=Depends(get_index),file: UploadFile = File(...)):
+async def upload_qa(index=Depends(get_index),prompt: str = Form(None),file: UploadFile = File(...)):
     contents = await file.read()
     contents = contents.decode("utf-8")
     # 分批生成 QA
-    qa_pairs = await generate_qa_batched(contents)
+    qa_pairs = await generate_qa_batched(contents,prompt)
     qa_data = formatted_pairs(qa_pairs)
-    embeddingQA(index,qa_data,'test')
+    embeddingQA(index,qa_data)
     return {"status": 'ok'}
 
 

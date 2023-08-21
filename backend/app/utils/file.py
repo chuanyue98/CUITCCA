@@ -1,8 +1,10 @@
 import os
+from datetime import datetime
 
 import pandas as pd
 
-from configs.load_env import PROJECT_ROOT
+from configs.load_env import PROJECT_ROOT, FEEDBACK_PATH
+from models.user import Feedback
 
 
 def xlsx_to_csv(input_file, output_file):
@@ -29,6 +31,22 @@ def get_folders_list(root_dir: str) -> list:
         for dirname in dirnames:
             folders_list.append(dirname)
     return folders_list
+
+
+def save_feedback_to_file(feedback: Feedback, client_ip: str):
+    # 获取当前的时间和日期
+    current_datetime = datetime.now()
+
+    # 生成文件名
+    filename = current_datetime.strftime("%Y-%m-%d_%H-%M-%S.txt")
+    path = os.path.join(FEEDBACK_PATH, filename)
+    os.makedirs(FEEDBACK_PATH, exist_ok=True)
+    # 打开文件，以追加模式写入数据
+    with open(path, "a", encoding="utf-8") as file:
+        file.write(f"Name (IP): {client_ip}\n")
+        file.write(f"Email: {feedback.email if feedback.email else 'NONE'}\n")
+        file.write(f"Message: {feedback.message}\n")
+        file.write("\n")
 
 if __name__ == '__main__':
     print(PROJECT_ROOT)
