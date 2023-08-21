@@ -1,23 +1,18 @@
-from typing import List
-
 from fastapi import APIRouter, Form
-from llama_index import ComposableGraph
-from llama_index.chat_engine.types import BaseChatEngine
-from llama_index.indices.base import BaseIndex
+from llama_index.chat_engine.types import BaseChatEngine, StreamingAgentChatResponse, AgentChatResponse
 from llama_index.query_engine import RouterQueryEngine
 from llama_index.selectors.pydantic_selectors import PydanticMultiSelector
-from llama_index.tools import QueryEngineTool
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
 
-from configs.config import Prompts
 from dependencies import role_required
 from handlers.llama_handler import compose_indices_to_graph, get_history_msg, indexes, compose_graph_query_egine
+from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger
 
 graph_app = APIRouter(default=role_required(allowed_roles=["admin"]))
 
-graph: BaseChatEngine
+graph: BaseChatEngine = None
 res = None
 
 
@@ -39,8 +34,9 @@ async def query_graph_stream(query: str = Form()):
         graph = compose_indices_to_graph()
     graph.reset()
     query = query.strip()
-    res = await graph.astream_chat(query)
     customer_logger.info(f"query_stream: {query}")
+    res = await graph.astream_chat(query)
+    customer_logger.info(f"res: {res}")
     return StreamingResponse(res.response_gen, media_type="text/plain")
 
 
@@ -52,6 +48,7 @@ async def query_sources():
     if res is None:
         return JSONResponse(content={"status": "detail", "message": "please query first"},
                             status_code=status.HTTP_400_BAD_REQUEST)
+    customer_logger.info(res.sources)
     return res.source_nodes
 
 
@@ -83,18 +80,10 @@ async def query_router(query: str = Form()):
         selector=PydanticMultiSelector.from_defaults(),
         query_engine_tools=query_engine_tools,
     )
+    customer_logger.info(f"query_router: {query}")
     res = query_engine.query(query)
+    customer_logger.info(f"res: {res}")
     return StreamingResponse(res.response_gen, media_type="text/plain")
 
 
-def generate_query_engine_tools(indexes: List[BaseIndex]) -> List[QueryEngineTool]:
-    query_engine_tools = []
-    for index in indexes:
-        query_engine = index.as_query_engine(streaming=True,
-                                             text_qa_template=Prompts.QA_PROMPT.value,
-                                             refine_template=Prompts.REFINE_PROMPT.value)
-        description = index.summary
-        tool = QueryEngineTool.from_defaults(query_engine=query_engine, description=description)
-        query_engine_tools.append(tool)
 
-    return query_engine_tools

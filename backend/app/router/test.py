@@ -80,20 +80,6 @@ async def confirm_modification(nodes: List[TextNode], index=Depends(get_index)):
 
 
 
-@test_app.post("/qa_generate")
-async def qa_generate(file: UploadFile = File(...)):
-    contents = await file.read()
-    contents = contents.decode("utf-8")
-    # 分批生成 QA
-    qa_pairs = await generate_qa_batched(contents)
-
-    return {"qa_pairs": qa_pairs}
-
-
-
-
-
-
 
 if __name__ == '__main__':
     p = """Q: 我校有多少担任校外兼职博士生导师？

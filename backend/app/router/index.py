@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT
 from handlers.llama_handler import *
 from dependencies import get_index
+from utils.file import read_file_contents
 from utils.llama import formatted_pairs, generate_qa_batched
 
 index_app = APIRouter()
@@ -102,18 +103,20 @@ async def query_index(index=Depends(get_index), query: str = Form()):
     engine = index.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value)
     return await engine.aquery(query)
 
+
 @index_app.post("/{index_name}/query_stream")
 async def query_stream(index: BaseIndex = Depends(get_index), query: str = Form()):
     """
     Streaming not supported for async
     """
-    engine = index.as_query_engine(streaming=True,text_qa_template=Prompts.QA_PROMPT.value,node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
+    engine = index.as_query_engine(streaming=True, text_qa_template=Prompts.QA_PROMPT.value,
+                                   node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
     res = engine.query(query)
     return res.response_gen
 
 
 @index_app.post("/{index_name}/update")
-async def update_doc(nodeId, index=Depends(get_index), text: str=Form()):
+async def update_doc(nodeId, index=Depends(get_index), text: str = Form()):
     """
     将文档插入到索引中
     :param index_name: 索引名称
@@ -125,7 +128,7 @@ async def update_doc(nodeId, index=Depends(get_index), text: str=Form()):
         updateNodeById(index, nodeId, text)
     except ValueError:
         return JSONResponse(content={'status': 'detail', 'message': 'node_id not exist'},
-                           status_code=status.HTTP_404_NOT_FOUND)
+                            status_code=status.HTTP_404_NOT_FOUND)
     return JSONResponse(content={"status": "updated"})
 
 
@@ -157,7 +160,6 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
         if filepath is not None and os.path.exists(filepath):
             os.remove(filepath)
     return {"status": "inserted"}
-
 
 
 @index_app.post("/{index_name}/uploadFiles")
@@ -196,16 +198,15 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
     return {"status": "inserted"}
 
 
-
 @index_app.post("{index_name}/upload_file_by_QA")
-async def upload_qa(index=Depends(get_index),prompt: str = Form(None),file: UploadFile = File(...)):
-    contents = await file.read()
-    contents = contents.decode("utf-8")
+async def upload_qa(index=Depends(get_index), prompt: str = Form(None), file: UploadFile = File(...)):
+    contents = read_file_contents(file)
     # 分批生成 QA
-    qa_pairs = await generate_qa_batched(contents,prompt)
+    qa_pairs = await generate_qa_batched(contents, prompt)
     qa_data = formatted_pairs(qa_pairs)
-    embeddingQA(index,qa_data)
+    embeddingQA(index, qa_data)
     return {"status": 'ok'}
+
 
 
 @index_app.post("/{index_name}/deleteDoc")
@@ -224,6 +225,7 @@ async def delete_doc(doc_id, index=Depends(get_index)):
     deleteDocById(index, doc_id)
     return {"status": "deleted"}
 
+
 @index_app.post("/{index_name}/deleteNode")
 async def delete_node(node_id, index=Depends(get_index)):
     """
@@ -238,6 +240,7 @@ async def delete_node(node_id, index=Depends(get_index)):
     except Exception as e:
         return JSONResponse(content={"status": "detail", "message": f"node_id: not found"},
                             status_code=status.HTTP_400_BAD_REQUEST)
+
 
 @index_app.get("/{index_name}/get_summary")
 async def get_summary(index=Depends(get_index)):
@@ -274,7 +277,7 @@ async def set_summary(index=Depends(get_index)):
 
 
 @index_app.post("/{index_name}/insertdoc")
-async def insert_docs(text, index=Depends(get_index),doc_id = Form(None)):
+async def insert_docs(text, index=Depends(get_index), doc_id=Form(None)):
     """
     插入文档
     :param text: 文本
@@ -286,7 +289,7 @@ async def insert_docs(text, index=Depends(get_index),doc_id = Form(None)):
         doc = Document(text=text)
     else:
         doc_id = doc_id.replace("\\\\", "\\")
-        doc = Document(text=text,doc_id=doc_id)
+        doc = Document(text=text, doc_id=doc_id)
     index.insert(doc)
     return {"status": "ok"}
 
@@ -302,6 +305,7 @@ async def save_index(index=Depends(get_index)):
     saveIndex(index)
     return {"status": "ok"}
 
+
 @index_app.post("/{index_name}/getfile")
 async def get_file(index_name):
     """
@@ -309,8 +313,9 @@ async def get_file(index_name):
     :param index_name: 索引名称
     :return:
     """
-    convert_index_to_file(index_name,f"{index_name}.txt")
+    convert_index_to_file(index_name, f"{index_name}.txt")
     return {"status": "ok"}
+
 
 @index_app.post("/{index_name}/evaluator")
 async def evaluator(index=Depends(get_index), query: str = Form()):
@@ -320,6 +325,7 @@ async def evaluator(index=Depends(get_index), query: str = Form()):
     response = query_engine.query(query)
     eval_result = evaluator.evaluate(response)
     return eval_result
+
 
 if __name__ == '__main__':
     print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

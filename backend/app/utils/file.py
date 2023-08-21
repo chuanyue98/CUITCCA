@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 import pandas as pd
+from fastapi import UploadFile
 
 from configs.load_env import PROJECT_ROOT, FEEDBACK_PATH
 from models.user import Feedback
@@ -47,6 +48,38 @@ def save_feedback_to_file(feedback: Feedback, client_ip: str):
         file.write(f"Email: {feedback.email if feedback.email else 'NONE'}\n")
         file.write(f"Message: {feedback.message}\n")
         file.write("\n")
+
+
+def read_file_contents(file: UploadFile) -> str:
+    # 获取文件扩展名
+    ext = file.filename.split('.')[-1].lower()
+
+    # 根据文件扩展名选择读取方法
+    if ext == 'docx':
+        from docx import Document
+        import tempfile
+        # 将 SpooledTemporaryFile 对象转换为临时文件对象
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(file.file.read())
+            temp_file.seek(0)
+
+            # 使用 python-docx 库读取 Word 文档
+            doc = Document(temp_file)
+            content_parts = []
+
+            # 读取文档内容
+            for paragraph in doc.paragraphs:
+                content_parts.append(paragraph.text)
+
+            # 将内容拼接为字符串
+            content = ' '.join(content_parts)
+
+    else:
+        # 默认使用 UTF-8 编码读取文件内容
+        contents = file.file.read()
+        content = contents.decode('utf-8')
+
+    return content
 
 if __name__ == '__main__':
     print(PROJECT_ROOT)
