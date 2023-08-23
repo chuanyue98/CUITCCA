@@ -37,11 +37,14 @@ def extract_content_after_backslash(string):
     return parts[-1]
 
 
-def formatted_pairs(qa_data: str):
-    "将字符串中的QA对格式化，返回列表"
+def formatted_pairs(qa_data_list):
+    """将字符串中的QA对格式化，返回列表"""
+    qa_pairs = []
     pattern = r'(?:Q: |A: )'
-    qa_pairs = re.split(pattern, qa_data)
-    qa_pairs = [pair.strip() for pair in qa_pairs if pair.strip()]
+    for qa_data in qa_data_list:
+        pairs = re.split(pattern, qa_data)
+        pairs = [pair.strip() for pair in pairs if pair.strip()]
+        qa_pairs.extend(pairs)
     return qa_pairs
 
 
@@ -73,11 +76,11 @@ A:
         response = await OpenAI().achat(messages)
         if response.message:
             assistant_message = response.message.content
-            customer_logger.info(f"{assistant_message}")
+            # customer_logger.info(f"{assistant_message}")
             qa_pairs.append(assistant_message)
         messages = messages[:1]
 
-    return qa_pairs[0]
+    return qa_pairs
 
 def generate_query_engine_tools(indexes: List[BaseIndex]) -> List[QueryEngineTool]:
     query_engine_tools = []

@@ -514,7 +514,7 @@
                           </svg></div>
                     </div></a></div>
                 </div>
-                <div><a href="./face.html"><div class="func">
+                <div><a href="#"><div class="func">
                     <div class="img">
                         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-chat-quote" viewBox="0 0 16 16">
                             <path d="M2.678 11.894a1 1 0 0 1 .287.801 10.97 10.97 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8.06 8.06 0 0 0 8 14c3.996 0 7-2.807 7-6 0-3.192-3.004-6-7-6S1 4.808 1 8c0 1.468.617 2.83 1.678 3.894zm-.493 3.905a21.682 21.682 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a9.68 9.68 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z"/>
@@ -553,14 +553,14 @@
                 <div class="talk_outlinein">
                     <div class="side"></div>
                     <div class="feedback">
-                        <textarea name="" id="" cols="10" rows="10" class="feedback_textarea" placeholder="请输入您的宝贵意见..."></textarea>
+                        <textarea name="" id="feedback" cols="10" rows="10" class="feedback_textarea" placeholder="请输入您的宝贵意见..."></textarea>
                         
                     </div>
                     <div class="side"></div>
                     
                 </div><div class="feedback_submit">
                     <div class="feedback_buttom">
-                        <button class="button">提交</button>
+                        <button class="button" id="feedbackButton" onclick="feedback()">提交</button>
                     </div>
                 </div>
             </div>
@@ -678,12 +678,13 @@
 	var type_11_p="/index/"+index_name+"/insertdoc";//insert doc
 	var type_12_p="/index/"+index_name+"/save";//save
 	var type_13_p="/graph_query";//main query
-    var type_2_p="/index/create"; //Create index  
+  var type_2_p="/index/create"; //Create index
+  var type_14_p="/manage/feedback";  
 	//xml发送请求
 	function SendXMLHttpRequest_Get(type) {
 
 		var xmlhttp; 
-        var url = "http://127.0.0.1:8000"+type;
+        var url = "http://101.32.45.4:8080/api"+type;
 
 		// 创建XMLHttpRequest对象，用于向服务器发送请求
 		if (window.XMLHttpRequest) {
@@ -710,7 +711,7 @@
 
 	function SendXMLHttpRequest_Post(type, id, reply, chatbox, replyContent, replySender,input_value,replybox_side,replyImg) {
     var xmlhttp;
-    var url = "http://127.0.0.1:8000" + type;
+    var url = "http://101.32.45.4:8080/api" + type;
 
     // 创建XMLHttpRequest对象，用于向服务器发送请求
     if (window.XMLHttpRequest) {
@@ -845,7 +846,68 @@
             box.style.width = width + "px";
         }
       </script>
-      
+      <script>
+        function feedback()
+        {
+          var text = document.getElementById("feedback").value;
+
+          if (text.trim() !== "") {
+            //防止刷爆
+            SendXMLHttpRequest_Post_feedback(type_14_p,text);
+            document.getElementById("feedbackButton").disabled = true;
+            console.log(text);
+          } else {
+              window.alert("请填写反馈内容。");
+          }
+        }
+
+
+        function SendXMLHttpRequest_Post_feedback(type, input_value) {
+          var xmlhttp;
+          var url = "http://101.32.45.4:8080/api" + type;
+
+          // 创建XMLHttpRequest对象，用于向服务器发送请求
+          if (window.XMLHttpRequest) {
+              xmlhttp = new XMLHttpRequest(); // 用于支持 IE7+, Firefox, Chrome, Opera, Safari 浏览器
+          } else {
+              xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); // 用于支持 IE6, IE5 浏览器
+          }
+          
+          // 当请求状态改变时，执行回调函数
+          xmlhttp.onreadystatechange = function () {
+              if (xmlhttp.readyState == 4||xmlhttp.status == 200) {
+                  if (xmlhttp.status == 200) {
+                      // 获取服务器返回的响应内容并更新页面上的显示结果
+                      var responsecontent = xmlhttp.responseText;
+                      console.log(xmlhttp.responseText);
+                      console.log("发送成功");
+                      var Answer = "发送成功！！ 期待您的下次反馈！！";
+                      window.alert(Answer);
+                      document.getElementById("feedbackButton").disabled = false;
+                  } else {
+                    document.getElementById("feedbackButton").disabled = false;
+                      console.error("发送失败：" + xmlhttp.status);
+                      var Answer = "发送失败: "+xmlhttp.status;
+                      console.log(xmlhttp.responseText);
+                      window.alert(Answer);
+                  }
+              }
+          };
+
+          // 打开一个POST请求，向指定URL发送请求
+          xmlhttp.open("POST", url, true);
+          xmlhttp.setRequestHeader("Content-type", "application/json");
+            // 设置请求头为"Content-type: application/x-www-form-urlencoded"，因为是POST请求
+              // 构建请求体为 JSON 格式
+          var requestData = {
+              "email": "your@email.com",  // Replace with actual email
+              "message": input_value
+          };
+
+          // 发送POST请求的JSON数据
+          xmlhttp.send(JSON.stringify(requestData));
+        }
+      </script>
       
 </body>
 </html>

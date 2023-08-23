@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Question-Answer Streaming Demo</title>
+</head>
+<body>
+    <textarea id="questionInput" rows="3" cols="50"></textarea>
+    <button onclick="sendQuestion()">Send Question</button>
+    <pre id="responseOutput"></pre>
+
+    <script>
+        const responseOutputElement = document.getElementById('responseOutput');
+        const questionInput = document.getElementById('questionInput');
+        let isStreaming = false;
+
+        async function streamResponse(question) {
+            try {
+                responseOutputElement.textContent = ''; // 清空文本框内容
+
+                const response = await fetch('http://127.0.0.1:8000/graph/query_stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'query=' + encodeURIComponent(question)
+                });
+
+                if (response.ok) {
+                    const reader = response.body.getReader();
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) {
+                            break;
+                        }
+                        const text = new TextDecoder().decode(value);
+                        responseOutputElement.textContent += text;
+                    }
+                } else {
+                    responseOutputElement.textContent += 'Error: ' + response.status;
+                }
+            } catch (error) {
+                responseOutputElement.textContent += 'Error: ' + error.message;
+            } finally {
+                isStreaming = false; // 重置流式状态
+            }
+        }
+
+        function sendQuestion() {
+            if (!isStreaming) {
+                const question = questionInput.value;
+                if (question) {
+                    isStreaming = true;
+                    streamResponse(question);
+                    questionInput.value = ''; // 清空问题输入
+                }
+            }
+        }
+    </script>
+</body>
+</html>
