@@ -61,12 +61,13 @@ class PromptType(str, Enum):
 
 
 class Prompts(Enum):
-    QA_PROMPT = Prompt("以下是有关内容。\n" 
-                       "---------------------\n"
-                       "{context_str}"
-                       "\n---------------------\n"
-                       "根据这些信息，请回答问题: {query_str}"
-                       )
+    QA_PROMPT = Prompt(
+        "我们已提供以下上下文信息。 \n"
+        "---------------------\n"
+        "{context_str}"
+        "\n---------------------\n"
+        "根据这些信息，请回答问题：{query_str}\n"
+    )
     CONDENSE_QUESTION_PROMPT = Prompt("""\
                             给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, \
                             将消息改写成一个独立问题仅补充后续留言不改变后续留言意思。\

@@ -17,9 +17,9 @@ from configs.llm_predictor import LLMPredictorOption
 from configs.load_env import index_save_directory, FILE_PATH
 from utils.file import get_folders_list
 from utils.llama import get_nodes_from_file
+from utils.logger import customer_logger
 
 indexes = []
-
 
 
 def createIndex(index_name):
@@ -60,7 +60,7 @@ def insert_into_index(index, doc_file_path, llm_predictor=None, embed_model=None
     """
     # 使用自定义的 llm_predictor 或默认值
     if llm_predictor is None:
-        llm_predictor =  LLMPredictorOption.GPT3_5.value
+        llm_predictor = LLMPredictorOption.GPT3_5.value
     # 使用自定义的 embed_model 或默认值
     if embed_model is None:
         embed_model = EmbedModelOption.DEFAULT.value
@@ -73,7 +73,7 @@ def insert_into_index(index, doc_file_path, llm_predictor=None, embed_model=None
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
 
 
-def embeddingQA(index: BaseIndex, qa_pairs,id=str(uuid.uuid4())):
+def embeddingQA(index: BaseIndex, qa_pairs, id=str(uuid.uuid4())):
     """
     将拆分后的问答对插入索引
     :param index: 索引
@@ -90,12 +90,11 @@ def embeddingQA(index: BaseIndex, qa_pairs,id=str(uuid.uuid4())):
         q = qa_pairs[i]
         a = qa_pairs[i + 1]
         doc = Document(text=f"{q} {a}", id_=id)
+        customer_logger.info(f"{doc.text}")
         index.insert(doc, service_context=service_context)
     # 生成summary
     index.summary = summary_index(index)
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
-
-
 
 
 def get_all_docs(index_):
@@ -149,7 +148,7 @@ def saveIndex(index):
     index.storage_context.persist(os.path.join(index_save_directory + index.index_id))
 
 
-def compose_indices_to_graph() -> BaseChatEngine:
+def compose_graph_chat_egine() -> BaseChatEngine:
     """
     将index合成为graph
     :return: chat_engine
@@ -190,7 +189,7 @@ def compose_indices_to_graph() -> BaseChatEngine:
 def compose_graph_query_egine() -> BaseQueryEngine:
     """
     将index合成为graph
-    :return: chat_engine
+    :return: query_engine
     """
     if indexes is None:
         loadAllIndexes()
@@ -211,12 +210,12 @@ def compose_graph_query_egine() -> BaseQueryEngine:
     }
 
     query_engine = graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
-                                       refine_template=Prompts.REFINE_PROMPT.value,
-                                       streaming=True,
-                                       similarity_top_k=3,
-                                       verbose=True,
-                                       system_prompt="你是成都信息工程大学校园小助手，只回答校园相关问题，若问题相关，回答sorry",
-                                       custom_query_engines=custom_query_engines)
+                                         refine_template=Prompts.REFINE_PROMPT.value,
+                                         streaming=True,
+                                         similarity_top_k=3,
+                                         verbose=True,
+                                         system_prompt="你是成都信息工程大学校园小助手，只回答校园相关问题，若问题不相关，回答:这个问题不在我的能力范围，请问问我的兄弟吧",
+                                         custom_query_engines=custom_query_engines)
     return query_engine
 
 

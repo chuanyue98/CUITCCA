@@ -434,7 +434,7 @@
             <div class="head_left">
                 <div class="head_logo">
                     <!-- logo -->
-                    <img src="./logo.png" alt="">
+                    <img src="./cca3.png" alt="">
                 </div>
                 <div class="head_font">成信大校园助手</div>
             </div>
@@ -462,7 +462,7 @@
                     </div>
                     <div class="menu_font" style="color: red;">聊天</div>
                 </div></a></div>
-                <div><a href="./feed_back.html"><div class="func">
+                <div><a href="#"><div class="func">
                     <div class="img">
                         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-stack-overflow" viewBox="0 0 16 16">
                             <path d="M12.412 14.572V10.29h1.428V16H1v-5.71h1.428v4.282h9.984z"/>
@@ -609,6 +609,7 @@
             //displayAnswer(reply,chatbox,replyContent,replySender);
             //请求接口
             console.log("得到了问题:"+question);
+            document.getElementById("submit").disabled = true;
             SendXMLHttpRequest_Post(type_13_p,id_new,reply,chatbox,replyContent,replySender,question,replybox_side,replyImg);
       }
     }
@@ -643,7 +644,7 @@
 	function SendXMLHttpRequest_Get(type) {
 
 		var xmlhttp; 
-        var url = "http://127.0.0.1:8000"+type;
+        var url = "http://101.32.45.4:8080/api" + type;
 
 		// 创建XMLHttpRequest对象，用于向服务器发送请求
 		if (window.XMLHttpRequest) {
@@ -670,7 +671,7 @@
 
 	function SendXMLHttpRequest_Post(type, id, reply, chatbox, replyContent, replySender,input_value,replybox_side,replyImg) {
     var xmlhttp;
-    var url = "http://127.0.0.1:8000" + type;
+    var url = "http://101.32.45.4:8080/api" + type;
 
     // 创建XMLHttpRequest对象，用于向服务器发送请求
     if (window.XMLHttpRequest) {
@@ -699,13 +700,14 @@
                     //displayAnswer(reply, chatbox, replyContent, replySender,id,replybox_side,replyImg);
 
                     typeText(content_id,Answer,currentIndex,currentHTML);
-
+                    document.getElementById("submit").disabled = false;
                     console.log("成功显示");
                 } catch (error) {
                     console.error("解析响应数据失败：" + error);
                     var Answer = "解析响应数据失败: "+xmlhttp.status;
                     //displayAnswer(reply, chatbox, replyContent, replySender,id,replybox_side,replyImg);
                     typeText(content_id,Answer,currentIndex,currentHTML);
+                    document.getElementById("submit").disabled = false;
                 }
             } else {
                 console.error("请求失败：" + xmlhttp.status);
@@ -713,6 +715,7 @@
                 //displayAnswer(reply, chatbox, replyContent, replySender,id,replybox_side,replyImg);
                 console.log("执行typetext");
                 typeText(content_id,Answer,currentIndex,currentHTML);
+                document.getElementById("submit").disabled = false;
             }
         }
     };
@@ -868,37 +871,43 @@
         // 获取需要操作的元素
         function typeText(name, givenText, currentIndex, currentHTML) {
             const outputElement = document.getElementById(name);
-            const Text = givenText; // 获取隐藏的文本内容
-            
-            if(Text.length==0) return;
-            if (currentIndex < Text.length) { // 如果还有字符要打印
-                const currentChar = Text.charAt(currentIndex); // 获取当前字符
-         
-                if (currentChar === "<") { // 如果是标签开始
-                    const closingTagIndex = Text.indexOf(">", currentIndex); // 找到标签结束位置
-                    currentHTML += Text.slice(currentIndex, closingTagIndex + 1); // 将标签及其内容添加到当前HTML
-                    currentIndex = closingTagIndex + 1; // 更新打字位置到标签之后
-                } else { // 如果是普通字符
-                    currentHTML += currentChar; // 将字符添加到当前HTML
-                    currentIndex++; // 更新打字位置
+            const Text = givenText;
+
+            if (Text.length == 0) return;
+            if (currentIndex < Text.length) {
+                const currentChar = Text.charAt(currentIndex);
+                const nextChar = Text.charAt(currentIndex+1);
+                if (currentChar === "<") {
+                    const closingTagIndex = Text.indexOf(">", currentIndex);
+                    currentHTML += Text.slice(currentIndex, closingTagIndex + 1);
+                    currentIndex = closingTagIndex + 1;
+                } else if (currentChar === "\\"&& nextChar ==="n" && currentIndex >5 ) {
+                    currentHTML += "<br>"; // 添加换行
+                    currentIndex+=2;
+                }else if (currentChar === "\\"&& nextChar ==="n" && currentIndex <= 5) {
+                    //currentHTML += "<br>"; // 添加换行
+                    currentIndex+=2;
+                }else if (currentChar === "\"") {
+                    currentHTML += "&nbsp;&nbsp;&nbsp;&nbsp;"; // 添加4个空格
+                    currentIndex++;
+                } else {
+                    currentHTML += currentChar;
+                    currentIndex++;
                 }
-         
-                outputElement.innerHTML = currentHTML; // 更新输出区域的文本内容
-                console.log("currentIndex:" + currentIndex + "   currentHTML:" + currentHTML);
+
+                outputElement.innerHTML = currentHTML;
                 const cursorElement = document.getElementById("cursor");
-                console.log(cursorElement); // 输出查看光标元素是否被正确获取
 
                 setTimeout(function() {
                     typeText(name, givenText, currentIndex, currentHTML);
-                }, 100); // 延迟一定时间后继续打字
+                }, 100);
             } else {
-                // 当打印完成时，移除光标的闪烁效果
-                    cursorElement = document.getElementById("cursor");
-                    cursorElement.classList.remove("cursor");
-                    cursorElement.setAttribute("id",uuid());
-                    console.log("移除了光标"+"  currentIndex:  "+currentIndex+"  length:  "+Text.length);
+                const cursorElement = document.getElementById("cursor");
+                cursorElement.classList.remove("cursor");
+                cursorElement.setAttribute("id", uuid());
             }
         }
+
     
     </script>
     

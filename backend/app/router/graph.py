@@ -1,27 +1,44 @@
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, WebSocket
 from llama_index.chat_engine.types import BaseChatEngine, StreamingAgentChatResponse, AgentChatResponse
+from llama_index.indices.query.base import BaseQueryEngine
 from llama_index.query_engine import RouterQueryEngine
 from llama_index.selectors.pydantic_selectors import PydanticMultiSelector
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
 
 from dependencies import role_required
-from handlers.llama_handler import compose_indices_to_graph, get_history_msg, indexes, compose_graph_query_egine
+from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_egine
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger
 
 graph_app = APIRouter(default=role_required(allowed_roles=["admin"]))
 
-graph: BaseChatEngine = None
+graph_chat_engine: BaseChatEngine = None
 res = None
 
 
 @graph_app.post("/create")
 async def create_graph():
     """创建graph"""
-    global graph
-    graph = compose_indices_to_graph()
+    global graph_chat_engine
+    graph_chat_engine = compose_graph_chat_egine()
     return {"status": "ok"}
+
+
+@graph_app.post("/chat_stream")
+async def chaty_graph_stream(query: str = Form()):
+    """
+    流式的查询，返回的是一个stream
+    """
+    global graph_chat_engine, res
+    if graph_chat_engine is None:
+        graph_chat_engine = compose_graph_chat_egine()
+    graph_chat_engine.reset()
+    query = query.strip()
+    customer_logger.info(f"query_stream: {query}")
+    res = await graph_chat_engine.astream_chat(query)
+    customer_logger.info(f"res: {res}")
+    return StreamingResponse(res.response_gen, media_type="text/plain")
 
 
 @graph_app.post("/query_stream")
@@ -29,16 +46,13 @@ async def query_graph_stream(query: str = Form()):
     """
     流式的查询，返回的是一个stream
     """
-    global graph, res
-    if graph is None:
-        graph = compose_indices_to_graph()
-    graph.reset()
+    query_engine = compose_graph_query_egine()
     query = query.strip()
     customer_logger.info(f"query_stream: {query}")
-    res = await graph.astream_chat(query)
-    customer_logger.info(f"res: {res}")
-    return StreamingResponse(res.response_gen, media_type="text/plain")
-
+    response = await query_engine.aquery(query)
+    customer_logger.info(f"res: {response}")
+    # return StreamingResponse(response.response_gen, media_type="text/plain")
+    return response.response_txt
 
 
 @graph_app.post("/query_sources")
@@ -54,11 +68,9 @@ async def query_sources():
 
 @graph_app.post("/query")
 async def query_graph(query: str = Form()):
-    global graph, res
-    if graph is None:
-        graph = compose_indices_to_graph()
-    res = await graph.achat(query)
-    return res.response
+    _graph_chat_engine = compose_graph_chat_egine()
+    response = await _graph_chat_engine.achat(query)
+    return response.response
 
 
 @graph_app.post("/query_history")
@@ -81,9 +93,6 @@ async def query_router(query: str = Form()):
         query_engine_tools=query_engine_tools,
     )
     customer_logger.info(f"query_router: {query}")
-    res = query_engine.query(query)
-    customer_logger.info(f"res: {res}")
-    return StreamingResponse(res.response_gen, media_type="text/plain")
-
-
-
+    response = query_engine.query(query)
+    customer_logger.info(f"res: {response}")
+    return StreamingResponse(response.response_gen, media_type="text/plain")

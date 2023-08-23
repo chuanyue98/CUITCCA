@@ -13,10 +13,6 @@ cd CUITCCA
 pip install -r backend/requirements.txt
 ```
 启动项目
-```bash
-bash backend.bash
-or
-backend.bat
-```
+
 
 ## 项目介绍
