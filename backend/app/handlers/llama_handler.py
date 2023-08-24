@@ -6,10 +6,11 @@ import uuid
 
 from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, ComposableGraph, \
     ListIndex, Prompt, LLMPredictor, Document
-from llama_index.chat_engine import CondenseQuestionChatEngine, ContextChatEngine
+from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.indices.base import BaseIndex
 from llama_index.indices.query.base import BaseQueryEngine
+from llama_index.langchain_helpers.agents import IndexToolConfig
 
 from configs.config import Prompts
 from configs.embed_model import EmbedModelOption
@@ -177,12 +178,13 @@ def compose_graph_chat_egine() -> BaseChatEngine:
                                            streaming=True,
                                            similarity_top_k=3,
                                            verbose=True,
-                                           system_prompt="你是成都信息工程大学校园小助手，只回答校园相关问题，若问题相关，回答sorry",
                                            custom_query_engines=custom_query_engines),
         condense_question_prompt=Prompts.CONDENSE_QUESTION_PROMPT.value,
         verbose=True,
         chat_mode="condense_question",
+        system_prompt="你是成都信息工程大学校园小助手,无论什么问题，仅回答学校有关的问题，其他问题都不回答"
     )
+
     return chat_engine
 
 
@@ -204,7 +206,7 @@ def compose_graph_query_egine() -> BaseQueryEngine:
 
     custom_query_engines = {
         index.index_id: index.as_query_engine(
-            child_branch_factor=2
+            child_branch_factor=3
         )
         for index in indexes
     }
@@ -214,7 +216,6 @@ def compose_graph_query_egine() -> BaseQueryEngine:
                                          streaming=True,
                                          similarity_top_k=3,
                                          verbose=True,
-                                         system_prompt="你是成都信息工程大学校园小助手，只回答校园相关问题，若问题不相关，回答:这个问题不在我的能力范围，请问问我的兄弟吧",
                                          custom_query_engines=custom_query_engines)
     return query_engine
 
@@ -224,7 +225,7 @@ def summary_index(index):
          生成 summary
     """
     summary = index.as_query_engine(response_mode="tree_summarize").query(
-        "总结，生成文章摘要，要覆盖所有要点，方便后续检索，尽量完整而详细准确"
+        "总结，生成文章摘要，要覆盖所有要点，方便后续检索"
     )
     # 去掉换行符、制表符、多余的空格和其他非字母数字字符
     summary_str = re.sub(r"\s+", " ", str(summary))
@@ -297,6 +298,14 @@ def citf(index, name):
 
 
 if __name__ == "__main__":
-    loadAllIndexes()
-    index = get_index_by_name('t2')
-    test(index)
+    from llama_index.llms import OpenAI
+
+    service_context = ServiceContext.from_defaults(
+        llm=OpenAI(temperature=0.0, model="gpt-3.5-turbo")
+    )
+    from llama_index.chat_engine import SimpleChatEngine
+
+    chat_engine = SimpleChatEngine.from_defaults(service_context=service_context,
+                                                 system_prompt="你是成都信息工程大学校园小助手，仅回答学校有关的问题，其他问题都不回答")
+    res = chat_engine.stream_chat("你知道天天酷跑吗")
+    res.print_response_stream()

@@ -51,8 +51,8 @@ async def query_graph_stream(query: str = Form()):
     customer_logger.info(f"query_stream: {query}")
     response = await query_engine.aquery(query)
     customer_logger.info(f"res: {response}")
-    # return StreamingResponse(response.response_gen, media_type="text/plain")
-    return response.response_txt
+    return StreamingResponse(response.response_gen, media_type="text/plain")
+    # return response.response_txt
 
 
 @graph_app.post("/query_sources")
@@ -68,9 +68,11 @@ async def query_sources():
 
 @graph_app.post("/query")
 async def query_graph(query: str = Form()):
-    _graph_chat_engine = compose_graph_chat_egine()
-    response = await _graph_chat_engine.achat(query)
-    return response.response
+    _graph_chat_engine = compose_graph_query_egine()
+    customer_logger.info(f"query: {query}")
+    response = await _graph_chat_engine.aquery(query)
+    customer_logger.info(f"res: {response}")
+    return response.response_txt
 
 
 @graph_app.post("/query_history")

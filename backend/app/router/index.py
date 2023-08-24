@@ -3,6 +3,7 @@ from typing import List
 
 import aiofiles
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends
+from langchain.prompts import SystemMessagePromptTemplate
 from llama_index.evaluation import ResponseEvaluator
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
 from starlette.responses import JSONResponse
@@ -11,7 +12,7 @@ from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT
 from handlers.llama_handler import *
 from dependencies import get_index
 from utils.file import read_file_contents
-from utils.llama import formatted_pairs, generate_qa_batched
+from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash
 
 index_app = APIRouter()
 
@@ -100,7 +101,11 @@ async def query_index(index=Depends(get_index), query: str = Form()):
     :param query: 查询语句
     :return:
     """
-    engine = index.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value)
+    customer_logger.info(f"query index {index.index_id} with query {query}")
+    engine = index.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
+                                   refine_template=Prompts.REFINE_PROMPT.value,
+                                   similarity_top_k=4,
+                                   )
     return await engine.aquery(query)
 
 
@@ -204,7 +209,8 @@ async def upload_qa(index=Depends(get_index), prompt: str = Form(None), file: Up
     # 分批生成 QA
     qa_pairs = await generate_qa_batched(contents, prompt)
     qa_data = formatted_pairs(qa_pairs)
-    embeddingQA(index, qa_data)
+    id = extract_content_after_backslash(file.filename)
+    embeddingQA(index, qa_data, id)
     return {"status": 'ok'}
 
 
