@@ -44,7 +44,7 @@ async def index():
     return {"status": "ok", "load": "ok"}
 
 
-@index_app.get("/index/list")
+@index_app.get("/list")
 def get_index_list():
     path = os.path.join(PROJECT_ROOT, index_save_directory)
     list = get_folders_list(path)
@@ -228,7 +228,10 @@ async def delete_doc(doc_id, index=Depends(get_index)):
     if doc_id not in doc_ids:
         return JSONResponse(content={"status": "detail", "message": f"doc_id: not found"},
                             status_code=status.HTTP_400_BAD_REQUEST)
-    deleteDocById(index, doc_id)
+    try:
+        deleteDocById(index, doc_id)
+    except Exception as e:
+        return JSONResponse(content={"status": "detail", "message": f"delete doc error: {e}"})
     return {"status": "deleted"}
 
 
@@ -283,7 +286,7 @@ async def set_summary(index=Depends(get_index)):
 
 
 @index_app.post("/{index_name}/insertdoc")
-async def insert_docs(text, index=Depends(get_index), doc_id=Form(None)):
+async def insert_docs(text=Form(), doc_id=Form(None), index=Depends(get_index)):
     """
     插入文档
     :param text: 文本
@@ -307,7 +310,6 @@ async def save_index(index=Depends(get_index)):
     :param index: 索引名称
     :return: 保存状态
     """
-    index.save()
     saveIndex(index)
     return {"status": "ok"}
 

@@ -89,12 +89,15 @@ def embeddingQA(index: BaseIndex, qa_pairs, id=str(uuid.uuid4())):
     service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=embed_model)
     for i in range(0, len(qa_pairs), 2):
         q = qa_pairs[i]
-        a = qa_pairs[i + 1]
-        doc = Document(text=f"{q} {a}", id_=id)
-        customer_logger.info(f"{doc.text}")
-        index.insert(doc, service_context=service_context)
-    # 生成summary
-    index.summary = summary_index(index)
+        if i + 1 < len(qa_pairs):
+            a = qa_pairs[i + 1]
+            doc = Document(text=f"{q} {a}", id_=id)
+            customer_logger.info(f"{doc.text}")
+            index.insert(doc, service_context=service_context)
+        else:
+            customer_logger.info(f"Last element': {qa_pairs[i]}")
+    # 生成summary 会出问题
+    # index.summary = summary_index(index)
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
 
 
@@ -122,6 +125,7 @@ def updateNodeById(index_, id_, text):
     :param text: 更改后的内容
     :return:
     """
+    # node = index.docstore.get_node(id_)
     node = index_.docstore.docs[id_]
     node.set_content(text)
     index_.docstore.add_documents([node])
@@ -133,6 +137,8 @@ def deleteNodeById(index_, id_, ):
     :param id_: node_id
     :return:
     """
+    # TODO 记录删除的节点
+    # content = index.docstore.get_node(id_).get_content()
     index_.docstore.delete_document(id_)
 
 
@@ -143,6 +149,7 @@ def deleteDocById(index, id):
     :return:
     """
     index.delete_ref_doc(id, delete_from_docstore=True)
+    saveIndex(index)
 
 
 def saveIndex(index):
@@ -206,7 +213,7 @@ def compose_graph_query_egine() -> BaseQueryEngine:
 
     custom_query_engines = {
         index.index_id: index.as_query_engine(
-            child_branch_factor=3
+            child_branch_factor=2
         )
         for index in indexes
     }
@@ -297,15 +304,20 @@ def citf(index, name):
         f.write('\n'.join(text_list))
 
 
+def format_source_nodes_list(node_with_score_list):
+    formatted_nodes = []
+    for node_with_score in node_with_score_list:
+        formatted_node = {
+            'id': node_with_score.node.id_,
+            'text': node_with_score.node.text
+        }
+        formatted_nodes.append(formatted_node)
+    return formatted_nodes
+
+
 if __name__ == "__main__":
-    from llama_index.llms import OpenAI
+    loadAllIndexes()
+    index = get_index_by_name('qa')
 
-    service_context = ServiceContext.from_defaults(
-        llm=OpenAI(temperature=0.0, model="gpt-3.5-turbo")
-    )
-    from llama_index.chat_engine import SimpleChatEngine
-
-    chat_engine = SimpleChatEngine.from_defaults(service_context=service_context,
-                                                 system_prompt="你是成都信息工程大学校园小助手，仅回答学校有关的问题，其他问题都不回答")
-    res = chat_engine.stream_chat("你知道天天酷跑吗")
-    res.print_response_stream()
+    node = index.docstore.get_node('41d0dfca-e2d1-4845-b330-4c88d2acce27')
+    print(node.get_content())

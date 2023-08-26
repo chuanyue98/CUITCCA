@@ -15,11 +15,14 @@ app.include_router(test_app, prefix='/test', tags=['test'])
 
 @app.middleware("http")
 async def access_stats_middleware(request, call_next):
+
+    client_ip = request.headers.get("X-Real-IP") or request.client.host
+
     # 更新总进站量
     access_stats["total_visits"] += 1
 
     # 更新用户访问次数和接口访问次数
-    access_stats["user_visits"][request.client.host] += 1
+    access_stats["user_visits"][client_ip] += 1
     access_stats["endpoint_visits"][request.url.path] += 1
 
     response = await call_next(request)

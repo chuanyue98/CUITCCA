@@ -61,8 +61,8 @@ async def generate_qa_batched(contents: str, prompt: str = None):
     if prompt is None:
         prompt = "我会发送一段长文本"
     messages = [
-        ChatMessage(role="system", content=f"""你是出题人.
-{prompt}从中提取出 25 个问题和答案. 问题答案详细完整，没有编造. 按下面格式返回:
+        ChatMessage(role="system", content=f"""你是出题人。
+{prompt}从中提取出 25 个问题和答案。 问题答案详完整详细,按下面格式返回:
 Q:
 A:
 Q:
@@ -76,7 +76,7 @@ A:
         response = await OpenAI().achat(messages)
         if response.message:
             assistant_message = response.message.content
-            # customer_logger.info(f"{assistant_message}")
+            customer_logger.info(f"{assistant_message}")
             qa_pairs.append(assistant_message)
         messages = messages[:1]
 

@@ -1,13 +1,18 @@
-from fastapi import APIRouter, Form, WebSocket
+import asyncio
+import time
+
+from fastapi import APIRouter, Form, WebSocket, Path
 from llama_index.chat_engine.types import BaseChatEngine, StreamingAgentChatResponse, AgentChatResponse
 from llama_index.indices.query.base import BaseQueryEngine
 from llama_index.query_engine import RouterQueryEngine
 from llama_index.selectors.pydantic_selectors import PydanticMultiSelector
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
+from starlette.websockets import WebSocketDisconnect
 
 from dependencies import role_required
-from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_egine
+from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_egine, \
+    format_source_nodes_list
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger
 
@@ -50,9 +55,8 @@ async def query_graph_stream(query: str = Form()):
     query = query.strip()
     customer_logger.info(f"query_stream: {query}")
     response = await query_engine.aquery(query)
-    customer_logger.info(f"res: {response}")
+    customer_logger.info(f"res: {response.get_formatted_sources()}")
     return StreamingResponse(response.response_gen, media_type="text/plain")
-    # return response.response_txt
 
 
 @graph_app.post("/query_sources")
@@ -71,8 +75,31 @@ async def query_graph(query: str = Form()):
     _graph_chat_engine = compose_graph_query_egine()
     customer_logger.info(f"query: {query}")
     response = await _graph_chat_engine.aquery(query)
+    for sn in format_source_nodes_list(response.source_nodes):
+        customer_logger.info(f"source: {sn}")
     customer_logger.info(f"res: {response}")
     return response.response_txt
+
+
+@graph_app.websocket("/query")
+async def query_graph_ws(websocket: WebSocket):
+    _graph_chat_engine = compose_graph_query_egine()
+    await websocket.accept()
+    try:
+        while True:
+            query = await websocket.receive_text()
+            if query == 'q':
+                await websocket.close()
+            customer_logger.info(f"query: {query}")
+            response = await _graph_chat_engine.aquery(query)
+            async def async_generator_wrapper(sync_gen):
+                for value in sync_gen:
+                    yield value
+            async for token in async_generator_wrapper(response.response_gen):
+                await websocket.send_text(token)
+                await asyncio.sleep(0.05)
+    except WebSocketDisconnect:
+        await websocket.close()
 
 
 @graph_app.post("/query_history")
@@ -98,3 +125,7 @@ async def query_router(query: str = Form()):
     response = query_engine.query(query)
     customer_logger.info(f"res: {response}")
     return StreamingResponse(response.response_gen, media_type="text/plain")
+
+
+if __name__ == '__main__':
+    pass
