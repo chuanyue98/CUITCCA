@@ -4,7 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from dependencies import access_stats
 from router import response_app, index_app, graph_app, test_app, manage_app
 
-app = FastAPI()
+app = FastAPI(root_path='/')
 
 app.include_router(index_app, prefix='/index', tags=['index'])
 app.include_router(graph_app, prefix='/graph', tags=['graph'])

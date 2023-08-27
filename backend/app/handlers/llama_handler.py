@@ -5,12 +5,11 @@ import re
 import uuid
 
 from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, ComposableGraph, \
-    ListIndex, Prompt, LLMPredictor, Document
+    ListIndex, Prompt, LLMPredictor, Document, TreeIndex
 from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.indices.base import BaseIndex
 from llama_index.indices.query.base import BaseQueryEngine
-from llama_index.langchain_helpers.agents import IndexToolConfig
 
 from configs.config import Prompts
 from configs.embed_model import EmbedModelOption
@@ -189,7 +188,6 @@ def compose_graph_chat_egine() -> BaseChatEngine:
         condense_question_prompt=Prompts.CONDENSE_QUESTION_PROMPT.value,
         verbose=True,
         chat_mode="condense_question",
-        system_prompt="你是成都信息工程大学校园小助手,无论什么问题，仅回答学校有关的问题，其他问题都不回答"
     )
 
     return chat_engine
@@ -206,14 +204,14 @@ def compose_graph_query_egine() -> BaseQueryEngine:
     for i in indexes:
         summaries.append(i.summary)
     graph = ComposableGraph.from_indices(
-        ListIndex,
+        TreeIndex,
         indexes,
         index_summaries=summaries,
     )
 
     custom_query_engines = {
         index.index_id: index.as_query_engine(
-            child_branch_factor=2
+            child_branch_factor=3
         )
         for index in indexes
     }
