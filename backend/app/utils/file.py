@@ -1,7 +1,11 @@
 import os
 from datetime import datetime
+from io import BytesIO
 
+import PyPDF2
+import magic
 import pandas as pd
+import textract
 from fastapi import UploadFile
 
 from configs.load_env import PROJECT_ROOT, FEEDBACK_PATH
@@ -62,7 +66,6 @@ def read_file_contents(file: UploadFile) -> str:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file.write(file.file.read())
             temp_file.seek(0)
-
             # 使用 python-docx 库读取 Word 文档
             doc = Document(temp_file)
             content_parts = []
@@ -74,12 +77,25 @@ def read_file_contents(file: UploadFile) -> str:
             # 将内容拼接为字符串
             content = ' '.join(content_parts)
 
+    elif ext == 'pdf':
+        import pdfplumber
+
+        with pdfplumber.open(BytesIO(file.file.read())) as pdf:
+            content = ''
+            for i in range(len(pdf.pages)):
+                # 读取PDF文档第i+1页
+                page = pdf.pages[i]
+
+                # page.extract_text()函数即读取文本内容，下面这步是去掉文档最下面的页码
+                page_content = '\n'.join(page.extract_text().split('\n')[:-1])
+                content = content + page_content
     else:
         # 默认使用 UTF-8 编码读取文件内容
         contents = file.file.read()
         content = contents.decode('utf-8')
 
-    return content
+    return ' '.join(content.split())
+
 
 if __name__ == '__main__':
     print(PROJECT_ROOT)
