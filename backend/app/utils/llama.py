@@ -1,3 +1,4 @@
+import json
 import re
 from typing import List
 
@@ -82,6 +83,7 @@ A:
 
     return qa_pairs
 
+
 def generate_query_engine_tools(indexes: List[BaseIndex]) -> List[QueryEngineTool]:
     query_engine_tools = []
     for index in indexes:
@@ -93,6 +95,48 @@ def generate_query_engine_tools(indexes: List[BaseIndex]) -> List[QueryEngineToo
         query_engine_tools.append(tool)
 
     return query_engine_tools
+
+
+def remove_vector_store(path, doc_id):
+    with open(path, 'r') as file:
+        data = json.load(file)
+
+    embedding_dict = data['embedding_dict']
+    text_id_to_ref_doc_id = data['text_id_to_ref_doc_id']
+
+    # 删除embedding_dict中的内容
+    if doc_id in embedding_dict:
+        del embedding_dict[doc_id]
+
+    # 删除text_id_to_ref_doc_id字典中的对应项
+    if doc_id in text_id_to_ref_doc_id:
+        del text_id_to_ref_doc_id[doc_id]
+
+    with open(path, 'w') as file:
+        json.dump(data, file, indent=4)
+
+
+def remove_index_store(path, doc_id):
+    with open(path, 'r') as file:
+        data = json.load(file)
+
+    if "index_store/data" in data:
+        index_data = data["index_store/data"]
+        for key, value in index_data.items():
+            if "__data__" in value:
+                data_str = value["__data__"]
+                data_dict = json.loads(data_str)
+                if "nodes_dict" in data_dict and doc_id in data_dict["nodes_dict"]:
+                    del data_dict["nodes_dict"][doc_id]
+                    value["__data__"] = json.dumps(data_dict)
+                    break
+
+    with open(path, 'w') as file:
+        json.dump(data, file, indent=4)
+
+
+def remove_docstore(path, doc_id):
+    pass
 
 
 if __name__ == '__main__':

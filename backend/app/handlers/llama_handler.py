@@ -16,7 +16,7 @@ from configs.embed_model import EmbedModelOption
 from configs.llm_predictor import LLMPredictorOption
 from configs.load_env import index_save_directory, FILE_PATH
 from utils.file import get_folders_list
-from utils.llama import get_nodes_from_file
+from utils.llama import get_nodes_from_file, remove_index_store, remove_vector_store, remove_docstore
 from utils.logger import customer_logger
 
 indexes = []
@@ -313,9 +313,22 @@ def format_source_nodes_list(node_with_score_list):
     return formatted_nodes
 
 
+def fix_doc_id_not_found(index, doc_id):
+    """
+    修复文档id不存在的情况
+    ‘ 删除后prev_node引用并没有删除
+    """
+    path = os.path.join(index_save_directory,index.index_id)
+    remove_index_store(os.path.join(path, 'index_store.json'), doc_id)
+    remove_vector_store(os.path.join(path, 'vector_store.json'), doc_id)
+    remove_docstore(os.path.join(path, 'docstore.json'), doc_id)
+
+
+
+
+
+
 if __name__ == "__main__":
     loadAllIndexes()
-    index = get_index_by_name('qa')
-
-    node = index.docstore.get_node('41d0dfca-e2d1-4845-b330-4c88d2acce27')
-    print(node.get_content())
+    index= get_index_by_name('test')
+    fix_doc_id_not_found(index,'doc_id:f85f3f6b-d502-4afc-b84e-fd17b3f12f19')
