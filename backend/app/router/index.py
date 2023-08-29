@@ -1,18 +1,22 @@
+import base64
 import shutil
 from typing import List
 
 import aiofiles
-from fastapi import APIRouter, Form, File, UploadFile, status, Depends
+from fastapi import APIRouter, Form, File, UploadFile, status, Depends, HTTPException
 from langchain.prompts import SystemMessagePromptTemplate
 from llama_index.evaluation import ResponseEvaluator
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
+from llama_index.llms import OpenAI, ChatMessage
 from starlette.responses import JSONResponse
 
-from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT
+from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, ERRORLOG_PATH
+from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import *
 from dependencies import get_index
 from utils.file import read_file_contents
 from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash
+from utils.logger import error_logger
 
 index_app = APIRouter()
 
@@ -23,7 +27,7 @@ async def startup_event():
     # 创建所需目录
     import os
     # 检查和创建目录
-    for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:
+    for directory in [index_save_directory, SAVE_PATH, LOAD_PATH, ERRORLOG_PATH]:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -94,6 +98,7 @@ def delete_index(index_name: str = Form()):
 
 
 @index_app.post("/{index_name}/query")
+@id_not_found_exceptions
 async def query_index(index=Depends(get_index), query: str = Form()):
     """
     查询索引
@@ -102,11 +107,32 @@ async def query_index(index=Depends(get_index), query: str = Form()):
     :return:
     """
     customer_logger.info(f"query index {index.index_id} with query {query}")
+
+    # messages = [ChatMessage(role="system", content=f"""你是学校智能小助手
+    #     我会给定一个问题，你需要判断问题是否涉及建筑位置,是否需要学校地图,或者是否要求提供校园地图，如果是,请回答yes，否则回答no。
+    #     如果问题提问某个地方怎么去，请回答yes，否则回答no。
+    #     如果问题提问某个地方在哪，请回答yes，否则回答no。
+    #     仅需回答yes/no"""),
+    #             ChatMessage(role="user", content=query)]
+    # flag = await OpenAI().achat(messages)
+    # if str(flag).__contains__("yes"):
+    #     # 读取图片文件
+    #     path = os.path.join(PROJECT_ROOT, '../map.jpg')
+    #     with open(path, "rb") as file:
+    #         file_data = file.read()
+    #         encoded_file = base64.b64encode(file_data).decode("utf-8")
+    #         response_data = {
+    #             'file_base64': encoded_file,
+    #         }
+    #     return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
     engine = index.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
                                    refine_template=Prompts.REFINE_PROMPT.value,
                                    similarity_top_k=4,
                                    )
-    return await engine.aquery(query)
+
+    response = await engine.aquery(query)
+    return response
+
 
 
 @index_app.post("/{index_name}/query_stream")
@@ -214,7 +240,6 @@ async def upload_qa(index=Depends(get_index), prompt: str = Form(None), file: Up
     return {"status": 'ok'}
 
 
-
 @index_app.post("/{index_name}/deleteDoc")
 async def delete_doc(doc_id, index=Depends(get_index)):
     """
@@ -294,12 +319,18 @@ async def insert_docs(text=Form(), doc_id=Form(None), index=Depends(get_index)):
     :param doc_id: 文档id
     :return: 插入状态
     """
+    # 使用自定义的 llm_predictor 或默认值
+    llm_predictor = LLMPredictorOption.GPT3_5.value
+    # 使用自定义的 embed_model 或默认值
+    embed_model = EmbedModelOption.DEFAULT.value
+    service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=embed_model)
+
     if doc_id is None:
         doc = Document(text=text)
     else:
         doc_id = doc_id.replace("\\\\", "\\")
         doc = Document(text=text, doc_id=doc_id)
-    index.insert(doc)
+    index.insert(doc, service_context=service_context)
     return {"status": "ok"}
 
 
