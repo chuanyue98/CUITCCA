@@ -4,10 +4,8 @@ from typing import List
 
 import aiofiles
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends, HTTPException
-from langchain.prompts import SystemMessagePromptTemplate
 from llama_index.evaluation import ResponseEvaluator
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
-from llama_index.llms import OpenAI, ChatMessage
 from starlette.responses import JSONResponse
 
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, ERRORLOG_PATH
@@ -98,7 +96,7 @@ def delete_index(index_name: str = Form()):
 
 
 @index_app.post("/{index_name}/query")
-@id_not_found_exceptions
+# @id_not_found_exceptions
 async def query_index(index=Depends(get_index), query: str = Form()):
     """
     查询索引
@@ -125,6 +123,7 @@ async def query_index(index=Depends(get_index), query: str = Form()):
     #             'file_base64': encoded_file,
     #         }
     #     return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
+
     engine = index.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
                                    refine_template=Prompts.REFINE_PROMPT.value,
                                    similarity_top_k=4,

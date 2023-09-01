@@ -40,7 +40,7 @@ async def chaty_graph_stream(query: str = Form()):
         graph_chat_engine = compose_graph_chat_egine()
     graph_chat_engine.reset()
     query = query.strip()
-    customer_logger.info(f"query_stream: {query}")
+    customer_logger.info(f"chat_stream: {query}")
     res = await graph_chat_engine.astream_chat(query)
     customer_logger.info(f"res: {res}")
     return StreamingResponse(res.response_gen, media_type="text/plain")

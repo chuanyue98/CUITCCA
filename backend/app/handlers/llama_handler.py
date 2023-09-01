@@ -14,7 +14,7 @@ from llama_index.indices.query.base import BaseQueryEngine
 from configs.config import Prompts
 from configs.embed_model import EmbedModelOption
 from configs.llm_predictor import LLMPredictorOption
-from configs.load_env import index_save_directory, FILE_PATH
+from configs.load_env import index_save_directory, FILE_PATH, openai_api_key, openai_api_base
 from utils.file import get_folders_list
 from utils.llama import get_nodes_from_file, remove_index_store, remove_vector_store, remove_docstore
 from utils.logger import customer_logger
@@ -330,5 +330,6 @@ def fix_doc_id_not_found(index, doc_id):
 
 if __name__ == "__main__":
     loadAllIndexes()
-    index= get_index_by_name('test')
-    fix_doc_id_not_found(index,'doc_id:f85f3f6b-d502-4afc-b84e-fd17b3f12f19')
+    index= compose_graph_query_egine()
+    res = index.query('学校地址')
+    print(res)
