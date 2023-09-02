@@ -17,8 +17,6 @@ from utils.llama import formatted_pairs, generate_qa_batched, extract_content_af
 from utils.logger import error_logger
 
 index_app = APIRouter()
-
-
 async def startup_event():
     # 启动时加载一次索引
     loadAllIndexes()
@@ -34,7 +32,6 @@ async def startup_event():
 async def startup():
     """启动时加载一次索引"""
     await startup_event()
-
 
 @index_app.get("/")
 async def index():
@@ -96,7 +93,6 @@ def delete_index(index_name: str = Form()):
 
 
 @index_app.post("/{index_name}/query")
-# @id_not_found_exceptions
 async def query_index(index=Depends(get_index), query: str = Form()):
     """
     查询索引
@@ -124,9 +120,10 @@ async def query_index(index=Depends(get_index), query: str = Form()):
     #         }
     #     return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
 
-    engine = index.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
-                                   refine_template=Prompts.REFINE_PROMPT.value,
-                                   similarity_top_k=4,
+    engine = index.as_query_engine(
+                                text_qa_template=Prompts.QA_PROMPT.value,
+                                refine_template=Prompts.REFINE_PROMPT.value,
+                                similarity_top_k=2,
                                    )
 
     response = await engine.aquery(query)
@@ -134,15 +131,15 @@ async def query_index(index=Depends(get_index), query: str = Form()):
 
 
 
-@index_app.post("/{index_name}/query_stream")
-async def query_stream(index: BaseIndex = Depends(get_index), query: str = Form()):
-    """
-    Streaming not supported for async
-    """
-    engine = index.as_query_engine(streaming=True, text_qa_template=Prompts.QA_PROMPT.value,
-                                   node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
-    res = engine.query(query)
-    return res.response_gen
+# @index_app.post("/{index_name}/query_stream")
+# async def query_stream(index: BaseIndex = Depends(get_index), query: str = Form()):
+#     """
+#     Streaming not supported for async
+#     """
+#     engine = index.as_query_engine(streaming=True, text_qa_template=Prompts.QA_PROMPT.value,
+#                                    node_postprocessors=[SentenceEmbeddingOptimizer(percentile_cutoff=0.5)])
+#     res = engine.query(query)
+#     return res.response_gen
 
 
 @index_app.post("/{index_name}/update")

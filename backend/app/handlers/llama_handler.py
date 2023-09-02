@@ -14,7 +14,7 @@ from llama_index.indices.query.base import BaseQueryEngine
 from configs.config import Prompts
 from configs.embed_model import EmbedModelOption
 from configs.llm_predictor import LLMPredictorOption
-from configs.load_env import index_save_directory, FILE_PATH, openai_api_key, openai_api_base
+from configs.load_env import index_save_directory, FILE_PATH, openai_api_key
 from utils.file import get_folders_list
 from utils.llama import get_nodes_from_file, remove_index_store, remove_vector_store, remove_docstore
 from utils.logger import customer_logger
@@ -130,8 +130,9 @@ def updateNodeById(index_, id_, text):
     index_.docstore.add_documents([node])
 
 
-def deleteNodeById(index_, id_, ):
+def deleteNodeById(index_, id_):
     """
+    删除时会自动保存修改到本地
     :param index_: 索引
     :param id_: node_id
     :return:
@@ -140,10 +141,17 @@ def deleteNodeById(index_, id_, ):
     # content = index.docstore.get_node(id_).get_content()
     index_.docstore.delete_document(id_)
 
+    # 删除在json文件的记录，防止出错doc_not_found
+    path = os.path.join(index_save_directory, index.index_id)
+    print(path)
+    remove_index_store(os.path.join(path, 'index_store.json'), id_)
+    remove_vector_store(os.path.join(path, 'vector_store.json'), id_)
+    remove_docstore(os.path.join(path, 'docstore.json'), id_)
+
 
 def deleteDocById(index, id):
     """
-    # 删除文档
+    # 删除文档 删除时会自动保存修改到本地
     :param id: 文档的id
     :return:
     """
@@ -330,6 +338,6 @@ def fix_doc_id_not_found(index, doc_id):
 
 if __name__ == "__main__":
     loadAllIndexes()
-    index= compose_graph_query_egine()
-    res = index.query('学校地址')
-    print(res)
+    index=get_index_by_name('学校信息')
+    fix_doc_id_not_found(index,'5157697c-ab9a-458b-baeb-0e8eb72ad159')
+

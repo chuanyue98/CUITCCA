@@ -11,10 +11,11 @@ from starlette.responses import JSONResponse, StreamingResponse
 from starlette.websockets import WebSocketDisconnect
 
 from dependencies import role_required
+from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_egine, \
     format_source_nodes_list
 from utils.llama import generate_query_engine_tools
-from utils.logger import customer_logger
+from utils.logger import customer_logger, query_logger, error_logger
 
 graph_app = APIRouter(default=role_required(allowed_roles=["admin"]))
 
@@ -71,13 +72,18 @@ async def query_sources():
 
 
 @graph_app.post("/query")
+@id_not_found_exceptions
 async def query_graph(query: str = Form()):
     _graph_chat_engine = compose_graph_query_egine()
-    customer_logger.info(f"query: {query}")
-    response = await _graph_chat_engine.aquery(query)
+    query_logger.info(f"query: {query}")
+    try:
+        response = await _graph_chat_engine.aquery(query)
+    except Exception as e:
+        error_logger.error(f"error: {e}")
+        return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"})
     for sn in format_source_nodes_list(response.source_nodes):
-        customer_logger.info(f"source: {sn}")
-    customer_logger.info(f"res: {response}")
+        query_logger.info(f"source: {sn}")
+    query_logger.info(f"res: {response}")
     return response.response_txt
 
 

@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -15,7 +17,6 @@ app.include_router(test_app, prefix='/test', tags=['test'])
 
 @app.middleware("http")
 async def access_stats_middleware(request, call_next):
-
     client_ip = request.headers.get("X-Real-IP") or request.client.host
 
     # 更新总进站量
@@ -53,5 +54,5 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
-
+    # os.makedirs(ERRORLOG_PATH, exist_ok=True)
     uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=False)

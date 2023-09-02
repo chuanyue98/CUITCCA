@@ -10,4 +10,5 @@ class EmbedModelOption(Enum):
     DEFAULT = OpenAIEmbedding(openai_api_key=openai_api_key)
 
 if __name__ == '__main__':
-    pass
+    res = EmbedModelOption.DEFAULT.value.get_query_embedding('hi')
+    print(res)

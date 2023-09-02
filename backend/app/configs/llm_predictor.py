@@ -2,6 +2,7 @@ from enum import Enum
 
 from langchain.chat_models import ChatOpenAI
 from llama_index import LLMPredictor
+from llama_index.llms import OpenAI
 
 from configs import openai_api_key
 
@@ -20,5 +21,6 @@ class LLMPredictorOption(Enum):
 
 
 if __name__ == '__main__':
-    llm_predictor = LLMPredictorOption.GPT3_5.value
+    res = LLMPredictorOption.GPT3_5.value.llm.complete('hi')
+    print(res)
 

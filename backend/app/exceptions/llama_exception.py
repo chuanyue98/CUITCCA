@@ -1,12 +1,12 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Form
 
 from utils.logger import error_logger
 
 
 def id_not_found_exceptions(func):
-    async def wrapper(*args, **kwargs):
+    async def wrapper(query: str = Form()):
         try:
-            return await func(*args, **kwargs)
+            return await func(query)
         except ValueError as e:
             error_message = str(e)
             extracted_doc_id = error_message.split("doc_id ")[1].split(" ")[0]
