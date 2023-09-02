@@ -1,9 +1,8 @@
 import asyncio
 import time
 
-from fastapi import APIRouter, Form, WebSocket, Path
-from llama_index.chat_engine.types import BaseChatEngine, StreamingAgentChatResponse, AgentChatResponse
-from llama_index.indices.query.base import BaseQueryEngine
+from fastapi import APIRouter, Form, WebSocket
+from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.query_engine import RouterQueryEngine
 from llama_index.selectors.pydantic_selectors import PydanticMultiSelector
 from starlette import status
@@ -21,6 +20,20 @@ graph_app = APIRouter(default=role_required(allowed_roles=["admin"]))
 
 graph_chat_engine: BaseChatEngine = None
 res = None
+
+
+class GraphQueryEngine:
+    def __init__(self):
+        self.query_engine = compose_graph_query_egine()
+
+    async def aquery(self, query_string):
+        await self.query_engine.aquery(query_string)
+
+    def reset(self):
+        self.query_engine = compose_graph_query_egine()
+
+
+graph_query_engine = GraphQueryEngine()
 
 
 @graph_app.post("/create")
@@ -74,10 +87,9 @@ async def query_sources():
 @graph_app.post("/query")
 @id_not_found_exceptions
 async def query_graph(query: str = Form()):
-    _graph_chat_engine = compose_graph_query_egine()
     query_logger.info(f"query: {query}")
     try:
-        response = await _graph_chat_engine.aquery(query)
+        response = await graph_query_engine.aquery(query)
     except Exception as e:
         error_logger.error(f"error: {e}")
         return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"})
@@ -98,9 +110,11 @@ async def query_graph_ws(websocket: WebSocket):
                 await websocket.close()
             customer_logger.info(f"query: {query}")
             response = await _graph_chat_engine.aquery(query)
+
             async def async_generator_wrapper(sync_gen):
                 for value in sync_gen:
                     yield value
+
             async for token in async_generator_wrapper(response.response_gen):
                 await websocket.send_text(token)
                 await asyncio.sleep(0.05)
