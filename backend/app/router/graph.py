@@ -4,14 +4,15 @@ import time
 from fastapi import APIRouter, Form, WebSocket
 from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.query_engine import RouterQueryEngine
+from llama_index.response.schema import StreamingResponse
 from llama_index.selectors.pydantic_selectors import PydanticMultiSelector
 from starlette import status
-from starlette.responses import JSONResponse, StreamingResponse
+from starlette.responses import JSONResponse,StreamingResponse
 from starlette.websockets import WebSocketDisconnect
 
 from dependencies import role_required
 from exceptions.llama_exception import id_not_found_exceptions
-from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_egine, \
+from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
     format_source_nodes_list
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger, query_logger, error_logger
@@ -24,16 +25,17 @@ res = None
 
 class GraphQueryEngine:
     def __init__(self):
-        self.query_engine = compose_graph_query_egine()
+        self.query_engine = compose_graph_query_engine()
+
 
     async def aquery(self, query_string):
         await self.query_engine.aquery(query_string)
 
     def reset(self):
-        self.query_engine = compose_graph_query_egine()
+        self.query_engine = compose_graph_query_engine()
 
 
-graph_query_engine = GraphQueryEngine()
+# graph_query_engine = GraphQueryEngine().query_engine
 
 
 @graph_app.post("/create")
@@ -65,7 +67,7 @@ async def query_graph_stream(query: str = Form()):
     """
     流式的查询，返回的是一个stream
     """
-    query_engine = compose_graph_query_egine()
+    query_engine = compose_graph_query_engine()
     query = query.strip()
     customer_logger.info(f"query_stream: {query}")
     response = await query_engine.aquery(query)
@@ -88,6 +90,7 @@ async def query_sources():
 @id_not_found_exceptions
 async def query_graph(query: str = Form()):
     query_logger.info(f"query: {query}")
+    graph_query_engine = compose_graph_query_engine()
     try:
         response = await graph_query_engine.aquery(query)
     except Exception as e:
@@ -96,12 +99,12 @@ async def query_graph(query: str = Form()):
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
-    return response.response_txt
+    return response
 
 
 @graph_app.websocket("/query")
 async def query_graph_ws(websocket: WebSocket):
-    _graph_chat_engine = compose_graph_query_egine()
+    _graph_chat_engine = compose_graph_query_engine()
     await websocket.accept()
     try:
         while True:

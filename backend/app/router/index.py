@@ -8,7 +8,7 @@ from llama_index.evaluation import ResponseEvaluator
 from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
 from starlette.responses import JSONResponse
 
-from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, ERRORLOG_PATH
+from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
 from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import *
 from dependencies import get_index
@@ -23,7 +23,7 @@ async def startup_event():
     # 创建所需目录
     import os
     # 检查和创建目录
-    for directory in [index_save_directory, SAVE_PATH, LOAD_PATH, ERRORLOG_PATH]:
+    for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:
         if not os.path.exists(directory):
             os.makedirs(directory)
 

@@ -201,7 +201,7 @@ def compose_graph_chat_egine() -> BaseChatEngine:
     return chat_engine
 
 
-def compose_graph_query_egine() -> BaseQueryEngine:
+def compose_graph_query_engine(streaming=False) -> BaseQueryEngine:
     """
     将index合成为graph
     :return: query_engine
@@ -226,7 +226,7 @@ def compose_graph_query_egine() -> BaseQueryEngine:
 
     query_engine = graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
                                          refine_template=Prompts.REFINE_PROMPT.value,
-                                         streaming=True,
+                                         streaming=streaming,
                                          similarity_top_k=3,
                                          verbose=True,
                                          custom_query_engines=custom_query_engines)
@@ -338,6 +338,6 @@ def fix_doc_id_not_found(index, doc_id):
 
 if __name__ == "__main__":
     loadAllIndexes()
-    index=get_index_by_name('学校信息')
-    fix_doc_id_not_found(index,'5157697c-ab9a-458b-baeb-0e8eb72ad159')
+    index=get_index_by_name('学生服务')
+    fix_doc_id_not_found(index,'9d956f98-4492-42d9-9ee1-a96175a073dd')
 
