@@ -14,7 +14,7 @@ class LLMPredictorOption(Enum):
     """GPT3.5"""
     GPT3_5 = LLMPredictor(
         llm=ChatOpenAI(temperature=0.1,
-                       model_name="gpt-3.5-turbo-16k",
+                       model_name="gpt-3.5-turbo",
                        max_tokens=1024,
                        openai_api_key=openai_api_key)
     )

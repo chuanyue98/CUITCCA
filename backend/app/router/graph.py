@@ -10,14 +10,13 @@ from starlette import status
 from starlette.responses import JSONResponse,StreamingResponse
 from starlette.websockets import WebSocketDisconnect
 
-from dependencies import role_required
 from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
     format_source_nodes_list
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger, query_logger, error_logger
 
-graph_app = APIRouter(default=role_required(allowed_roles=["admin"]))
+graph_app = APIRouter()
 
 graph_chat_engine: BaseChatEngine = None
 res = None
@@ -90,8 +89,8 @@ async def query_sources():
 @id_not_found_exceptions
 async def query_graph(query: str = Form()):
     query_logger.info(f"query: {query}")
-    graph_query_engine = compose_graph_query_engine()
     try:
+        graph_query_engine = compose_graph_query_engine()
         response = await graph_query_engine.aquery(query)
     except Exception as e:
         error_logger.error(f"error: {e}")

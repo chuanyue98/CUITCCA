@@ -2,17 +2,19 @@ import pickle
 from collections import defaultdict
 from datetime import timedelta
 
-from fastapi import Depends, HTTPException, status, APIRouter
+from dotenv import dotenv_values, set_key
+from fastapi import Depends, HTTPException, status, APIRouter, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.requests import Request
 
-from configs.load_env import access_stats_path, FEEDBACK_PATH
+from configs.load_env import access_stats_path, FEEDBACK_PATH, reload_env_variables
 from dependencies.manage import get_current_active_user, role_required, fake_users_db, get_current_user, access_stats
 from handlers.auth import authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from models.user import Token, User, Feedback
 from utils.file import save_feedback_to_file
 
 manage_app = APIRouter()
+
 
 @manage_app.on_event("startup")
 async def startup():
@@ -63,6 +65,22 @@ def create_feedback(feedback: Feedback, request: Request):
     save_feedback_to_file(feedback, client_ip)
 
     return {"message": "Feedback received"}
+
+
+@manage_app.post('/env')
+def set_env(openai_api=Form(), openai_base_url=Form(default='https://api.openai.com/v1')):
+    # 读取当前的.env文件内容
+    env_values = dotenv_values("../.env")
+    # 更新指定的键值对
+    env_values['OPENAI_API_KEY'] = openai_api
+    env_values['OPENAI_API_BASE'] = openai_base_url
+
+    # 将更新后的键值对写回到.env文件
+    for k, v in env_values.items():
+        set_key("../.env", k, v)
+    reload_env_variables()
+    return {"message": "环境变量已更新"}
+
 
 
 @manage_app.post("/token", response_model=Token)

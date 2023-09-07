@@ -9,12 +9,10 @@ from llama_index.indices.postprocessor import SentenceEmbeddingOptimizer
 from starlette.responses import JSONResponse
 
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
-from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import *
 from dependencies import get_index
 from utils.file import read_file_contents
 from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash
-from utils.logger import error_logger
 
 index_app = APIRouter()
 async def startup_event():
@@ -45,9 +43,12 @@ async def index():
 
 @index_app.get("/list")
 def get_index_list():
-    path = os.path.join(PROJECT_ROOT, index_save_directory)
-    list = get_folders_list(path)
-    return JSONResponse(content={'indexes': list})
+    index_list = []
+    for index in indexes:
+        index_list.append(index.index_id)
+    # path = os.path.join(PROJECT_ROOT, index_save_directory)
+    # list = get_folders_list(path)
+    return JSONResponse(content={'indexes': index_list})
 
 
 @index_app.post("/create")
@@ -295,7 +296,7 @@ async def set_summary(index=Depends(get_index), summary: str = Form()):
 
 
 @index_app.post("/{index_name}/generate_summary")
-async def set_summary(index=Depends(get_index)):
+async def generate_summary(index=Depends(get_index)):
     """
     使用gpt生成索引的摘要信息
     :param index: 索引名称
