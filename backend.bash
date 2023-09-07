@@ -18,7 +18,7 @@ activate_conda() {
 # 启动应用程序
 start_application() {
   echo "Starting the application..."
-  nohup python backend/app/main.py > backend.log 2>&1 &
+  nohup python backend/app/main.py > fastapi.log 2>&1 &
 }
 
 # 执行检测端口、激活环境和启动应用程序的操作
