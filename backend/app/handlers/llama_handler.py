@@ -4,8 +4,9 @@ import os
 import re
 import uuid
 
-from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ServiceContext, ComposableGraph, \
-    ListIndex, Prompt, LLMPredictor, Document, TreeIndex
+from langchain.embeddings import HuggingFaceEmbeddings
+from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ComposableGraph, \
+    ListIndex, Prompt, Document, TreeIndex, LangchainEmbedding
 from llama_index.chat_engine import CondenseQuestionChatEngine
 from llama_index.chat_engine.types import BaseChatEngine
 from llama_index.indices.base import BaseIndex
@@ -20,6 +21,21 @@ from utils.llama import get_nodes_from_file, remove_index_store, remove_vector_s
 from utils.logger import customer_logger
 
 indexes = []
+
+import tiktoken
+from llama_index.callbacks import CallbackManager, TokenCountingHandler
+
+token_counter = TokenCountingHandler(
+    tokenizer=tiktoken.encoding_for_model("gpt-3.5-turbo").encode
+)
+from llama_index import ServiceContext, set_global_service_context
+
+callback_manager = CallbackManager([token_counter])
+set_global_service_context(
+    ServiceContext.from_defaults(
+        callback_manager=callback_manager
+    )
+)
 
 
 def createIndex(index_name):
@@ -62,8 +78,13 @@ def insert_into_index(index, doc_file_path, llm_predictor=None, embed_model=None
     if llm_predictor is None:
         llm_predictor = LLMPredictorOption.GPT3_5.value
     # 使用自定义的 embed_model 或默认值
-    if embed_model is None:
-        embed_model = EmbedModelOption.DEFAULT.value
+    # if embed_model is None:
+    #     embed_model = EmbedModelOption.DEFAULT.value
+
+
+    embed_model = LangchainEmbedding(
+        HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"))
+
     service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=embed_model)
     nodes = get_nodes_from_file(doc_file_path)
     index.insert_nodes(nodes, context=service_context)
@@ -81,40 +102,42 @@ def embeddingQA(index: BaseIndex, qa_pairs, id=str(uuid.uuid4())):
     :param id: 文档id
     :return:
     """
-    # 使用自定义的 llm_predictor 或默认值
-    llm_predictor = LLMPredictorOption.GPT3_5.value
-    # 使用自定义的 embed_model 或默认值
-    embed_model = EmbedModelOption.DEFAULT.value
-    service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=embed_model)
+    # # 使用自定义的 llm_predictor 或默认值
+    # llm_predictor = LLMPredictorOption.GPT3_5.value
+    # # 使用自定义的 embed_model 或默认值
+    # embed_model = EmbedModelOption.DEFAULT.value
+
     for i in range(0, len(qa_pairs), 2):
         q = qa_pairs[i]
         if i + 1 < len(qa_pairs):
             a = qa_pairs[i + 1]
             doc = Document(text=f"{q} {a}", id_=id)
             customer_logger.info(f"{doc.text}")
-            index.insert(doc, service_context=service_context)
+            index.insert(doc)
         else:
             customer_logger.info(f"Last element': {qa_pairs[i]}")
     # 生成summary 会出问题
     # index.summary = summary_index(index)
+
+    customer_logger.info("Embedding Tokens: ",token_counter.total_embedding_token_count)
+    customer_logger.info("LLM Prompt Tokens: ",token_counter.prompt_llm_token_count)
+    customer_logger.info("LLM Completion Tokens: ",token_counter.completion_llm_token_count)
+    customer_logger.info("Total LLM Token Count: ",token_counter.total_llm_token_count)
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
 
 
-def get_all_docs(index_):
+def get_all_docs(index):
     """
     通过index，获取所有文档
-    :param index_:
+    :param index:
     :return:
     """
-    all_docs = index_.docstore.docs.values()
-    # 创建一个空列表，用于存储节点 ID 和内容
-    documents = []
-    for doc in all_docs:
-        node_id = doc.node_id
-        doc_id = doc.ref_doc_id
-        doc_text = doc.get_content()
-        documents.append({"doc_id": doc_id, "node_id": node_id, "text": doc_text})
-    return documents
+    docs = [
+        {"doc_id": doc.ref_doc_id, "node_id": doc.node_id, "text": doc.get_content()}
+        for doc in index.docstore.docs.values()
+    ]
+    sorted_docs = sorted(docs, key=lambda x: x["doc_id"])
+    return sorted_docs
 
 
 def updateNodeById(index_, id_, text):
@@ -130,17 +153,17 @@ def updateNodeById(index_, id_, text):
     index_.docstore.add_documents([node])
 
 
-def deleteNodeById(index_, id_):
+def deleteNodeById(index, id_):
     """
     删除时会自动保存修改到本地
-    :param index_: 索引
+    :param index: 索引
     :param id_: node_id
     :return:
     """
     # TODO 记录删除的节点
     # content = index.docstore.get_node(id_).get_content()
-    index_.docstore.delete_document(id_)
-
+    index.docstore.delete_document(id_)
+    saveIndex(index)
     # 删除在json文件的记录，防止出错doc_not_found
     path = os.path.join(index_save_directory, index.index_id)
     print(path)
@@ -326,18 +349,17 @@ def fix_doc_id_not_found(index, doc_id):
     修复文档id不存在的情况
     ‘ 删除后prev_node引用并没有删除
     """
-    path = os.path.join(index_save_directory,index.index_id)
+    path = os.path.join(index_save_directory, index.index_id)
     remove_index_store(os.path.join(path, 'index_store.json'), doc_id)
     remove_vector_store(os.path.join(path, 'vector_store.json'), doc_id)
     remove_docstore(os.path.join(path, 'docstore.json'), doc_id)
 
 
-
-
-
-
 if __name__ == "__main__":
+    import openai
+
+    print(openai.api_key, openai.api_base)
     loadAllIndexes()
-    index=get_index_by_name('学生服务')
+    index =get_index_by_name('学生服务')
     fix_doc_id_not_found(index,'9d956f98-4492-42d9-9ee1-a96175a073dd')
 

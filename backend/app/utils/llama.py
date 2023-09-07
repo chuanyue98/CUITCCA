@@ -21,7 +21,7 @@ def get_nodes_from_file(file_path):
     """
     # 加载文本分词器
     text_splitter = SpacyTextSplitter(pipeline="zh_core_web_sm", chunk_size=512)
-    parser = SimpleNodeParser(text_splitter=text_splitter)
+    parser = SimpleNodeParser.from_defaults(text_splitter=text_splitter)
     documents = SimpleDirectoryReader(file_path, filename_as_id=True).load_data()
     for doc in documents:
         doc.id_ = extract_content_after_backslash(doc.id_)
@@ -136,7 +136,25 @@ def remove_index_store(path, doc_id):
 
 
 def remove_docstore(path, doc_id):
-    pass
+    # 读取JSON文件
+    with open(path, 'r') as file:
+        data = json.load(file)
+
+    # 检查是否存在指定的doc_id
+    if doc_id in data['docstore/data']:
+        # 删除指定的doc_id信息
+        del data['docstore/data'][doc_id]
+
+        # 删除相关的ref_doc_info和metadata
+        if doc_id in data['docstore/ref_doc_info']:
+            del data['docstore/ref_doc_info'][doc_id]
+
+        if doc_id in data['docstore/metadata']:
+            del data['docstore/metadata'][doc_id]
+
+    # 写回JSON文件
+    with open(path, 'w') as file:
+        json.dump(data, file, indent=4)
 
 
 if __name__ == '__main__':
