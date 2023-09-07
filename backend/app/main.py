@@ -24,6 +24,9 @@ async def access_stats_middleware(request, call_next):
     access_stats["user_visits"][client_ip] += 1
     access_stats["endpoint_visits"][request.url.path] += 1
 
+    # 统计不同 IP 的数量
+    access_stats["ip_count"] = len(access_stats["user_visits"])
+
     response = await call_next(request)
     return response
 

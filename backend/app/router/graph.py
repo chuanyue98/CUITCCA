@@ -98,7 +98,7 @@ async def query_graph(query: str = Form()):
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
-    return response
+    return response.response
 
 
 @graph_app.websocket("/query")

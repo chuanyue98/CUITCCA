@@ -30,6 +30,9 @@ async def startup():
     except FileNotFoundError:
         pass
 
+        # 初始化 IP 数量
+    access_stats["ip_count"] = len(access_stats["user_visits"])
+
 
 @manage_app.on_event("shutdown")
 def save_access_stats():
@@ -80,7 +83,6 @@ def set_env(openai_api=Form(), openai_base_url=Form(default='https://api.openai.
         set_key("../.env", k, v)
     reload_env_variables()
     return {"message": "环境变量已更新"}
-
 
 
 @manage_app.post("/token", response_model=Token)
