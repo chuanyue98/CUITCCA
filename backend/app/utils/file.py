@@ -2,9 +2,7 @@ import os
 from datetime import datetime
 from io import BytesIO
 
-import PyPDF2
 import pandas as pd
-import textract
 from fastapi import UploadFile
 
 from configs.load_env import PROJECT_ROOT, FEEDBACK_PATH
