@@ -1,5 +1,5 @@
 from fastapi import Path, HTTPException
-from llama_index.indices.base import BaseIndex
+from llama_index.core.indices.base import BaseIndex
 from starlette import status
 
 from handlers.llama_handler import get_index_by_name, loadAllIndexes

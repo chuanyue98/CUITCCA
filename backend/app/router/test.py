@@ -1,25 +1,19 @@
-import asyncio
 import os
-import re
 from typing import List
 
 import openai
 from fastapi import APIRouter, Depends, UploadFile, File
-from langchain.chat_models import ChatOpenAI
-from langchain.text_splitter import SpacyTextSplitter
-from llama_index import SimpleDirectoryReader, LLMPredictor, ServiceContext
-from llama_index.indices.base import BaseIndex
-from llama_index.llms import ChatMessage, OpenAI
-from llama_index.schema import TextNode, Document
+from langchain_community.chat_models.openai import ChatOpenAI
+from llama_index.core import ServiceContext
+from llama_index.core.schema import TextNode
+from llama_index.core.service_context_elements.llm_predictor import LLMPredictor
 from starlette import status
 from starlette.responses import JSONResponse
 
-from configs.embed_model import EmbedModelOption
-from configs.llm_predictor import LLMPredictorOption
-from configs.load_env import LOAD_PATH, SAVE_PATH, index_save_directory
+from configs.load_env import LOAD_PATH, SAVE_PATH
 from dependencies import get_index
 from handlers.llama_handler import insert_into_index, summary_index
-from utils.llama import get_nodes_from_file
+from utils.llama import get_nodes_from_file, formatted_pairs
 
 test_app = APIRouter()
 

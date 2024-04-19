@@ -1,0 +1,18 @@
+2023-09-05 22:23:55,917 - INFO - query: 测试
+2023-09-05 22:27:48,110 - INFO - query: 测试
+2023-09-05 22:29:32,891 - INFO - query: 测试
+2023-09-05 22:52:50,442 - INFO - query: 测试
+2023-09-06 20:22:07,015 - INFO - query: cs
+2023-09-06 20:24:30,121 - INFO - query: cs
+2023-09-06 20:25:14,431 - INFO - query: cs
+2023-09-06 20:26:47,415 - INFO - query: cs
+2023-09-06 20:29:15,595 - INFO - query: cs
+2023-09-06 20:29:20,916 - INFO - source: {'id': '7113ac4a-73e2-4f12-8419-d478817145cf', 'text': 'There is no information provided in the given context about "cs". Therefore, it is not possible to provide an answer to the query.'}
+2023-09-06 20:29:20,925 - INFO - source: {'id': '0968d58d-9cd5-4e7a-afe4-670208a8b263', 'text': '四川省大学生就业创业扶持政策清单\n（2021年版）\n四川省就业工作领导小组办公室\n2021年11月'}
+2023-09-06 20:29:20,925 - INFO - source: {'id': 'e8dfd98f-ed6b-45a5-9d41-c10f2a0fce24', 'text': '成都信息工程大学本科招生网址？ http://zjc.cuit.edu.cn/Index.htm'}
+2023-09-06 20:29:20,925 - INFO - res: 无法回答，因为上下文中没有提供关于“cs”的信息。
+2023-09-06 20:29:49,547 - INFO - query: 菜鸟驿站时间
+2023-09-06 20:34:54,719 - INFO - source: {'id': 'c84da0a5-9aac-4a94-b283-a05369802a4a', 'text': 'The given context does not provide any information about the operating hours of the 菜鸟驿站.'}
+2023-09-06 20:34:54,720 - INFO - source: {'id': 'c04381f8-749d-49b4-b46b-e9a8215fad66', 'text': '菜鸟驿站位于哪里？ 菜鸟驿站位于一栋右侧。'}
+2023-09-06 20:34:54,720 - INFO - source: {'id': '8d26b478-53cf-42c6-b3af-d4b5e65f56a8', 'text': '除了京东和顺丰，基本所有快递都在菜鸟驿站吗？ 是的，除了京东和顺丰，基本所有快递都在菜鸟驿站。'}
+2023-09-06 20:34:54,720 - INFO - res: 抱歉，根据提供的上下文信息，无法回答菜鸟驿站的营业时间。建议您查询相关官方渠道或直接前往校园内查看相关公告。

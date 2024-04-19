@@ -4,7 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from dependencies import access_stats
 from router import response_app, index_app, graph_app, test_app, manage_app
 
-app = FastAPI(root_path='/')
+app = FastAPI()
 
 app.include_router(index_app, prefix='/index', tags=['index'])
 app.include_router(graph_app, prefix='/graph', tags=['graph'])
@@ -32,11 +32,11 @@ async def access_stats_middleware(request, call_next):
 
 
 # 设置允许的来源（即允许跨域请求的域名）
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    # 添加其他需要允许的域名
-]
+# origins = [
+#     "http://localhost",
+#     "http://localhost:3000",
+#     # 添加其他需要允许的域名
+# ]
 
 # 添加CORS中间件
 app.add_middleware(

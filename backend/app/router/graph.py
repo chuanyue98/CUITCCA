@@ -1,14 +1,9 @@
-import asyncio
-import time
-
-from fastapi import APIRouter, Form, WebSocket
-from llama_index.chat_engine.types import BaseChatEngine
-from llama_index.query_engine import RouterQueryEngine
-from llama_index.response.schema import StreamingResponse
-from llama_index.selectors.pydantic_selectors import PydanticMultiSelector
+from fastapi import APIRouter, Form
+from llama_index.core.chat_engine.types import BaseChatEngine
+from llama_index.core.query_engine import RouterQueryEngine
+from llama_index.core.selectors.pydantic_selectors import PydanticMultiSelector
 from starlette import status
-from starlette.responses import JSONResponse,StreamingResponse
-from starlette.websockets import WebSocketDisconnect
+from starlette.responses import JSONResponse, StreamingResponse
 
 from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
@@ -25,7 +20,6 @@ res = None
 class GraphQueryEngine:
     def __init__(self):
         self.query_engine = compose_graph_query_engine()
-
 
     async def aquery(self, query_string):
         await self.query_engine.aquery(query_string)
@@ -98,34 +92,11 @@ async def query_graph(query: str = Form()):
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
-    return response.response
-
-
-@graph_app.websocket("/query")
-async def query_graph_ws(websocket: WebSocket):
-    _graph_chat_engine = compose_graph_query_engine()
-    await websocket.accept()
-    try:
-        while True:
-            query = await websocket.receive_text()
-            if query == 'q':
-                await websocket.close()
-            customer_logger.info(f"query: {query}")
-            response = await _graph_chat_engine.aquery(query)
-
-            async def async_generator_wrapper(sync_gen):
-                for value in sync_gen:
-                    yield value
-
-            async for token in async_generator_wrapper(response.response_gen):
-                await websocket.send_text(token)
-                await asyncio.sleep(0.05)
-    except WebSocketDisconnect:
-        await websocket.close()
+    return response
 
 
 @graph_app.post("/query_history")
-async def query_graph():
+async def graph():
     """
     获取历史记录
     """

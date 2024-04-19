@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Form
-from llama_index import get_response_synthesizer
+from llama_index.core import get_response_synthesizer
 
 from configs.config import ResponseMode,PromptType
 from dependencies import get_index

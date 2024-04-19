@@ -3,7 +3,6 @@ from datetime import datetime
 from io import BytesIO
 
 import PyPDF2
-import magic
 import pandas as pd
 import textract
 from fastapi import UploadFile

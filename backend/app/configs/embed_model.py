@@ -1,6 +1,6 @@
 from enum import Enum
 
-from llama_index import OpenAIEmbedding
+from llama_index.embeddings.openai import OpenAIEmbedding
 
 from configs import openai_api_key
 

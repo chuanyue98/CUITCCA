@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>问题查询</title>
+</head>
+<body>
+<h1>问题查询</h1>
+<form id="queryForm">
+    <label for="queryInput">问题：</label>
+    <input type="text" id="queryInput" name="query" required>
+    <button type="submit">发送</button>
+</form>
+
+<div id="responseContainer"></div>
+
+<script>
+    const queryForm = document.getElementById('queryForm');
+    const responseContainer = document.getElementById('responseContainer');
+
+    queryForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const queryInput = document.getElementById('queryInput');
+        const query = queryInput.value;
+
+        const response = await fetch('http://127.0.0.1:8000/index/test/query', {
+            method: 'POST',
+            body: new URLSearchParams({
+                query: query
+            }),
+        });
+
+        const responseData = await response.json();
+        console.log(responseData);
+
+        if (response.ok) {
+            if (responseData.file_base64) {
+                const imgElement = document.createElement('img');
+                imgElement.src = 'data:image/jpeg;base64,' + responseData.file_base64;
+                responseContainer.innerHTML = '';
+                responseContainer.appendChild(imgElement);
+            } else {
+                const messageElement = document.createElement('p');
+                messageElement.textContent = responseData.message;
+                responseContainer.innerHTML = '';
+                responseContainer.appendChild(messageElement);
+            }
+        } else {
+            const errorMessage = '发生错误，请重试';
+            responseContainer.textContent = errorMessage;
+        }
+    });
+</script>
+</body>
+</html>

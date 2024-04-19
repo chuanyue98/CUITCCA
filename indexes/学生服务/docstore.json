@@ -1,0 +1,116 @@
+{
+    "docstore/data": {
+        "69626a18-5d55-4c52-955f-5040eca35040": {
+            "__data__": {
+                "id_": "69626a18-5d55-4c52-955f-5040eca35040",
+                "embedding": null,
+                "metadata": {},
+                "excluded_embed_metadata_keys": [],
+                "excluded_llm_metadata_keys": [],
+                "relationships": {
+                    "1": {
+                        "node_id": "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6d41\u7a0b.txt",
+                        "node_type": null,
+                        "metadata": {},
+                        "hash": "5e76366b127ab5c29f8e3edda278966a0d8b0c08cd2bfb90d4acfbe60ed28a55"
+                    }
+                },
+                "hash": "d9f2deab188d623a837e97bb5582c008e9f9bac4c81716ef9580f300e8d72454",
+                "text": "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u53d7\u7406\u8303\u56f4\u662f\u4ec0\u4e48\uff1f \u6211\u6821\u6bd5\u4e1a\u7684\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u751f\u3002",
+                "start_char_idx": 0,
+                "end_char_idx": 26,
+                "text_template": "{metadata_str}\n\n{content}",
+                "metadata_template": "{key}: {value}",
+                "metadata_seperator": "\n"
+            },
+            "__type__": "1"
+        },
+        "19b1d33a-a597-4045-8993-20e90d691ae0": {
+            "__data__": {
+                "id_": "19b1d33a-a597-4045-8993-20e90d691ae0",
+                "embedding": null,
+                "metadata": {},
+                "excluded_embed_metadata_keys": [],
+                "excluded_llm_metadata_keys": [],
+                "relationships": {
+                    "1": {
+                        "node_id": "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6d41\u7a0b.txt",
+                        "node_type": null,
+                        "metadata": {},
+                        "hash": "319136988684948f1e584390180d97ce976bb1017e8fb9094d8ae61cf94a1405"
+                    }
+                },
+                "hash": "319136988684948f1e584390180d97ce976bb1017e8fb9094d8ae61cf94a1405",
+                "text": "\u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6750\u6599\u51c6\u5907\u6709\u54ea\u4e9b\uff1f \u2460\u5230\u6821\u586b\u5199\u300a\u6210\u90fd\u4fe1\u606f\u5de5\u7a0b\u5927\u5b66\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u7533\u8bf7\u8868\u300b\uff1b\u24613 \u5f20 1 \u5bf8\u6700\u8fd1\u7684\u5f69\u8272\u6807\u51c6\u7eb8\u8d28\u50cf\u7247\uff08\u9700\u63d0\u4f9b\u7535\u5b50\u7248\u7167\u7247\u5bfc\u5165\u5b66\u4fe1\u7f51\uff09, \u7535\u5b50\u7248\u7167\u7247\u53d1\u5230\u90ae\u7bb1 3477258002@qq.com\uff1b\u2462\u672c\u4eba\u8eab\u4efd\u8bc1\u539f\u4ef6\u53ca\u6b63\u3001\u53cd\u4e24\u9762\u590d\u5370\u4ef6\u4e00\u5f20\uff1b\u2463\u6210\u90fd\u4fe1\u606f\u5de5\u7a0b\u5927\u5b66\u6863\u6848\u9986\u51fa\u5177\u7684\u5b66\u5386\u8bc1\u660e\uff082000 \u5e74\u53ca\u4ee5\u524d\u6bd5\u4e1a\u7684\u5b66\u751f\uff09\uff1b\u2464\u6210\u90fd\u4fe1\u606f\u5de5\u7a0b\u5927\u5b66\u8d22\u52a1\u5904\u5b66\u8d39\u4ea4\u6e05\u8bc1\u660e\uff1b\u2465\u59d4\u6258\u4ed6\u4eba\u4ee3\u529e\u7684\uff0c\u53e6\u9700\u7533\u8bf7\u4eba\u51fa\u5177 \u201c\u6388\u6743\u59d4\u6258\u4e66\u201d \u548c\u53cc\u65b9\u8eab\u4efd\u8bc1\u6b63\u3001\u53cd\u4e24\u9762\u590d\u5370\u4ef6\u3002",
+                "start_char_idx": 0,
+                "end_char_idx": 224,
+                "text_template": "{metadata_str}\n\n{content}",
+                "metadata_template": "{key}: {value}",
+                "metadata_seperator": "\n"
+            },
+            "__type__": "1"
+        },
+        "0809d14d-c605-4b6f-86ef-d37b501115fd": {
+            "__data__": {
+                "id_": "0809d14d-c605-4b6f-86ef-d37b501115fd",
+                "embedding": null,
+                "metadata": {},
+                "excluded_embed_metadata_keys": [],
+                "excluded_llm_metadata_keys": [],
+                "relationships": {
+                    "1": {
+                        "node_id": "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6d41\u7a0b.txt",
+                        "node_type": null,
+                        "metadata": {},
+                        "hash": "f065c976fb8a12fa996e1ca581b13fea8208dab212aa290681b65d14e81bee99"
+                    }
+                },
+                "hash": "f065c976fb8a12fa996e1ca581b13fea8208dab212aa290681b65d14e81bee99",
+                "text": "\u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u529e\u7406\u65f6\u95f4\u548c\u5730\u70b9\u662f\u4ec0\u4e48\uff1f \u2460\u529e\u7406\u65f6\u95f4\uff1a2-3 \u4e2a\u5de5\u4f5c\u65e5\uff1b\u2461\u53d7\u7406\u8303\u56f4\uff1a\u822a\u7a7a\u6e2f\u3001\u9f99\u6cc9\u6821\u533a\u6bd5\u4e1a\u7684\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u5b66\u751f\uff1b\u2462\u901a\u8baf\u5730\u5740\uff1a\u6210\u90fd\u4fe1\u606f\u5de5\u7a0b\u5927\u5b66\u822a\u7a7a\u6e2f\u6821\u533a\u884c\u653f\u697c 208\uff1b\u2463\u8054\u7cfb\u7535\u8bdd\uff1a028-85967803 \u6bb5\u8001\u5e08\u3001\u5434\u8001\u5e08\u3002",
+                "start_char_idx": 0,
+                "end_char_idx": 109,
+                "text_template": "{metadata_str}\n\n{content}",
+                "metadata_template": "{key}: {value}",
+                "metadata_seperator": "\n"
+            },
+            "__type__": "1"
+        }
+    },
+    "docstore/ref_doc_info": {
+        "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6d41\u7a0b.txt": {
+            "node_ids": [
+                "69626a18-5d55-4c52-955f-5040eca35040",
+                "19b1d33a-a597-4045-8993-20e90d691ae0",
+                "0809d14d-c605-4b6f-86ef-d37b501115fd",
+                "69626a18-5d55-4c52-955f-5040eca35040",
+                "19b1d33a-a597-4045-8993-20e90d691ae0",
+                "0809d14d-c605-4b6f-86ef-d37b501115fd",
+                "69626a18-5d55-4c52-955f-5040eca35040"
+            ],
+            "metadata": {}
+        },
+        "\u6210\u90fd\u4fe1\u606f\u5de5\u7a0b\u5927\u5b66\u672c\u79d1\u5b66\u751f\u8f6c\u4e13\u4e1a\u7533\u8bf7\u8868.docx_part_0": {
+            "node_ids": [],
+            "metadata": {
+                "file_name": "\u6210\u90fd\u4fe1\u606f\u5de5\u7a0b\u5927\u5b66\u672c\u79d1\u5b66\u751f\u8f6c\u4e13\u4e1a\u7533\u8bf7\u8868.docx"
+            }
+        }
+    },
+    "docstore/metadata": {
+        "69626a18-5d55-4c52-955f-5040eca35040": {
+            "doc_hash": "d9f2deab188d623a837e97bb5582c008e9f9bac4c81716ef9580f300e8d72454",
+            "ref_doc_id": "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6d41\u7a0b.txt"
+        },
+        "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6d41\u7a0b.txt": {
+            "doc_hash": "f065c976fb8a12fa996e1ca581b13fea8208dab212aa290681b65d14e81bee99"
+        },
+        "19b1d33a-a597-4045-8993-20e90d691ae0": {
+            "doc_hash": "319136988684948f1e584390180d97ce976bb1017e8fb9094d8ae61cf94a1405",
+            "ref_doc_id": "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6d41\u7a0b.txt"
+        },
+        "0809d14d-c605-4b6f-86ef-d37b501115fd": {
+            "doc_hash": "f065c976fb8a12fa996e1ca581b13fea8208dab212aa290681b65d14e81bee99",
+            "ref_doc_id": "\u666e\u901a\u5168\u65e5\u5236\u672c\u4e13\u79d1\u6bd5\u4e1a\u8bc1 (\u5b66\u4f4d\u8bc1) \u9057\u5931\u8865\u529e\u8bc1\u660e\u4e66\u6d41\u7a0b.txt"
+        }
+    }
+}

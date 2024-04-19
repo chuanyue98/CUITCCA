@@ -4,39 +4,26 @@ import os
 import re
 import uuid
 
-from langchain.embeddings import HuggingFaceEmbeddings
-from llama_index import VectorStoreIndex, load_index_from_storage, StorageContext, ComposableGraph, \
-    ListIndex, Prompt, Document, TreeIndex, LangchainEmbedding
-from llama_index.chat_engine import CondenseQuestionChatEngine
-from llama_index.chat_engine.types import BaseChatEngine
-from llama_index.indices.base import BaseIndex
-from llama_index.indices.query.base import BaseQueryEngine
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from llama_index.core import VectorStoreIndex, load_index_from_storage, StorageContext, ComposableGraph, \
+    ListIndex, Prompt, Document, TreeIndex, get_response_synthesizer, ServiceContext, Settings
+from llama_index.core.chat_engine import CondenseQuestionChatEngine
+from llama_index.core.chat_engine.types import BaseChatEngine
+from llama_index.core.indices.base import BaseIndex
+from llama_index.core.indices.postprocessor import SimilarityPostprocessor
+from llama_index.core.indices.query.base import BaseQueryEngine
+from llama_index.core.query_engine import SubQuestionQueryEngine
+from llama_index.core.tools import QueryEngineTool, ToolMetadata
+from llama_index.legacy.embeddings import LangchainEmbedding
 
 from configs.config import Prompts
-from configs.embed_model import EmbedModelOption
-from configs.llm_predictor import LLMPredictorOption
+# from configs.llm_predictor import LLMPredictorOption
 from configs.load_env import index_save_directory, FILE_PATH, openai_api_key
 from utils.file import get_folders_list
 from utils.llama import get_nodes_from_file, remove_index_store, remove_vector_store, remove_docstore
 from utils.logger import customer_logger
 
 indexes = []
-
-import tiktoken
-from llama_index.callbacks import CallbackManager, TokenCountingHandler
-
-token_counter = TokenCountingHandler(
-    tokenizer=tiktoken.encoding_for_model("gpt-3.5-turbo").encode
-)
-from llama_index import ServiceContext, set_global_service_context
-
-callback_manager = CallbackManager([token_counter])
-set_global_service_context(
-    ServiceContext.from_defaults(
-        callback_manager=callback_manager
-    )
-)
-
 
 def createIndex(index_name):
     """
@@ -75,12 +62,11 @@ def insert_into_index(index, doc_file_path, llm_predictor=None, embed_model=None
     :return:
     """
     # 使用自定义的 llm_predictor 或默认值
-    if llm_predictor is None:
-        llm_predictor = LLMPredictorOption.GPT3_5.value
+    # if llm_predictor is None:
+    #     llm_predictor = LLMPredictorOption.GPT3_5.value
     # 使用自定义的 embed_model 或默认值
     # if embed_model is None:
     #     embed_model = EmbedModelOption.DEFAULT.value
-
 
     embed_model = LangchainEmbedding(
         HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"))
@@ -118,11 +104,6 @@ def embeddingQA(index: BaseIndex, qa_pairs, id=str(uuid.uuid4())):
             customer_logger.info(f"Last element': {qa_pairs[i]}")
     # 生成summary 会出问题
     # index.summary = summary_index(index)
-
-    customer_logger.info("Embedding Tokens: ",token_counter.total_embedding_token_count)
-    customer_logger.info("LLM Prompt Tokens: ",token_counter.prompt_llm_token_count)
-    customer_logger.info("LLM Completion Tokens: ",token_counter.completion_llm_token_count)
-    customer_logger.info("Total LLM Token Count: ",token_counter.total_llm_token_count)
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
 
 
@@ -215,7 +196,7 @@ def compose_graph_chat_egine() -> BaseChatEngine:
                                            streaming=True,
                                            similarity_top_k=3,
                                            verbose=True,
-                                           custom_query_engines=custom_query_engines),
+                                           custom_query_engines=custom_query_engines,),
         condense_question_prompt=Prompts.CONDENSE_QUESTION_PROMPT.value,
         verbose=True,
         chat_mode="condense_question",
@@ -239,20 +220,23 @@ def compose_graph_query_engine(streaming=False) -> BaseQueryEngine:
         indexes,
         index_summaries=summaries,
     )
-
     custom_query_engines = {
         index.index_id: index.as_query_engine(
             child_branch_factor=3
         )
         for index in indexes
     }
+    # 可以通过设置为False 来过滤掉这些无用的响应。它默认设置为，因为目前仅当您使用支持函数调用的 OpenAI 模型时，此功能才最有效。structured_answer_filtering
+    response_synthesizer = get_response_synthesizer(structured_answer_filtering=True)
 
     query_engine = graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
                                          refine_template=Prompts.REFINE_PROMPT.value,
                                          streaming=streaming,
                                          similarity_top_k=3,
                                          verbose=True,
-                                         custom_query_engines=custom_query_engines)
+                                         # custom_query_engines=custom_query_engines,
+                                         # response_synthesizer=response_synthesizer
+                                         )
     return query_engine
 
 
@@ -261,8 +245,7 @@ def summary_index(index):
          生成 summary
     """
     summary = index.as_query_engine(response_mode="tree_summarize").query(
-        "总结，生成文章摘要，要覆盖所有要点，方便后续检索"
-    )
+        "总结，生成文章摘要，要覆盖所有要点，方便后续检索,不需要详细内容，只需要关键信息，方便后续检索")
     # 去掉换行符、制表符、多余的空格和其他非字母数字字符
     summary_str = re.sub(r"\s+", " ", str(summary))
     summary_str = re.sub(r"[^\w\s]", "", summary_str)
@@ -355,11 +338,28 @@ def fix_doc_id_not_found(index, doc_id):
     remove_docstore(os.path.join(path, 'docstore.json'), doc_id)
 
 
+def get_docs_from_index(index, doc_id):
+    docs_list = index.docstore.get_ref_doc_info(doc_id)
+    docs = index.docstore.get_nodes(docs_list.node_ids)
+    return docs
+
+
 if __name__ == "__main__":
-    import openai
-
-    print(openai.api_key, openai.api_base)
     loadAllIndexes()
-    index =get_index_by_name('学生服务')
-    fix_doc_id_not_found(index,'9d956f98-4492-42d9-9ee1-a96175a073dd')
+    graph = ComposableGraph.from_indices(
+        TreeIndex,
+        [get_index_by_name('test')],
+        index_summaries=['sum'],
+    )
+    # 可以通过设置为False 来过滤掉这些无用的响应。它默认设置为，因为目前仅当您使用支持函数调用的 OpenAI 模型时，此功能才最有效。structured_answer_filtering
+    response_synthesizer = get_response_synthesizer(structured_answer_filtering=True)
 
+    query_engine = graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
+                                         refine_template=Prompts.REFINE_PROMPT.value,
+                                         similarity_top_k=3,
+                                         verbose=True,
+                                         custom_query_engines=get_index_by_name('test').as_query_engine(),
+                                         node_postprocessors=[SimilarityPostprocessor(similarity_cutoff=0.7)],
+                                         # response_synthesizer=response_synthesizer
+                                         )
+    print(query_engine.query("哪些招生信息可以在研究生招生网站上找到？"))

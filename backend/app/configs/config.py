@@ -1,6 +1,6 @@
 from enum import Enum
 
-from llama_index import Prompt
+from llama_index.core import Prompt
 
 
 class ResponseMode(str, Enum):

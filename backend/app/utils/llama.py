@@ -1,13 +1,14 @@
 import json
 import re
-from typing import List
+from typing import List, Any
 
 from langchain.text_splitter import SpacyTextSplitter
-from llama_index import SimpleDirectoryReader
-from llama_index.indices.base import BaseIndex
-from llama_index.llms import ChatMessage, OpenAI
-from llama_index.node_parser import SimpleNodeParser
-from llama_index.tools import QueryEngineTool
+from langchain_core.messages import ChatMessage
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core.indices.base import BaseIndex
+from llama_index.core.node_parser import SimpleNodeParser
+from llama_index.core.tools import QueryEngineTool
+from llama_index.llms.openai import OpenAI
 
 from configs.config import Prompts
 from utils.logger import customer_logger
@@ -20,6 +21,7 @@ def get_nodes_from_file(file_path):
     :return:
     """
     # 加载文本分词器
+
     text_splitter = SpacyTextSplitter(pipeline="zh_core_web_sm", chunk_size=512)
     parser = SimpleNodeParser.from_defaults(text_splitter=text_splitter)
     documents = SimpleDirectoryReader(file_path, filename_as_id=True).load_data()

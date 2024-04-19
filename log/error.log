@@ -1,0 +1,8 @@
+2023-09-05 22:23:56,205 - ERROR - error: 用户额度不足
+2023-09-05 22:27:48,650 - ERROR - error: 用户额度不足
+2023-09-05 22:30:51,305 - ERROR - error: Invalid response object from API: '{"code":429,"message":"Too many requests. Rate limit reached for free user on requests per min. Limit: 2 / min. Please try again in 20s."}\n' (HTTP response code was 429)
+2023-09-05 22:54:09,003 - ERROR - error: Invalid response object from API: '{"code":429,"message":"Too many requests. Rate limit reached for free user on requests per min. Limit: 2 / min. Please try again in 20s."}\n' (HTTP response code was 429)
+2023-09-06 20:22:13,210 - ERROR - error: doc_id 12791288-ad6e-4d13-b438-0326602e7c11 not found.
+2023-09-06 20:24:35,767 - ERROR - error: doc_id 9d956f98-4492-42d9-9ee1-a96175a073dd not found.
+2023-09-06 20:26:38,286 - ERROR - error: Invalid response object from API: '{"code":429,"message":"Too many requests. Rate limit reached for free user on requests per min. Limit: 5 / min. Please try again in 20s."}\n' (HTTP response code was 429)
+2023-09-06 20:28:02,116 - ERROR - error: Invalid response object from API: '{"code":429,"message":"Too many requests. Rate limit reached for free user on requests per min. Limit: 5 / min. Please try again in 20s."}\n' (HTTP response code was 429)
