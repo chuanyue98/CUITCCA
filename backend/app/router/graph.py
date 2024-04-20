@@ -94,7 +94,10 @@ async def query_graph(query: str = Form()):
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
+    if response.response == "Empty Response":
+        response.response = '我还不知道，请反馈给我吧'
     return response.response
+
 
 @graph_app.post("/agent")
 @id_not_found_exceptions
@@ -119,6 +122,7 @@ async def agent(query: str = Form()):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
     return response.response
+
 
 @graph_app.post("/query_history")
 async def graph():
@@ -146,15 +150,6 @@ async def query_router(query: str = Form()):
 
 
 if __name__ == '__main__':
-    query_engine_tools = [
-        QueryEngineTool(
-            query_engine=get_index_by_name(index.index_id).as_query_engine(),
-            metadata=ToolMetadata(
-                name=index.index_id,
-                description=index.summary,
-            ),
-        )
-        for index in indexes
-    ]
-    agent = ReActAgent.from_tools(query_engine_tools, verbose=True)
-    agent.chat_repl()
+    graph_query_engine = compose_graph_query_engine()
+    response = graph_query_engine.query('hello')
+    print()
