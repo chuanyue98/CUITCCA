@@ -1,10 +1,12 @@
-import base64
+import os
 import shutil
 from typing import List
 
 import aiofiles
+import torch
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends, HTTPException
 from llama_index.core.evaluation import ResponseEvaluator
+from llama_index.core.node_parser import SentenceSplitter
 from starlette.responses import JSONResponse
 
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
@@ -14,6 +16,20 @@ from utils.file import read_file_contents
 from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash
 
 index_app = APIRouter()
+
+# model_name = "DMetaSoul/Dmeta-embedding-zh-small"
+# model_kwargs = {'device': 'cuda' if torch.cuda.is_available() else 'cpu'}
+# encode_kwargs = {'normalize_embeddings': True} # set True to compute cosine similarity
+# model = HuggingFaceEmbeddings(
+#     model_name=model_name,
+#     model_kwargs=model_kwargs,
+#     encode_kwargs=encode_kwargs,
+# )
+Settings.embed_model = HuggingFaceEmbeddings(model_name="DMetaSoul/Dmeta-embedding-zh-small")
+
+
+text_splitter = SentenceSplitter.from_defaults(chunk_size=512)
+Settings.text_splitter = text_splitter
 
 
 async def startup_event():
@@ -167,7 +183,6 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
     """
     上传文件
     :param index_name: 索引名称
-    :param files: List of file objects
     :return:
     """
     filepaths = []
@@ -175,10 +190,12 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
         for file in files:
             filename = file.filename
             filepath = os.path.join(LOAD_PATH, filename)
-            savepath = os.path.join(SAVE_PATH, filename)
+            savepath = os.path.join(SAVE_PATH, index.index_id, filename)
             file_bytes = await file.read()
             async with aiofiles.open(filepath, 'wb') as f:
                 await f.write(file_bytes)
+            if not os.path.exists(savepath):
+                os.makedirs(os.path.dirname(savepath), exist_ok=True)
             async with aiofiles.open(savepath, 'wb') as f:
                 await f.write(file_bytes)
 
@@ -289,8 +306,7 @@ async def insert_docs(text=Form(), doc_id=Form(None), index=Depends(get_index)):
     :return: 插入状态
     """
     # 使用自定义的 llm_predictor 或默认值
-    llm_predictor = LLMPredictorOption.GPT3_5.value
-    service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
+    service_context = ServiceContext.from_defaults()
 
     if doc_id is None:
         doc = Document(text=text)
@@ -325,7 +341,7 @@ async def get_file(index_name):
 
 @index_app.post("/{index_name}/evaluator")
 async def evaluator(index=Depends(get_index), query: str = Form()):
-    service_context = ServiceContext.from_defaults(llm_predictor=LLMPredictorOption.DEFAULT.value)
+    service_context = ServiceContext.from_defaults()
     evaluator = ResponseEvaluator(service_context=service_context)
     query_engine = index.as_query_engine()
     response = query_engine.query(query)
@@ -334,4 +350,4 @@ async def evaluator(index=Depends(get_index), query: str = Form()):
 
 
 if __name__ == '__main__':
-    print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.makedirs(os.path.dirname('E:\\\\demo\\\\CUITCCA\\\\backend\\\\app\\\\../../data/upload_files\\\\学校信息'), exist_ok=True)

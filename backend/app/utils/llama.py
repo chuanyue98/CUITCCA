@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 from typing import List, Any
@@ -21,9 +22,7 @@ def get_nodes_from_file(file_path):
     :return:
     """
     # 加载文本分词器
-
-    text_splitter = SpacyTextSplitter(pipeline="zh_core_web_sm", chunk_size=512)
-    parser = SimpleNodeParser.from_defaults(text_splitter=text_splitter)
+    parser = SimpleNodeParser.from_defaults()
     documents = SimpleDirectoryReader(file_path, filename_as_id=True).load_data()
     for doc in documents:
         doc.id_ = extract_content_after_backslash(doc.id_)
@@ -63,25 +62,19 @@ async def generate_qa_batched(contents: str, prompt: str = None):
     contents = textSplitter.split_text(contents)
     if prompt is None:
         prompt = "我会发送一段长文本"
-    messages = [
-        ChatMessage(role="system", content=f"""你是出题人。
-{prompt}从中提取出 25 个问题和答案。 问题答案详完整详细,按下面格式返回:
-Q:
-A:
-Q:
-A:
-...""")
-    ]
-
+    prompt = f"""   你是出题人。
+                    {prompt}从中提取出若干个,尽可能多的问题和答案。 问题答案详完整详细,按下面格式返回:
+                    Q:
+                    A:
+                    Q:
+                    A:
+                    ...
+                """
     qa_pairs = []
     for content in contents:
-        messages.append(ChatMessage(role="user", content=content))
-        response = await OpenAI().achat(messages)
-        if response.message:
-            assistant_message = response.message.content
-            customer_logger.info(f"{assistant_message}")
-            qa_pairs.append(assistant_message)
-        messages = messages[:1]
+        response = await OpenAI().acomplete(prompt + content)
+        if response:
+            qa_pairs.append(response.text)
 
     return qa_pairs
 
@@ -160,4 +153,6 @@ def remove_docstore(path, doc_id):
 
 
 if __name__ == '__main__':
-    nodes = get_nodes_from_file('../utils')
+    res = asyncio.run(generate_qa_batched(
+        "本科招生http://zjc.cuit.edu.cn/Index.htm研究生招生https://yjsc.cuit.edu.cn/继续教育招生https://cjy.cuit.edu.cn/", ))
+    print(res)

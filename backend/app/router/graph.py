@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Form
+from llama_index.core.agent import ReActAgent
 from llama_index.core.chat_engine.types import BaseChatEngine
 from llama_index.core.query_engine import RouterQueryEngine
 from llama_index.core.selectors.pydantic_selectors import PydanticMultiSelector
+from llama_index.core.tools import QueryEngineTool, ToolMetadata
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
 
 from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
-    format_source_nodes_list
+    format_source_nodes_list, get_index_by_name
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger, query_logger, error_logger
 
@@ -94,6 +96,29 @@ async def query_graph(query: str = Form()):
     query_logger.info(f"res: {response}")
     return response.response
 
+@graph_app.post("/agent")
+@id_not_found_exceptions
+async def agent(query: str = Form()):
+    query_engine_tools = [
+        QueryEngineTool(
+            query_engine=get_index_by_name(index.index_id).as_query_engine(),
+            metadata=ToolMetadata(
+                name=index.index_id,
+                description=index.summary,
+            ),
+        )
+        for index in indexes
+    ]
+    agent = ReActAgent.from_tools(query_engine_tools, verbose=True)
+    try:
+        response = await agent.achat(query)
+    except Exception as e:
+        error_logger.error(f"error: {e}")
+        return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"})
+    for sn in format_source_nodes_list(response.source_nodes):
+        query_logger.info(f"source: {sn}")
+    query_logger.info(f"res: {response}")
+    return response.response
 
 @graph_app.post("/query_history")
 async def graph():
@@ -121,4 +146,15 @@ async def query_router(query: str = Form()):
 
 
 if __name__ == '__main__':
-    pass
+    query_engine_tools = [
+        QueryEngineTool(
+            query_engine=get_index_by_name(index.index_id).as_query_engine(),
+            metadata=ToolMetadata(
+                name=index.index_id,
+                description=index.summary,
+            ),
+        )
+        for index in indexes
+    ]
+    agent = ReActAgent.from_tools(query_engine_tools, verbose=True)
+    agent.chat_repl()

@@ -12,13 +12,10 @@ from llama_index.core.chat_engine.types import BaseChatEngine
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.indices.postprocessor import SimilarityPostprocessor
 from llama_index.core.indices.query.base import BaseQueryEngine
-from llama_index.core.query_engine import SubQuestionQueryEngine
-from llama_index.core.tools import QueryEngineTool, ToolMetadata
-from llama_index.legacy.embeddings import LangchainEmbedding
+
 
 from configs.config import Prompts
-# from configs.llm_predictor import LLMPredictorOption
-from configs.load_env import index_save_directory, FILE_PATH, openai_api_key
+from configs.load_env import index_save_directory
 from utils.file import get_folders_list
 from utils.llama import get_nodes_from_file, remove_index_store, remove_vector_store, remove_docstore
 from utils.logger import customer_logger
@@ -51,27 +48,16 @@ def loadAllIndexes():
         indexes.append(index)
 
 
-def insert_into_index(index, doc_file_path, llm_predictor=None, embed_model=None):
+def insert_into_index(index, doc_file_path):
     """
     通过文档路径插入index
     :param index: 索引
     :param doc_file_path: 文档路径
     :param input_files 文档列表
-    :param llm_predictor: 语言模型预测器
-    :param embed_model: 嵌入模型
     :return:
     """
-    # 使用自定义的 llm_predictor 或默认值
-    # if llm_predictor is None:
-    #     llm_predictor = LLMPredictorOption.GPT3_5.value
-    # 使用自定义的 embed_model 或默认值
-    # if embed_model is None:
-    #     embed_model = EmbedModelOption.DEFAULT.value
 
-    embed_model = LangchainEmbedding(
-        HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"))
-
-    service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor, embed_model=embed_model)
+    service_context = ServiceContext.from_defaults(embed_model=Settings.embed_model)
     nodes = get_nodes_from_file(doc_file_path)
     index.insert_nodes(nodes, context=service_context)
 
@@ -182,7 +168,6 @@ def compose_graph_chat_egine() -> BaseChatEngine:
         indexes,
         index_summaries=summaries,
     )
-
     custom_query_engines = {
         index.index_id: index.as_query_engine(
             child_branch_factor=2
