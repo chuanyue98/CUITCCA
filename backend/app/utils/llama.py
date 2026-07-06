@@ -3,16 +3,32 @@ import json
 import re
 from typing import List, Any
 
-from langchain.text_splitter import SpacyTextSplitter
+from langchain_text_splitters import SpacyTextSplitter
 from langchain_core.messages import ChatMessage
-from llama_index.core import SimpleDirectoryReader
+from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser import SimpleNodeParser
 from llama_index.core.tools import QueryEngineTool
-from llama_index.llms.openai import OpenAI
 
 from configs.config import Prompts
 from utils.logger import customer_logger
+
+
+_DEFAULT_QA_INSTRUCTION = (
+    "请根据以下内容生成尽可能多的问答对。\n"
+    "要求：问题和答案都需完整详细。\n"
+    "按下面格式返回：\n"
+    "Q:\nA:\nQ:\nA:\n..."
+)
+
+
+def build_qa_generation_prompt(custom_prompt: str | None) -> str:
+    """
+    构造用于 QA 生成的指令。只返回指令本身，不拼接文档内容——
+    文档内容由 generate_qa_batched 按 chunk 拼接，这里重复拼入整篇内容
+    会导致每个 chunk 请求都携带一份完整文档，浪费大量 token。
+    """
+    return custom_prompt or _DEFAULT_QA_INSTRUCTION
 
 
 def get_nodes_from_file(file_path):
@@ -72,7 +88,7 @@ async def generate_qa_batched(contents: str, prompt: str = None):
                 """
     qa_pairs = []
     for content in contents:
-        response = await OpenAI().acomplete(prompt + content)
+        response = await Settings.llm.acomplete(prompt + content)
         if response:
             qa_pairs.append(response.text)
 

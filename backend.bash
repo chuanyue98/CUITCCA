@@ -9,10 +9,10 @@ check_port() {
   fi
 }
 
-# 激活conda环境
-activate_conda() {
-  echo "Activating conda environment..."
-  conda activate cca
+# 激活 uv venv
+activate_venv() {
+  echo "Activating uv virtual environment..."
+  source .venv/bin/activate
 }
 
 # 启动应用程序
@@ -23,5 +23,5 @@ start_application() {
 
 # 执行检测端口、激活环境和启动应用程序的操作
 check_port
-activate_conda
+activate_venv
 start_application

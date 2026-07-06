@@ -4,7 +4,7 @@ from collections import defaultdict
 # 存储访问信息的字典
 access_stats = {
     "total_visits": 0,
-    "ip_count": defaultdict(int),
+    "ip_count": 0,
     "user_visits": defaultdict(int),
     "endpoint_visits": defaultdict(int)
 }

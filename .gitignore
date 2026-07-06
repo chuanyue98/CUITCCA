@@ -5,8 +5,13 @@
 !/backend/.env.example
 /frontend/*
 /indexes/*
-!/backend/requirements.txt
-!requirements.txt
+.venv/
+uv.lock
+.env
+__pycache__/
+*.pyc
+access_stats.json
+fastapi.log
 /log/
 backend.log
 /backendlatest/*

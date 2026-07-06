@@ -1,0 +1,46 @@
+[project]
+name = "cuitcca"
+version = "0.2.0"
+description = "校园AI助手 - CUIT Campus AI Assistant"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.110.2",
+    "uvicorn>=0.29.0",
+    "python-dotenv>=1.0.1",
+    "python-multipart>=0.0.9",
+    "pydantic>=2.7.0",
+    "aiofiles>=23.2.1",
+    "openai>=1.23.1",
+    "llama-index-core>=0.10.30",
+    "llama-index-embeddings-openai>=0.1.7",
+    "llama-index-embeddings-huggingface>=0.1.0",
+    "llama-index-llms-openai>=0.1.15",
+    "llama-index-agent-openai>=0.2.2",
+    "llama-index-multi-modal-llms-openai>=0.1.5",
+    "llama-index-program-openai>=0.1.5",
+    "llama-index-question-gen-openai>=0.1.3",
+    "llama-index-readers-file>=0.1.19",
+    "llama-index-readers-llama-parse>=0.1.4",
+    "llama-parse>=0.4.1",
+    "langchain>=0.1.16",
+    "langchain-community>=0.0.33",
+    "langchain-text-splitters>=0.0.1",
+    "requests>=2.31.0",
+    "pandas>=2.2.2",
+    "python-docx>=1.1.0",
+    "pdfplumber>=0.7.0",
+    "tiktoken>=0.6.0",
+    "orjson>=3.10.1",
+    "PyYAML>=6.0.1",
+    "networkx>=3.3",
+    "xlrd>=1.2.0",
+    "XlsxWriter>=3.2.0",
+    "tqdm>=4.66.2",
+    "llama-index-llms-openai-like>=0.4.0",
+]
+
+[dependency-groups]
+dev = []
+
+[project.urls]
+Homepage = "https://github.com/ChuanYuei/CUITCCA"
