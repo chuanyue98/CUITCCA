@@ -41,7 +41,6 @@ async def chaty_graph_stream(request: Request, query: str = Form()):
     if chat_engine is None:
         chat_engine = compose_graph_chat_egine()
         _graph_chat_engines[client_id] = chat_engine
-    chat_engine.reset()
     query = query.strip()
     customer_logger.info(f"chat_stream: {query}")
     res = await chat_engine.astream_chat(query)

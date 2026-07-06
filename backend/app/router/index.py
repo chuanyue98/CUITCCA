@@ -18,7 +18,8 @@ from configs.llm_predictor import build_llm
 from handlers.llama_handler import *
 from dependencies import get_index
 from utils.file import read_file_contents, safe_filename
-from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash
+from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash, \
+    build_qa_generation_prompt
 
 index_app = APIRouter()
 
@@ -124,10 +125,10 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
         filepath = os.path.join(LOAD_PATH, filename)
         savepath = os.path.join(SAVE_PATH, filename)
         file_bytes = await file.read()
-        with open(filepath, 'wb') as f:
-            f.write(file_bytes)
-        with open(savepath, 'wb') as f:
-            f.write(file_bytes)
+        async with aiofiles.open(filepath, 'wb') as f:
+            await f.write(file_bytes)
+        async with aiofiles.open(savepath, 'wb') as f:
+            await f.write(file_bytes)
         insert_into_index(index, filepath)
     except Exception as e:
         logging.error(f"Error while handling file: {str(e)}")
@@ -169,19 +170,10 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
     return {"status": "inserted"}
 
 
-_SAFE_PROMPT_TEMPLATE = (
-    "请根据以下内容生成尽可能多的问答对。\n"
-    "要求：问题和答案都需完整详细。\n"
-    "按下面格式返回：\n"
-    "Q:\nA:\nQ:\nA:\n...\n\n"
-    "内容如下：\n{}"
-)
-
-
 @index_app.post("/{index_name}/upload_file_by_QA")
 async def upload_qa(index=Depends(get_index), prompt: str = Form(None), file: UploadFile = File(...)):
     contents = read_file_contents(file)
-    safe_prompt = _SAFE_PROMPT_TEMPLATE.format(contents)
+    safe_prompt = build_qa_generation_prompt(prompt)
     qa_pairs = await generate_qa_batched(contents, safe_prompt)
     qa_data = formatted_pairs(qa_pairs)
     id = extract_content_after_backslash(file.filename)

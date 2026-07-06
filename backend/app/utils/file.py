@@ -67,6 +67,9 @@ def read_file_contents(file: UploadFile) -> str:
                 content = content + page_text
     else:
         contents = file.file.read()
-        content = contents.decode('utf-8')
+        try:
+            content = contents.decode('utf-8')
+        except UnicodeDecodeError:
+            content = contents.decode('gbk')
 
     return ' '.join(content.split())

@@ -1,7 +1,29 @@
 import os
 
 from fastapi import HTTPException, status
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+
+class ApiKeyMiddleware(BaseHTTPMiddleware):
+    """
+    校验 Authorization: Bearer <api_key>。
+
+    注意：这里必须返回 JSONResponse 而不是 raise HTTPException——在
+    BaseHTTPMiddleware.dispatch 里抛出 HTTPException 不会被 FastAPI 的异常处理器
+    捕获，会直接变成裸的 500，而不是预期的 401（已用最小复现验证过）。
+    """
+
+    def __init__(self, app, api_key: str):
+        super().__init__(app)
+        self.api_key = api_key
+
+    async def dispatch(self, request: Request, call_next):
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith('Bearer ') or auth.removeprefix('Bearer ') != self.api_key:
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": "Unauthorized"})
+        return await call_next(request)
 
 
 def require_configured_api_key(request: Request) -> None:

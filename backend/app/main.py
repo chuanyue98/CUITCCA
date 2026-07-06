@@ -1,12 +1,12 @@
 import os
 import threading
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from dependencies import access_stats
 from router import response_app, index_app, graph_app, manage_app
+from utils.security import ApiKeyMiddleware
 
 app = FastAPI()
 
@@ -43,18 +43,8 @@ app.add_middleware(
 
 API_KEY = os.environ.get('CUITCCA_API_KEY', '')
 
-
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        if API_KEY:
-            auth = request.headers.get('Authorization', '')
-            if not auth.startswith('Bearer ') or auth.removeprefix('Bearer ') != API_KEY:
-                raise HTTPException(status_code=401, detail="Unauthorized")
-        return await call_next(request)
-
-
 if API_KEY:
-    app.add_middleware(AuthMiddleware)
+    app.add_middleware(ApiKeyMiddleware, api_key=API_KEY)
 
 
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'frontend')

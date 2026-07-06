@@ -94,9 +94,21 @@ class ChatEngineIsolationTest(unittest.TestCase):
             self._current_ip = '2.2.2.2'
             self.client.post('/graph/chat_stream', data={'query': 'hi from B'}, headers={'X-Real-IP': '2.2.2.2'})
 
-        engine_a.reset.assert_called_once()
-        engine_b.reset.assert_called_once()
         self.assertNotEqual(engine_a, engine_b)
+
+    def test_repeated_messages_from_the_same_client_do_not_reset_history(self):
+        """chat_engine.reset() used to run on every /graph/chat_stream call, wiping
+        conversation history before every message -- making multi-turn conversation
+        with CondenseQuestionChatEngine impossible. A returning client must keep
+        talking to the same, un-reset engine."""
+        engine = self._make_fake_engine()
+
+        with patch.object(self.graph, 'compose_graph_chat_egine', return_value=engine):
+            self.client.post('/graph/chat_stream', data={'query': 'first message'}, headers={'X-Real-IP': '3.3.3.3'})
+            self.client.post('/graph/chat_stream', data={'query': 'follow-up message'}, headers={'X-Real-IP': '3.3.3.3'})
+
+        engine.reset.assert_not_called()
+        self.assertEqual(engine.astream_chat.await_count, 2)
 
     def test_query_history_uses_the_calling_clients_engine(self):
         resp = self.client.post('/graph/query_history', headers={'X-Real-IP': '9.9.9.9'})

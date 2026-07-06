@@ -17,7 +17,7 @@ openai_model = ''
 
 
 def reload_env_variables():
-    load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'))
+    load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
     global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
         openai_api_key, openai_api_base, openai_model
 
