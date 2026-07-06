@@ -1,4 +1,8 @@
+from llama_index.core import Settings
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core.node_parser import SentenceSplitter
 from llama_index.llms.openai_like import OpenAILike
+import torch
 
 import configs.load_env as env_config
 
@@ -27,10 +31,27 @@ def build_llm() -> OpenAILike:
         api_key=env_config.openai_api_key,
         api_base=env_config.openai_api_base,
         is_chat_model=True,
-        context_window=_CONTEXT_WINDOWS.get(model, _DEFAULT_CONTEXT_WINDOW),
+        context_window=_CONTEXT_WINDOWS.get(model, _DEFAULT_WINDOW := _DEFAULT_CONTEXT_WINDOW),
         max_tokens=_MAX_TOKENS,
     )
 
 
+def init_settings():
+    """Lazily initialize settings to avoid immediate loading of models on import."""
+    if Settings.embed_model is None or not isinstance(Settings.embed_model, HuggingFaceEmbedding):
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        Settings.embed_model = HuggingFaceEmbedding(
+            model_name="DMetaSoul/Dmeta-embedding-zh-small",
+            device=device,
+            normalize=True,
+        )
+    if Settings.llm is None or not isinstance(Settings.llm, OpenAILike):
+        Settings.llm = build_llm()
+    if Settings.text_splitter is None:
+        Settings.text_splitter = SentenceSplitter.from_defaults(chunk_size=512)
+
+
 if __name__ == '__main__':
-    print(build_llm().complete('hi'))
+    init_settings()
+    print(Settings.llm.complete('hi'))
+

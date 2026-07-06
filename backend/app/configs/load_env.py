@@ -14,12 +14,13 @@ access_stats_path = ''
 openai_api_key = ''
 openai_api_base = ''
 openai_model = ''
+VERBOSE = False
 
 
 def reload_env_variables():
     load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
     global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
-        openai_api_key, openai_api_base, openai_model
+        openai_api_key, openai_api_base, openai_model, VERBOSE
 
     openai.api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_key = openai.api_key
@@ -28,6 +29,7 @@ def reload_env_variables():
     openai.api_base = openai_api_base
 
     openai_model = os.environ.get('OPENAI_MODEL', 'sensenova-6.7-flash-lite')
+    VERBOSE = os.environ.get('VERBOSE', 'False').lower() in ('true', '1', 't')
 
     index_save_directory = os.environ.get('INDEX_SAVE_DIRECTORY', '../../data/indexes/')
     SAVE_PATH = os.environ.get('SAVE_PATH', '../../data/upload_files')

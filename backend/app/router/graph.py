@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect
 from llama_index.core.agent import ReActAgent
 from llama_index.core.chat_engine.types import BaseChatEngine
 from llama_index.core.query_engine import RouterQueryEngine
@@ -7,6 +7,7 @@ from llama_index.core.tools import QueryEngineTool, ToolMetadata
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
 
+from configs.load_env import VERBOSE
 from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
     format_source_nodes_list, get_index_by_name
@@ -17,7 +18,21 @@ graph_app = APIRouter()
 
 
 def _client_id(request: Request) -> str:
-    return request.headers.get("X-Real-IP") or request.client.host
+    if hasattr(request.state, "session_id"):
+        return request.state.session_id
+    client_ip = request.headers.get("X-Real-IP") or (request.client.host if request.client else "unknown")
+    safe_ip = client_ip.replace(":", "_").replace(".", "_")
+    cookie_name = f"session_id_{safe_ip}"
+    return request.cookies.get(cookie_name) or client_ip
+
+
+def _prune_sessions(d: dict, max_size: int = 100):
+    while len(d) >= max_size:
+        try:
+            first_key = next(iter(d))
+            d.pop(first_key, None)
+        except StopIteration:
+            break
 
 
 # 按客户端隔离，避免不同用户共享同一个对话状态/查询结果（见 code review 报告）
@@ -27,7 +42,9 @@ _graph_chat_engines: dict[str, BaseChatEngine] = {}
 @graph_app.post("/create")
 async def create_graph(request: Request):
     """创建graph"""
-    _graph_chat_engines[_client_id(request)] = compose_graph_chat_egine()
+    client_id = _client_id(request)
+    _prune_sessions(_graph_chat_engines, 100)
+    _graph_chat_engines[client_id] = compose_graph_chat_egine()
     return {"status": "ok"}
 
 
@@ -91,8 +108,11 @@ async def query_graph(request: Request, query: str = Form()):
         response = await graph_query_engine.aquery(query)
     except Exception as e:
         error_logger.error(f"error: {e}")
-        return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"})
-    _last_query_response[_client_id(request)] = response.source_nodes
+        return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"},
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    client_id = _client_id(request)
+    _prune_sessions(_last_query_response, 100)
+    _last_query_response[client_id] = response.source_nodes
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
@@ -114,16 +134,40 @@ async def agent(query: str = Form()):
         )
         for index in indexes
     ]
-    agent = ReActAgent.from_tools(query_engine_tools, verbose=True)
+    agent_obj = ReActAgent.from_tools(query_engine_tools, verbose=VERBOSE)
     try:
-        response = await agent.achat(query)
+        response = await agent_obj.achat(query)
     except Exception as e:
         error_logger.error(f"error: {e}")
-        return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"})
+        return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"},
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
     return {"response": response.response}
+
+
+@graph_app.websocket("/query")
+async def websocket_query(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        query_engine = compose_graph_query_engine()
+        while True:
+            query = await websocket.receive_text()
+            query = query.strip()
+            response = await query_engine.aquery(query)
+            ans = str(response)
+            if ans == "Empty Response":
+                ans = '我还不知道，请反馈给我吧'
+            await websocket.send_text(ans)
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        error_logger.error(f"websocket error: {e}")
+        try:
+            await websocket.send_text("出错了，请稍后在试一下吧")
+        except Exception:
+            pass
 
 
 @graph_app.post("/query_history")

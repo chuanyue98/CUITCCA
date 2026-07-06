@@ -13,12 +13,12 @@ if %errorlevel% equ 0 (
 )
 
 echo 激活虚拟环境...
-call backend\venv\Scripts\activate.bat
-
-echo 启动应用程序
-start /b backend\venv\Scripts\python.exe backend\app\main.py > fastapi.log 2>&1
+call .venv\Scripts\activate.bat
 
 echo 如果日志文件夹不存在，则创建
 if not exist log mkdir log
+
+echo 启动应用程序并守护进程
+start /b powershell -Command "while ($true) { .venv\Scripts\python.exe backend\app\main.py; Write-Host 'Application crashed. Restarting...'; Start-Sleep -Seconds 1 }" > fastapi.log 2>&1
 
 

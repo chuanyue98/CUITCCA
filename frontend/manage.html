@@ -81,10 +81,18 @@
         indexListDiv.appendChild(select);
 
         // 获取选择的索引名称
-        const selectedIndex = document.getElementById('index-select').value;
+        const indexSelect = document.getElementById('index-select');
+        const selectedIndex = indexSelect ? indexSelect.value : null;
 
-        // 手动调用 showIndexDetails 函数加载索引详情
-        showIndexDetails(selectedIndex);
+        if (selectedIndex) {
+            // 手动调用 showIndexDetails 函数加载索引详情
+            showIndexDetails(selectedIndex);
+        } else {
+            // Clear details display
+            document.getElementById('index-name-display').innerText = '';
+            document.getElementById('node-list').innerHTML = '';
+            document.getElementById('summary').innerHTML = '';
+        }
     }
 
     // Function to save an index

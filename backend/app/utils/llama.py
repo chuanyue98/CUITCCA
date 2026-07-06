@@ -3,11 +3,10 @@ import json
 import re
 from typing import List, Any
 
-from langchain_text_splitters import SpacyTextSplitter
 from langchain_core.messages import ChatMessage
 from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.core.indices.base import BaseIndex
-from llama_index.core.node_parser import SimpleNodeParser
+from llama_index.core.node_parser import SimpleNodeParser, SentenceSplitter
 from llama_index.core.tools import QueryEngineTool
 
 from configs.config import Prompts
@@ -45,7 +44,7 @@ def get_nodes_from_file(file_path):
     return parser.get_nodes_from_documents(documents)
 
 
-def extract_content_after_backslash(string):
+def extract_content_after_backslash(string: str) -> str:
     """
     去除文件名中的路径（同时兼容 Windows 反斜杠路径和 POSIX 正斜杠路径）
     :param string:
@@ -55,7 +54,11 @@ def extract_content_after_backslash(string):
 
 
 def formatted_pairs(qa_data_list):
-    """将字符串中的QA对格式化，返回列表"""
+    """
+    格式化问答对
+    :param qa_data_list: 问答数据列表
+    :return: 提取出的问答对列表
+    """
     qa_pairs = []
     pattern = r'(?:Q: |A: )'
     for qa_data in qa_data_list:
@@ -73,7 +76,7 @@ async def generate_qa_batched(contents: str, prompt: str = None):
     """
     contents = contents.replace("\n", "")
     contents = contents.strip()
-    textSplitter = SpacyTextSplitter(pipeline="zh_core_web_sm", chunk_size=1024)
+    textSplitter = SentenceSplitter(chunk_size=1024)
     contents = textSplitter.split_text(contents)
     if prompt is None:
         prompt = "我会发送一段长文本"
@@ -85,11 +88,13 @@ async def generate_qa_batched(contents: str, prompt: str = None):
                     A:
                     ...
                 """
-    qa_pairs = []
-    for content in contents:
-        response = await Settings.llm.acomplete(prompt + content)
-        if response:
-            qa_pairs.append(response.text)
+    semaphore = asyncio.Semaphore(5)
+    async def sem_complete(content):
+        async with semaphore:
+            return await Settings.llm.acomplete(prompt + content)
+    tasks = [sem_complete(content) for content in contents]
+    responses = await asyncio.gather(*tasks)
+    qa_pairs = [res.text for res in responses if res]
 
     return qa_pairs
 
