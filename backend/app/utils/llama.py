@@ -5,11 +5,10 @@ from typing import List, Any
 
 from langchain_text_splitters import SpacyTextSplitter
 from langchain_core.messages import ChatMessage
-from llama_index.core import SimpleDirectoryReader
+from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser import SimpleNodeParser
 from llama_index.core.tools import QueryEngineTool
-from llama_index.llms.openai import OpenAI
 
 from configs.config import Prompts
 from utils.logger import customer_logger
@@ -72,7 +71,7 @@ async def generate_qa_batched(contents: str, prompt: str = None):
                 """
     qa_pairs = []
     for content in contents:
-        response = await OpenAI().acomplete(prompt + content)
+        response = await Settings.llm.acomplete(prompt + content)
         if response:
             qa_pairs.append(response.text)
 

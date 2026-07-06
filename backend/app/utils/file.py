@@ -10,6 +10,16 @@ from configs.load_env import PROJECT_ROOT, FEEDBACK_PATH
 from models.user import Feedback
 
 
+def safe_filename(filename: str) -> str:
+    """
+    去除路径分隔符，只保留文件名本身，防止路径穿越（如 ../../etc/passwd）
+    """
+    name = os.path.basename(filename.replace('\\', '/'))
+    if name in ('', '.', '..'):
+        raise ValueError(f'invalid filename: {filename!r}')
+    return name
+
+
 def get_folders_list(root_dir: str) -> list:
     folders_list = []
     dir = os.path.join(PROJECT_ROOT, root_dir)

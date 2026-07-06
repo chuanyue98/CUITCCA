@@ -14,9 +14,10 @@ from starlette.responses import JSONResponse
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
+from configs.llm_predictor import build_llm
 from handlers.llama_handler import *
 from dependencies import get_index
-from utils.file import read_file_contents
+from utils.file import read_file_contents, safe_filename
 from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash
 
 index_app = APIRouter()
@@ -27,6 +28,7 @@ Settings.embed_model = HuggingFaceEmbedding(
     device=device,
     normalize=True,
 )
+Settings.llm = build_llm()
 
 
 text_splitter = SentenceSplitter.from_defaults(chunk_size=512)
@@ -118,7 +120,7 @@ async def update_doc(nodeId, index=Depends(get_index), text: str = Form()):
 async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
     filepath = None
     try:
-        filename = file.filename
+        filename = safe_filename(file.filename)
         filepath = os.path.join(LOAD_PATH, filename)
         savepath = os.path.join(SAVE_PATH, filename)
         file_bytes = await file.read()
@@ -142,7 +144,7 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
     filepaths = []
     try:
         for file in files:
-            filename = file.filename
+            filename = safe_filename(file.filename)
             filepath = os.path.join(LOAD_PATH, filename)
             savepath = os.path.join(SAVE_PATH, index.index_id, filename)
             file_bytes = await file.read()

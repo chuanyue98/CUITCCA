@@ -3,9 +3,13 @@ import os
 from collections import defaultdict
 from dotenv import dotenv_values, set_key
 from fastapi import Depends, HTTPException, status, APIRouter, Form
+from llama_index.core import Settings
 from starlette.requests import Request
 
+from utils.security import require_configured_api_key
+
 from configs.load_env import access_stats_path, reload_env_variables, PROJECT_ROOT
+from configs.llm_predictor import build_llm
 from dependencies.manage import access_stats
 from models.user import Feedback
 from utils.file import save_feedback_to_file
@@ -62,7 +66,7 @@ def create_feedback(feedback: Feedback, request: Request):
 _env_path = os.path.join(os.path.dirname(PROJECT_ROOT), '.env')
 
 
-@manage_app.post('/env')
+@manage_app.post('/env', dependencies=[Depends(require_configured_api_key)])
 def set_env(openai_api_key=Form(), openai_base_url=Form(default='https://api.openai.com/v1')):
     if not openai_api_key:
         raise HTTPException(status_code=400, detail="OPENAI_API_KEY is required")
@@ -74,4 +78,5 @@ def set_env(openai_api_key=Form(), openai_base_url=Form(default='https://api.ope
     for k, v in env_values.items():
         set_key(_env_path, k, v)
     reload_env_variables()
+    Settings.llm = build_llm()
     return {"message": "环境变量已更新"}

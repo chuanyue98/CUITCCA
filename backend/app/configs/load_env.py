@@ -12,18 +12,22 @@ LOG_PATH = ''
 FILE_PATH = ''
 access_stats_path = ''
 openai_api_key = ''
+openai_api_base = ''
+openai_model = ''
 
 
 def reload_env_variables():
     load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'))
-    global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, openai_api_key
+    global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
+        openai_api_key, openai_api_base, openai_model
 
     openai.api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_key = openai.api_key
 
-    openai_api_base = os.environ.get('OPENAI_API_BASE')
-    if openai_api_base:
-        openai.api_base = openai_api_base
+    openai_api_base = os.environ.get('OPENAI_API_BASE') or 'https://api.openai.com/v1'
+    openai.api_base = openai_api_base
+
+    openai_model = os.environ.get('OPENAI_MODEL', 'sensenova-6.7-flash-lite')
 
     index_save_directory = os.environ.get('INDEX_SAVE_DIRECTORY', '../../data/indexes/')
     SAVE_PATH = os.environ.get('SAVE_PATH', '../../data/upload_files')

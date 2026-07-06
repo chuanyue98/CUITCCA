@@ -40,6 +40,7 @@ def loadAllIndexes():
     :param index_save_directory: 索引保存目录
     :return:
     """
+    indexes.clear()
     for index_dir_name in get_folders_list(index_save_directory):
         # 获取索引目录的完整路径
         index_dir_path = os.path.join(index_save_directory, index_dir_name)
@@ -65,7 +66,7 @@ def insert_into_index(index, doc_file_path):
     index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
 
 
-def embeddingQA(index: BaseIndex, qa_pairs, id=str(uuid.uuid4())):
+def embeddingQA(index: BaseIndex, qa_pairs, id=None):
     """
     将拆分后的问答对插入索引
     :param index: 索引
@@ -77,6 +78,8 @@ def embeddingQA(index: BaseIndex, qa_pairs, id=str(uuid.uuid4())):
     # llm_predictor = LLMPredictorOption.GPT3_5.value
     # # 使用自定义的 embed_model 或默认值
     # embed_model = EmbedModelOption.DEFAULT.value
+    if id is None:
+        id = str(uuid.uuid4())
 
     for i in range(0, len(qa_pairs), 2):
         q = qa_pairs[i]
@@ -117,6 +120,7 @@ def updateNodeById(index_, id_, text):
     node = index_.docstore.docs[id_]
     node.set_content(text)
     index_.docstore.add_documents([node])
+    saveIndex(index_)
 
 
 def deleteNodeById(index, id_):
@@ -149,7 +153,7 @@ def deleteDocById(index, id):
 
 
 def saveIndex(index):
-    index.storage_context.persist(os.path.join(index_save_directory + index.index_id))
+    index.storage_context.persist(os.path.join(index_save_directory, index.index_id))
 
 
 def compose_graph_chat_egine() -> BaseChatEngine:

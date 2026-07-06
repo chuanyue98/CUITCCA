@@ -24,7 +24,7 @@
         const queryInput = document.getElementById('queryInput');
         const query = queryInput.value;
 
-        const response = await fetch('http://127.0.0.1:8000/index/test/query', {
+        const response = await fetch('/index/test/query', {
             method: 'POST',
             body: new URLSearchParams({
                 query: query

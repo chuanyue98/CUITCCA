@@ -1,9 +1,12 @@
+import functools
+
 from fastapi import HTTPException
 
 from utils.logger import error_logger
 
 
 def id_not_found_exceptions(func):
+    @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)

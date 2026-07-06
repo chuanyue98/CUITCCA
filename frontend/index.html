@@ -645,7 +645,7 @@
 	function SendXMLHttpRequest_Get(type) {
 
 		var xmlhttp; 
-        var url = "http://101.32.45.4:80/api" + type;
+        var url = type;
 
 		// 创建XMLHttpRequest对象，用于向服务器发送请求
 		if (window.XMLHttpRequest) {
@@ -672,7 +672,7 @@
 
 	function SendXMLHttpRequest_Post(type, id, reply, chatbox, replyContent, replySender,input_value,replybox_side,replyImg) {
     var xmlhttp;
-    var url = "http://101.32.45.4:80/api" + type;
+    var url = type;
 
     // 创建XMLHttpRequest对象，用于向服务器发送请求
     if (window.XMLHttpRequest) {

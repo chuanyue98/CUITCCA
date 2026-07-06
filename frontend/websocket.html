@@ -20,8 +20,7 @@
 }
 </style>
 <script>
-    const api = "://127.0.0.1:8000/graph/query";
-    // const url = "://101.32.45.4:8080/api/graph/query";
+    const api = "://" + location.host + "/graph/query";
     let status = document.getElementById("status");
     let message = document.getElementById("message");
     let inp = document.getElementById("inp");
