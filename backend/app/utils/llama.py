@@ -39,7 +39,7 @@ def get_nodes_from_file(file_path):
     """
     # 加载文本分词器
     parser = SimpleNodeParser.from_defaults()
-    documents = SimpleDirectoryReader(file_path, filename_as_id=True).load_data()
+    documents = SimpleDirectoryReader(input_files=[file_path], filename_as_id=True).load_data()
     for doc in documents:
         doc.id_ = extract_content_after_backslash(doc.id_)
     return parser.get_nodes_from_documents(documents)
