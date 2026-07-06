@@ -237,7 +237,7 @@ async def save_index(index=Depends(get_index)):
 
 @index_app.post("/{index_name}/getfile")
 async def get_file(index=Depends(get_index)):
-    convert_index_to_file(index.index_id, f"{index.index_id}.txt")
+    citf(index, f"{index.index_id}.txt")
     return {"status": "ok"}
 
 

@@ -23,7 +23,8 @@ access_stats_lock = threading.Lock()
 @app.middleware("http")
 async def session_and_stats_middleware(request, call_next):
     client_ip = request.headers.get("X-Real-IP") or (request.client.host if request.client else "unknown")
-    cookie_name = f"session_id_{client_ip}"
+    safe_ip = client_ip.replace(":", "_").replace(".", "_")
+    cookie_name = f"session_id_{safe_ip}"
     session_id = request.cookies.get(cookie_name)
     has_session = bool(session_id)
     if not has_session:

@@ -21,7 +21,8 @@ def _client_id(request: Request) -> str:
     if hasattr(request.state, "session_id"):
         return request.state.session_id
     client_ip = request.headers.get("X-Real-IP") or (request.client.host if request.client else "unknown")
-    cookie_name = f"session_id_{client_ip}"
+    safe_ip = client_ip.replace(":", "_").replace(".", "_")
+    cookie_name = f"session_id_{safe_ip}"
     return request.cookies.get(cookie_name) or client_ip
 
 
@@ -150,10 +151,10 @@ async def agent(query: str = Form()):
 async def websocket_query(websocket: WebSocket):
     await websocket.accept()
     try:
+        query_engine = compose_graph_query_engine()
         while True:
             query = await websocket.receive_text()
             query = query.strip()
-            query_engine = compose_graph_query_engine()
             response = await query_engine.aquery(query)
             ans = str(response)
             if ans == "Empty Response":

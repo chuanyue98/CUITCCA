@@ -791,13 +791,14 @@
       <script>
         function feedback()
         {
-          var email = document.getElementById("email").value;
-          var text = document.getElementById("feedback").value;
-
-          if (email.trim() === "") {
-              window.alert("请填写您的邮箱。");
+          var emailInput = document.getElementById("email");
+          if (!emailInput.checkValidity()) {
+              window.alert("请输入有效的邮箱地址。");
               return;
           }
+          var email = emailInput.value;
+          var text = document.getElementById("feedback").value;
+
           if (text.trim() !== "") {
             //防止刷爆
             SendXMLHttpRequest_Post_feedback(type_14_p, email, text);

@@ -88,7 +88,11 @@ async def generate_qa_batched(contents: str, prompt: str = None):
                     A:
                     ...
                 """
-    tasks = [Settings.llm.acomplete(prompt + content) for content in contents]
+    semaphore = asyncio.Semaphore(5)
+    async def sem_complete(content):
+        async with semaphore:
+            return await Settings.llm.acomplete(prompt + content)
+    tasks = [sem_complete(content) for content in contents]
     responses = await asyncio.gather(*tasks)
     qa_pairs = [res.text for res in responses if res]
 
