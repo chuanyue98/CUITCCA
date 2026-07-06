@@ -47,12 +47,11 @@ def get_nodes_from_file(file_path):
 
 def extract_content_after_backslash(string):
     """
-    去除文件名中的路径
+    去除文件名中的路径（同时兼容 Windows 反斜杠路径和 POSIX 正斜杠路径）
     :param string:
     :return:
     """
-    parts = string.split('\\')
-    return parts[-1]
+    return string.replace('\\', '/').rsplit('/', 1)[-1]
 
 
 def formatted_pairs(qa_data_list):
