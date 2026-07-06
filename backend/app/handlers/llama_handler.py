@@ -15,9 +15,9 @@ from llama_index.core.indices.query.base import BaseQueryEngine
 
 
 from configs.config import Prompts
-from configs.load_env import index_save_directory, FILE_PATH
+from configs.load_env import index_save_directory, FILE_PATH, VERBOSE
 from utils.file import get_folders_list
-from utils.llama import get_nodes_from_file, remove_index_store, remove_vector_store, remove_docstore
+from utils.llama import get_nodes_from_file
 from utils.logger import customer_logger
 
 indexes = []
@@ -40,16 +40,28 @@ def loadAllIndexes():
     :param index_save_directory: 索引保存目录
     :return:
     """
+    from configs.llm_predictor import init_settings
+    init_settings()
     indexes.clear()
     for index_dir_name in get_folders_list(index_save_directory):
         # 获取索引目录的完整路径
         index_dir_path = os.path.join(index_save_directory, index_dir_name)
-        storage_context = StorageContext.from_defaults(persist_dir=index_dir_path)
-        index = load_index_from_storage(storage_context)
-        indexes.append(index)
+        try:
+            storage_context = StorageContext.from_defaults(persist_dir=index_dir_path)
+            index = load_index_from_storage(storage_context)
+            # Load summary if summary.txt exists
+            summary_path = os.path.join(index_dir_path, 'summary.txt')
+            if os.path.exists(summary_path):
+                with open(summary_path, 'r', encoding='utf-8') as f:
+                    index.summary = f.read().strip()
+            else:
+                index.summary = ""
+            indexes.append(index)
+        except Exception as e:
+            logging.error(f"Error loading index {index_dir_name}: {e}")
 
 
-def insert_into_index(index, doc_file_path):
+async def insert_into_index(index, doc_file_path):
     """
     通过文档路径插入index
     :param index: 索引
@@ -62,8 +74,8 @@ def insert_into_index(index, doc_file_path):
     index.insert_nodes(nodes)
 
     # 生成summary maxRecursion
-    index.summary = summary_index(index)
-    index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
+    index.summary = await summary_index(index)
+    saveIndex(index)
 
 
 def embeddingQA(index: BaseIndex, qa_pairs, id=None):
@@ -74,10 +86,6 @@ def embeddingQA(index: BaseIndex, qa_pairs, id=None):
     :param id: 文档id
     :return:
     """
-    # # 使用自定义的 llm_predictor 或默认值
-    # llm_predictor = LLMPredictorOption.GPT3_5.value
-    # # 使用自定义的 embed_model 或默认值
-    # embed_model = EmbedModelOption.DEFAULT.value
     if id is None:
         id = str(uuid.uuid4())
 
@@ -90,9 +98,7 @@ def embeddingQA(index: BaseIndex, qa_pairs, id=None):
             index.insert(doc)
         else:
             customer_logger.info(f"Last element': {qa_pairs[i]}")
-    # 生成summary 会出问题
-    # index.summary = summary_index(index)
-    index.storage_context.persist(persist_dir=os.path.join(index_save_directory, index.index_id))
+    saveIndex(index)
 
 
 def get_all_docs(index):
@@ -130,16 +136,19 @@ def deleteNodeById(index, id_):
     :param id_: node_id
     :return:
     """
-    # TODO 记录删除的节点
-    # content = index.docstore.get_node(id_).get_content()
     index.docstore.delete_document(id_)
+    # Also delete node from index struct in memory
+    if hasattr(index, 'index_struct') and hasattr(index.index_struct, 'nodes_dict'):
+        if id_ in index.index_struct.nodes_dict:
+            del index.index_struct.nodes_dict[id_]
+    # Delete from in-memory SimpleVectorStore if applicable
+    if hasattr(index, 'vector_store') and hasattr(index.vector_store, '_data'):
+        data = index.vector_store._data
+        if hasattr(data, 'embedding_dict') and id_ in data.embedding_dict:
+            del data.embedding_dict[id_]
+        if hasattr(data, 'text_id_to_ref_doc_id') and id_ in data.text_id_to_ref_doc_id:
+            del data.text_id_to_ref_doc_id[id_]
     saveIndex(index)
-    # 删除在json文件的记录，防止出错doc_not_found
-    path = os.path.join(index_save_directory, index.index_id)
-    print(path)
-    remove_index_store(os.path.join(path, 'index_store.json'), id_)
-    remove_vector_store(os.path.join(path, 'vector_store.json'), id_)
-    remove_docstore(os.path.join(path, 'docstore.json'), id_)
 
 
 def deleteDocById(index, id):
@@ -153,7 +162,14 @@ def deleteDocById(index, id):
 
 
 def saveIndex(index):
-    index.storage_context.persist(os.path.join(index_save_directory, index.index_id))
+    persist_dir = os.path.join(index_save_directory, index.index_id)
+    index.storage_context.persist(persist_dir)
+    # Persist index.summary to summary.txt
+    summary_path = os.path.join(persist_dir, 'summary.txt')
+    summary_val = getattr(index, 'summary', '')
+    if summary_val:
+        with open(summary_path, 'w', encoding='utf-8') as f:
+            f.write(summary_val)
 
 
 def compose_graph_chat_egine() -> BaseChatEngine:
@@ -181,10 +197,10 @@ def compose_graph_chat_egine() -> BaseChatEngine:
                                            refine_template=Prompts.REFINE_PROMPT.value,
                                            streaming=True,
                                            similarity_top_k=3,
-                                           verbose=True,
+                                           verbose=VERBOSE,
                                            custom_query_engines=custom_query_engines,),
         condense_question_prompt=Prompts.CONDENSE_QUESTION_PROMPT.value,
-        verbose=True,
+        verbose=VERBOSE,
         chat_mode="condense_question",
     )
 
@@ -216,16 +232,16 @@ def compose_graph_query_engine(streaming=False) -> BaseQueryEngine:
                                          refine_template=Prompts.REFINE_PROMPT.value,
                                          streaming=streaming,
                                          similarity_top_k=3,
-                                         verbose=True,
+                                         verbose=VERBOSE,
                                          )
     return query_engine
 
 
-def summary_index(index):
+async def summary_index(index):
     """
          生成 summary
     """
-    summary = index.as_query_engine(response_mode="tree_summarize").query(
+    summary = await index.as_query_engine(response_mode="tree_summarize").aquery(
         "总结，生成文章摘要，要覆盖所有要点，方便后续检索,不需要详细内容，只需要关键信息，方便后续检索")
     # 去掉换行符、制表符、多余的空格和其他非字母数字字符
     summary_str = re.sub(r"\s+", " ", str(summary))
@@ -254,7 +270,7 @@ def get_index_by_name(index_name):
 
 def get_prompt_by_name(prompt_type):
     """获取Prompt"""
-    return Prompt(getattr(Prompts, prompt_type.value))
+    return getattr(Prompts, prompt_type.value).value
 
 
 def convert_index_to_file(index_name, file_name):
@@ -335,7 +351,7 @@ if __name__ == "__main__":
     query_engine = graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
                                          refine_template=Prompts.REFINE_PROMPT.value,
                                          similarity_top_k=3,
-                                         verbose=True,
+                                         verbose=VERBOSE,
                                          custom_query_engines=get_index_by_name('test').as_query_engine(),
                                          node_postprocessors=[SimilarityPostprocessor(similarity_cutoff=0.7)],
                                          # response_synthesizer=response_synthesizer

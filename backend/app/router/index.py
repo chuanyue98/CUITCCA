@@ -1,6 +1,7 @@
 import os
 import shutil
 import re
+import uuid
 from typing import List
 
 import aiofiles
@@ -14,7 +15,7 @@ from starlette.responses import JSONResponse
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
-from configs.llm_predictor import build_llm
+from configs.llm_predictor import build_llm, init_settings
 from handlers.llama_handler import *
 from dependencies import get_index
 from utils.file import read_file_contents, safe_filename
@@ -23,24 +24,13 @@ from utils.llama import formatted_pairs, generate_qa_batched, extract_content_af
 
 index_app = APIRouter()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-Settings.embed_model = HuggingFaceEmbedding(
-    model_name="DMetaSoul/Dmeta-embedding-zh-small",
-    device=device,
-    normalize=True,
-)
-Settings.llm = build_llm()
-
-
-text_splitter = SentenceSplitter.from_defaults(chunk_size=512)
-Settings.text_splitter = text_splitter
-
 
 def _sanitize_index_name(name: str) -> str:
     return re.sub(r'[^\w\-]', '_', name)
 
 
 async def startup_event():
+    init_settings()
     loadAllIndexes()
     for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:
         if not os.path.exists(directory):
@@ -54,7 +44,6 @@ async def startup():
 
 @index_app.get("/")
 async def index():
-    loadAllIndexes()
     return {"status": "ok", "load": "ok"}
 
 
@@ -68,11 +57,12 @@ def get_index_list():
 
 @index_app.post("/create")
 async def create_index(index_name: str = Form()):
-    if index_name in get_folders_list(index_save_directory):
+    sanitized_name = _sanitize_index_name(index_name)
+    if sanitized_name in get_folders_list(index_save_directory):
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
-    createIndex(_sanitize_index_name(index_name))
+    createIndex(sanitized_name)
     loadAllIndexes()
-    return JSONResponse(content={'status': 'success', 'msg': f'index {index_name} created'})
+    return JSONResponse(content={'status': 'success', 'msg': f'index {sanitized_name} created'})
 
 
 @index_app.get("/{index_name}/info")
@@ -111,7 +101,7 @@ async def query_index(index=Depends(get_index), query: str = Form()):
 async def update_doc(nodeId, index=Depends(get_index), text: str = Form()):
     try:
         updateNodeById(index, nodeId, text)
-    except ValueError:
+    except (ValueError, KeyError):
         return JSONResponse(content={'status': 'detail', 'message': 'node_id not exist'},
                             status_code=status.HTTP_404_NOT_FOUND)
     return JSONResponse(content={"status": "updated"})
@@ -122,14 +112,15 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
     filepath = None
     try:
         filename = safe_filename(file.filename)
-        filepath = os.path.join(LOAD_PATH, filename)
+        unique_id = str(uuid.uuid4())
+        filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
         savepath = os.path.join(SAVE_PATH, filename)
         file_bytes = await file.read()
         async with aiofiles.open(filepath, 'wb') as f:
             await f.write(file_bytes)
         async with aiofiles.open(savepath, 'wb') as f:
             await f.write(file_bytes)
-        insert_into_index(index, filepath)
+        await insert_into_index(index, filepath)
     except Exception as e:
         logging.error(f"Error while handling file: {str(e)}")
         return JSONResponse(content={"status": "detail", "message": "Error while handling file: {}".format(str(e))},
@@ -146,7 +137,8 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
     try:
         for file in files:
             filename = safe_filename(file.filename)
-            filepath = os.path.join(LOAD_PATH, filename)
+            unique_id = str(uuid.uuid4())
+            filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
             savepath = os.path.join(SAVE_PATH, index.index_id, filename)
             file_bytes = await file.read()
             async with aiofiles.open(filepath, 'wb') as f:
@@ -157,7 +149,7 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
                 await f.write(file_bytes)
             filepaths.append(filepath)
         for fp in filepaths:
-            insert_into_index(index, fp)
+            await insert_into_index(index, fp)
 
     except Exception as e:
         return JSONResponse(content={"status": "detail", "message": f"Error while handling file: {str(e)}"},
@@ -213,13 +205,15 @@ async def get_summary(index=Depends(get_index)):
 @index_app.post("/{index_name}/set_summary")
 async def set_summary(index=Depends(get_index), summary: str = Form()):
     index.summary = summary
+    saveIndex(index)
     return {"status": "ok", "summary": index.summary}
 
 
 @index_app.post("/{index_name}/generate_summary")
 async def generate_summary(index=Depends(get_index)):
-    index.generate_summary()
-    summary = summary_index(index)
+    summary = await summary_index(index)
+    index.summary = summary
+    saveIndex(index)
     return {"status": "ok", "summary": summary}
 
 
@@ -231,6 +225,7 @@ async def insert_docs(text=Form(), doc_id=Form(None), index=Depends(get_index)):
         doc_id = doc_id.replace("\\\\", "\\")
         doc = Document(text=text, doc_id=doc_id)
     index.insert(doc)
+    saveIndex(index)
     return {"status": "ok"}
 
 
@@ -241,8 +236,8 @@ async def save_index(index=Depends(get_index)):
 
 
 @index_app.post("/{index_name}/getfile")
-async def get_file(index_name):
-    convert_index_to_file(index_name, f"{index_name}.txt")
+async def get_file(index=Depends(get_index)):
+    convert_index_to_file(index.index_id, f"{index.index_id}.txt")
     return {"status": "ok"}
 
 

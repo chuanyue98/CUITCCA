@@ -1,6 +1,8 @@
 import os
+import uuid
 from typing import List
 
+import aiofiles
 from fastapi import APIRouter, Depends, UploadFile, File
 from llama_index.core import Settings
 from llama_index.core.schema import TextNode
@@ -21,13 +23,14 @@ async def upload_file(file: UploadFile = File(...)):
     filepath = None
     try:
         filename = safe_filename(file.filename)
-        filepath = os.path.join(LOAD_PATH, filename)
+        unique_id = str(uuid.uuid4())
+        filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
         savepath = os.path.join(SAVE_PATH, filename)
         file_bytes = await file.read()
-        with open(filepath, 'wb') as f:
-            f.write(file_bytes)
-        with open(savepath, 'wb') as f:
-            f.write(file_bytes)
+        async with aiofiles.open(filepath, 'wb') as f:
+            await f.write(file_bytes)
+        async with aiofiles.open(savepath, 'wb') as f:
+            await f.write(file_bytes)
 
         nodes = get_nodes_from_file(filepath)
         return nodes

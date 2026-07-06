@@ -15,10 +15,10 @@ activate_venv() {
   source .venv/bin/activate
 }
 
-# 启动应用程序
+# 启动应用程序并守护进程
 start_application() {
-  echo "Starting the application..."
-  nohup python backend/app/main.py > fastapi.log 2>&1 &
+  echo "Starting the application with process guardian..."
+  nohup bash -c "while true; do python backend/app/main.py; echo 'Application crashed. Restarting...'; sleep 1; done" > fastapi.log 2>&1 &
 }
 
 # 执行检测端口、激活环境和启动应用程序的操作

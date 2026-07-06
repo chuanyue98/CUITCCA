@@ -20,7 +20,7 @@ class GenerateQaBatchedUsesConfiguredLlmTest(unittest.TestCase):
         fake_llm = MagicMock()
         fake_llm.acomplete = AsyncMock(return_value=fake_response)
 
-        with patch.object(llama_utils, 'SpacyTextSplitter', return_value=fake_splitter), \
+        with patch.object(llama_utils, 'SentenceSplitter', return_value=fake_splitter), \
              patch.object(llama_utils, 'Settings') as mock_settings:
             mock_settings.llm = fake_llm
             result = self._run(llama_utils.generate_qa_batched('some long text'))

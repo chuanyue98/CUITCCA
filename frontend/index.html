@@ -670,6 +670,18 @@
 	}
 
 
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+
 	function SendXMLHttpRequest_Post(type, id, reply, chatbox, replyContent, replySender,input_value,replybox_side,replyImg) {
     var xmlhttp;
     var url = type;
@@ -686,7 +698,7 @@
     xmlhttp.onreadystatechange = function () {
             let currentIndex = 0; // 当前打字位置
             let currentHTML = ""; // 当前已经生成的HTML文本
-        if (xmlhttp.readyState == 4||xmlhttp.status == 200) {
+        if (xmlhttp.readyState == 4) {
             if (xmlhttp.status == 200) {
                 // 获取服务器返回的响应内容并更新页面上的显示结果
                 var responsecontent = xmlhttp.responseText;
@@ -694,11 +706,9 @@
                 console.log("获取到了结果");
 
                 try {
-                    //var Answer = "成功获取HTTP响应，得到结果!\n\n" + responsecontent;
-                    var Answer = responsecontent;
-                    //var extractedText = Answer.match(/"\\n\\n(.*?)"/)[1];
+                    var Answer = extractBestAnswer(responsecontent);
+                    Answer = escapeHTML(Answer);
                     console.log("答案处理成功");
-                    //displayAnswer(reply, chatbox, replyContent, replySender,id,replybox_side,replyImg);
 
                     typeText(content_id,Answer,currentIndex,currentHTML);
                     document.getElementById("submit").disabled = false;
@@ -706,14 +716,12 @@
                 } catch (error) {
                     console.error("解析响应数据失败：" + error);
                     var Answer = "解析响应数据失败: "+xmlhttp.status;
-                    //displayAnswer(reply, chatbox, replyContent, replySender,id,replybox_side,replyImg);
                     typeText(content_id,Answer,currentIndex,currentHTML);
                     document.getElementById("submit").disabled = false;
                 }
             } else {
                 console.error("请求失败：" + xmlhttp.status);
                 var Answer = "请求失败: "+xmlhttp.status;
-                //displayAnswer(reply, chatbox, replyContent, replySender,id,replybox_side,replyImg);
                 console.log("执行typetext");
                 typeText(content_id,Answer,currentIndex,currentHTML);
                 document.getElementById("submit").disabled = false;
@@ -882,6 +890,15 @@
                     const closingTagIndex = Text.indexOf(">", currentIndex);
                     currentHTML += Text.slice(currentIndex, closingTagIndex + 1);
                     currentIndex = closingTagIndex + 1;
+                } else if (currentChar === "&") {
+                    const closingSemicolonIndex = Text.indexOf(";", currentIndex);
+                    if (closingSemicolonIndex !== -1 && closingSemicolonIndex - currentIndex < 10) {
+                        currentHTML += Text.slice(currentIndex, closingSemicolonIndex + 1);
+                        currentIndex = closingSemicolonIndex + 1;
+                    } else {
+                        currentHTML += currentChar;
+                        currentIndex++;
+                    }
                 } else if (currentChar === "\\"&& nextChar ==="n" && currentIndex >5 ) {
                     currentHTML += "<br>"; // 添加换行
                     currentIndex+=2;

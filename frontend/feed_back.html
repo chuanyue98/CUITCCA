@@ -342,6 +342,7 @@
         }
         .feedback{
             display: flex;
+            flex-direction: column;
             flex-wrap: nowrap;
             flex-grow: 1;
             height: 450px;
@@ -354,9 +355,20 @@
             width: 60px;
             height: 10px;
         }
+        .feedback_email {
+            width: 500px;
+            height: 40px;
+            margin-bottom: 15px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid rgb(209, 209, 209);
+            box-shadow: 0 2px 20px rgba(157, 157, 157, 0.5);
+            box-sizing: border-box;
+            border-radius: 4px;
+        }
         .feedback_textarea{
             width: 500px;
-            height: 400px;
+            height: 345px;
             flex-grow: 1;
             min-width: 10px;
             padding: 10px;
@@ -499,8 +511,8 @@
                 <div class="talk_outlinein">
                     <div class="side"></div>
                     <div class="feedback">
+                        <input type="email" id="email" class="feedback_email" placeholder="请输入您的邮箱地址..." required>
                         <textarea name="" id="feedback" cols="10" rows="10" class="feedback_textarea" placeholder="请输入您的宝贵意见..."></textarea>
-                        
                     </div>
                     <div class="side"></div>
                     
@@ -668,7 +680,7 @@
 
     // 当请求状态改变时，执行回调函数
     xmlhttp.onreadystatechange = function () {
-        if (xmlhttp.readyState == 4||xmlhttp.status == 200) {
+        if (xmlhttp.readyState == 4) {
             if (xmlhttp.status == 200) {
                 // 获取服务器返回的响应内容并更新页面上的显示结果
                 var responsecontent = xmlhttp.responseText;
@@ -763,22 +775,6 @@
 		}
 	}
 	</script>
-    <script>
-        const textArea = document.getElementById('input');
-        const otherDiv = document.getElementById('changeborder_div');
-    
-        textArea.addEventListener('focus', () => {
-          otherDiv.style.borderColor = 'rgb(151, 204, 242)';
-          otherDiv.style.boxShadow = "0 12px 16px 0 rgb(0,0,0,.24),0 17px 50px 0 rgb(0,0,0,.19)";
-        });
-    
-        textArea.addEventListener('blur', () => {
-          otherDiv.style.borderColor = 'rgb(209, 209, 209)';
-          otherDiv.style.boxShadow = '';
-        });
-
-        
-      </script>
       <script>
         window.addEventListener("resize", function() {
             var boxes = document.querySelectorAll(".box_side");
@@ -795,11 +791,16 @@
       <script>
         function feedback()
         {
+          var email = document.getElementById("email").value;
           var text = document.getElementById("feedback").value;
 
+          if (email.trim() === "") {
+              window.alert("请填写您的邮箱。");
+              return;
+          }
           if (text.trim() !== "") {
             //防止刷爆
-            SendXMLHttpRequest_Post_feedback(type_14_p,text);
+            SendXMLHttpRequest_Post_feedback(type_14_p, email, text);
             document.getElementById("feedbackButton").disabled = true;
             console.log(text);
           } else {
@@ -808,7 +809,7 @@
         }
 
 
-        function SendXMLHttpRequest_Post_feedback(type, input_value) {
+        function SendXMLHttpRequest_Post_feedback(type, email_value, input_value) {
           var xmlhttp;
           var url = type;
 
@@ -821,7 +822,7 @@
           var lock = 1;
           // 当请求状态改变时，执行回调函数
           xmlhttp.onreadystatechange = function () {
-              if (xmlhttp.readyState == 4||xmlhttp.status == 200) {
+              if (xmlhttp.readyState == 4) {
                   if (xmlhttp.status == 200) {
                       // 获取服务器返回的响应内容并更新页面上的显示结果
                       var responsecontent = xmlhttp.responseText;
@@ -856,7 +857,7 @@
             // 设置请求头为"Content-type: application/x-www-form-urlencoded"，因为是POST请求
               // 构建请求体为 JSON 格式
           var requestData = {
-              "email": "your@email.com",  // Replace with actual email
+              "email": email_value,
               "message": input_value
           };
 

@@ -40,9 +40,14 @@
                 imgElement.src = 'data:image/jpeg;base64,' + responseData.file_base64;
                 responseContainer.innerHTML = '';
                 responseContainer.appendChild(imgElement);
+            } else if (responseData.response) {
+                const messageElement = document.createElement('p');
+                messageElement.textContent = responseData.response;
+                responseContainer.innerHTML = '';
+                responseContainer.appendChild(messageElement);
             } else {
                 const messageElement = document.createElement('p');
-                messageElement.textContent = responseData.message;
+                messageElement.textContent = responseData.message || '未找到有效的回答';
                 responseContainer.innerHTML = '';
                 responseContainer.appendChild(messageElement);
             }
