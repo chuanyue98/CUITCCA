@@ -15,7 +15,7 @@ from llama_index.core.indices.query.base import BaseQueryEngine
 
 
 from configs.config import Prompts
-from configs.load_env import index_save_directory
+from configs.load_env import index_save_directory, FILE_PATH
 from utils.file import get_folders_list
 from utils.llama import get_nodes_from_file, remove_index_store, remove_vector_store, remove_docstore
 from utils.logger import customer_logger
@@ -57,9 +57,8 @@ def insert_into_index(index, doc_file_path):
     :return:
     """
 
-    service_context = ServiceContext.from_defaults(embed_model=Settings.embed_model)
     nodes = get_nodes_from_file(doc_file_path)
-    index.insert_nodes(nodes, context=service_context)
+    index.insert_nodes(nodes)
 
     # 生成summary maxRecursion
     index.summary = summary_index(index)
@@ -158,8 +157,6 @@ def compose_graph_chat_egine() -> BaseChatEngine:
     将index合成为graph
     :return: chat_engine
     """
-    if indexes is None:
-        loadAllIndexes()
     summaries = []
     for i in indexes:
         summaries.append(i.summary)
@@ -195,8 +192,6 @@ def compose_graph_query_engine(streaming=False) -> BaseQueryEngine:
     将index合成为graph
     :return: query_engine
     """
-    if indexes is None:
-        loadAllIndexes()
     summaries = []
     for i in indexes:
         summaries.append(i.summary)
@@ -211,7 +206,6 @@ def compose_graph_query_engine(streaming=False) -> BaseQueryEngine:
         )
         for index in indexes
     }
-    # 可以通过设置为False 来过滤掉这些无用的响应。它默认设置为，因为目前仅当您使用支持函数调用的 OpenAI 模型时，此功能才最有效。structured_answer_filtering
     response_synthesizer = get_response_synthesizer(structured_answer_filtering=True)
 
     query_engine = graph.as_query_engine(text_qa_template=Prompts.QA_PROMPT.value,
@@ -219,8 +213,6 @@ def compose_graph_query_engine(streaming=False) -> BaseQueryEngine:
                                          streaming=streaming,
                                          similarity_top_k=3,
                                          verbose=True,
-                                         # custom_query_engines=custom_query_engines,
-                                         # response_synthesizer=response_synthesizer
                                          )
     return query_engine
 
@@ -290,12 +282,9 @@ def citf(index, name):
     data = index.docstore.docs
     text_list = []
     for node_id, node_data in data.items():
-        for key, value in node_data:
-            if key == 'text':
-                node_text = value
-                # 去除空格和换行符
-                node_text = node_text.strip().replace('\n', '').replace('\r', '')
-                text_list.append(node_text)
+        node_text = getattr(node_data, 'text', None) or getattr(node_data, 'get_content', lambda: '')()
+        node_text = node_text.strip().replace('\n', '').replace('\r', '')
+        text_list.append(node_text)
 
     with open(path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(text_list))

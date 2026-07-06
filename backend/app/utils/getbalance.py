@@ -4,7 +4,6 @@ import requests
 
 
 def get_usage(apikey):
-    apikey = ""
     subscription_url = "https://api.openai.com/v1/dashboard/billing/subscription"
     headers = {
         "Authorization": "Bearer " + apikey,

@@ -1,6 +1,7 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
 class Feedback(BaseModel):
-    email: str = None
+    email: Optional[str] = None
     message: str

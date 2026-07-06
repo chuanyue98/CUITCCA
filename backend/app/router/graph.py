@@ -15,22 +15,7 @@ from utils.logger import customer_logger, query_logger, error_logger
 
 graph_app = APIRouter()
 
-graph_chat_engine: BaseChatEngine = None
-res = None
-
-
-class GraphQueryEngine:
-    def __init__(self):
-        self.query_engine = compose_graph_query_engine()
-
-    async def aquery(self, query_string):
-        await self.query_engine.aquery(query_string)
-
-    def reset(self):
-        self.query_engine = compose_graph_query_engine()
-
-
-# graph_query_engine = GraphQueryEngine().query_engine
+graph_chat_engine: BaseChatEngine | None = None
 
 
 @graph_app.post("/create")
@@ -46,7 +31,7 @@ async def chaty_graph_stream(query: str = Form()):
     """
     流式的查询，返回的是一个stream
     """
-    global graph_chat_engine, res
+    global graph_chat_engine
     if graph_chat_engine is None:
         graph_chat_engine = compose_graph_chat_egine()
     graph_chat_engine.reset()
@@ -70,20 +55,30 @@ async def query_graph_stream(query: str = Form()):
     return StreamingResponse(response.response_gen, media_type="text/plain")
 
 
+_last_query_response = {}
+
+
 @graph_app.post("/query_sources")
 async def query_sources():
     """返回的源为上一次query_stream所产生的"""
-    global res
-    if res is None:
+    global _last_query_response
+    if not _last_query_response:
         return JSONResponse(content={"status": "detail", "message": "please query first"},
                             status_code=status.HTTP_400_BAD_REQUEST)
-    customer_logger.info(res.sources)
-    return res.source_nodes
+    return {"source_nodes": [
+        {
+            'id': sn.node.id_,
+            'text': sn.node.text,
+            'score': sn.score,
+        }
+        for sn in _last_query_response.pop('source_nodes', [])
+    ]}
 
 
 @graph_app.post("/query")
 @id_not_found_exceptions
 async def query_graph(query: str = Form()):
+    global _last_query_response
     query_logger.info(f"query: {query}")
     try:
         graph_query_engine = compose_graph_query_engine()
@@ -91,12 +86,13 @@ async def query_graph(query: str = Form()):
     except Exception as e:
         error_logger.error(f"error: {e}")
         return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"})
+    _last_query_response = {'source_nodes': response.source_nodes}
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
     if response.response == "Empty Response":
         response.response = '我还不知道，请反馈给我吧'
-    return response.response
+    return {"response": response.response}
 
 
 @graph_app.post("/agent")
@@ -121,19 +117,20 @@ async def agent(query: str = Form()):
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
-    return response.response
+    return {"response": response.response}
 
 
 @graph_app.post("/query_history")
-async def graph():
+async def graph_history():
     """
     获取历史记录
     """
-    global graph
-    if graph is None:
+    global graph_chat_engine
+    if graph_chat_engine is None:
         return JSONResponse(content={"status": "detail", "message": "No query graph available"},
                             status_code=status.HTTP_404_NOT_FOUND)
-    return get_history_msg(graph)
+    history = get_history_msg(graph_chat_engine)
+    return {"history": [{"role": str(msg.role), "content": msg.content} for msg in history]}
 
 
 @graph_app.post("/query_router")
@@ -144,12 +141,6 @@ async def query_router(query: str = Form()):
         query_engine_tools=query_engine_tools,
     )
     customer_logger.info(f"query_router: {query}")
-    response = query_engine.query(query)
+    response = await query_engine.aquery(query)
     customer_logger.info(f"res: {response}")
-    return StreamingResponse(response.response_gen, media_type="text/plain")
-
-
-if __name__ == '__main__':
-    graph_query_engine = compose_graph_query_engine()
-    response = graph_query_engine.query('hello')
-    print()
+    return {"response": str(response)}

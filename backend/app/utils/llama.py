@@ -3,7 +3,7 @@ import json
 import re
 from typing import List, Any
 
-from langchain.text_splitter import SpacyTextSplitter
+from langchain_text_splitters import SpacyTextSplitter
 from langchain_core.messages import ChatMessage
 from llama_index.core import SimpleDirectoryReader
 from llama_index.core.indices.base import BaseIndex
