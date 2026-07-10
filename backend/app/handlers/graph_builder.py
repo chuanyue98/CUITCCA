@@ -1,7 +1,7 @@
 import re
 import logging
 
-from llama_index.core import ComposableGraph, ListIndex, TreeIndex, get_response_synthesizer
+from llama_index.core import ComposableGraph, VectorStoreIndex, get_response_synthesizer
 from llama_index.core.chat_engine import CondenseQuestionChatEngine
 from llama_index.core.chat_engine.types import BaseChatEngine
 from llama_index.core.indices.query.base import BaseQueryEngine
@@ -21,7 +21,7 @@ async def compose_graph_chat_egine() -> BaseChatEngine:
         _indexes_snapshot = list(indexes)
 
     graph = ComposableGraph.from_indices(
-        ListIndex,
+        VectorStoreIndex,
         _indexes_snapshot,
         index_summaries=summaries,
     )
@@ -56,7 +56,7 @@ def compose_graph_query_engine(streaming=False) -> BaseQueryEngine:
     for i in indexes:
         summaries.append(i.summary)
     graph = ComposableGraph.from_indices(
-        TreeIndex,
+        VectorStoreIndex,
         indexes,
         index_summaries=summaries,
     )
