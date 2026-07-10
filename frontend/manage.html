@@ -477,6 +477,83 @@
         .btn-submit:hover {
             opacity: 0.9;
         }
+        
+        /* 节点卡片样式 */
+        .node_card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid rgba(200, 200, 200, 0.4);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        
+        .node_card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border-color: rgba(25, 84, 142, 0.2);
+        }
+        
+        .node_meta_row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #888;
+            border-bottom: 1px solid rgba(0,0,0,0.02);
+            padding-bottom: 8px;
+        }
+        
+        .node_doc_id {
+            background-color: rgba(25, 84, 142, 0.05);
+            color: rgb(25, 84, 142);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .node_editor {
+            width: 100%;
+            min-height: 80px;
+            resize: vertical;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(200, 200, 200, 0.6);
+            font-size: 13px;
+            line-height: 1.6;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .node_editor:focus {
+            border-color: rgb(25, 84, 142);
+        }
+        
+        .node_actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .node_status_tag {
+            font-size: 11px;
+            color: #999;
+            font-weight: 500;
+        }
+        
+        .btn-delete-node {
+            background: none;
+            border: none;
+            color: #ff4d4f;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .btn-delete-node:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -657,8 +734,32 @@
                         </div>
                     </div>
                 </div>
-                <div class="panel_right" id="panel-right-container">
-                    <!-- 占位，Task 4 将填充这里 -->
+                <div class="panel_right" id="panel-right-container" style="display: flex; flex-direction: column;">
+                    <!-- 搜索头部栏 -->
+                    <div style="padding: 20px; border-bottom: 1px solid rgba(25, 84, 142, 0.1); display: flex; align-items: center; gap: 15px; flex-shrink: 0; background: #fafbfc;">
+                        <h3 style="font-size: 16px; font-weight: 600; color: #333; margin-right: auto; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="rgb(25, 84, 142)" class="bi bi-list-check" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.5.5 1.146-1.147a.5.5 0 0 1 .708 0z"/>
+                            </svg>
+                            数据分块浏览器 (Nodes)
+                        </h3>
+                        
+                        <input type="text" id="node-search" placeholder="搜索关键词 / Doc ID..." style="width: 200px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200, 200, 200, 0.8); outline: none; font-size: 13px;">
+                    </div>
+                    
+                    <!-- 节点展示主区 (滚动容器) -->
+                    <div id="node-list-viewport" style="flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background-color: #fcfdfe;">
+                        <div style="text-align: center; color: #999; margin-top: 40px;">选择或载入索引以查看分块数据</div>
+                    </div>
+                    
+                    <!-- 分页控制栏 -->
+                    <div id="pagination-bar" style="height: 50px; border-top: 1px solid rgba(25, 84, 142, 0.1); background: #fafbfc; display: none; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0;">
+                        <span id="page-indicator" style="font-size: 12px; color: #666; font-weight: 500;">第 1 / 1 页 (共 0 项)</span>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="prevPage()" id="btn-prev-page" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 12px; font-weight: 500;">上一页</button>
+                            <button onclick="nextPage()" id="btn-next-page" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 12px; font-weight: 500;">下一页</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1177,6 +1278,242 @@
             } finally {
                 hideLoading();
                 document.getElementById('qa-file-input').value = '';
+            }
+        }
+
+        let allNodesList = [];
+        let filteredNodesList = [];
+        let currentPage = 1;
+        const pageSize = 10;
+        let updateTimers = {}; // 存储各个节点的定时器
+
+        async function loadIndexNodes(indexName) {
+            if (!indexName) {
+                const viewport = document.getElementById('node-list-viewport');
+                if (viewport) {
+                    viewport.innerHTML = '<div style="text-align: center; color: #999; margin-top: 40px;">选择或载入索引以查看分块数据</div>';
+                }
+                const pagBar = document.getElementById('pagination-bar');
+                if (pagBar) {
+                    pagBar.style.display = 'none';
+                }
+                return;
+            }
+            
+            const viewport = document.getElementById('node-list-viewport');
+            viewport.innerHTML = '<div style="text-align: center; color: rgb(25, 84, 142); margin-top: 40px; font-weight: 500;">正在加载节点数据...</div>';
+            const pagBar = document.getElementById('pagination-bar');
+            if (pagBar) pagBar.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${baseURL}/${indexName}/info`);
+                const data = await response.json();
+                allNodesList = data.docs || [];
+                
+                // 执行过滤与渲染
+                applyFilterAndRender();
+            } catch (error) {
+                viewport.innerHTML = '<div style="text-align: center; color: #ff4d4f; margin-top: 40px;">数据分块加载失败</div>';
+                showToast('获取索引节点数据失败', 'error');
+            }
+        }
+
+        // 绑定搜索输入事件
+        document.getElementById('node-search').addEventListener('input', () => {
+            currentPage = 1;
+            applyFilterAndRender();
+        });
+
+        function applyFilterAndRender() {
+            const keyword = document.getElementById('node-search').value.trim().toLowerCase();
+            
+            if (!keyword) {
+                filteredNodesList = [...allNodesList];
+            } else {
+                filteredNodesList = allNodesList.filter(node => 
+                    (node.text && String(node.text).toLowerCase().includes(keyword)) ||
+                    (node.doc_id && String(node.doc_id).toLowerCase().includes(keyword)) ||
+                    (node.node_id && String(node.node_id).toLowerCase().includes(keyword))
+                );
+            }
+            
+            currentPage = 1;
+            renderNodesPage();
+        }
+
+        function renderNodesPage() {
+            const viewport = document.getElementById('node-list-viewport');
+            const pagBar = document.getElementById('pagination-bar');
+            
+            if (filteredNodesList.length === 0) {
+                viewport.innerHTML = '<div style="text-align: center; color: #999; margin-top: 40px;">无匹配的节点数据</div>';
+                pagBar.style.display = 'none';
+                return;
+            }
+            
+            const totalItems = filteredNodesList.length;
+            const totalPages = Math.ceil(totalItems / pageSize);
+            
+            // 分页区间
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, totalItems);
+            const pageItems = filteredNodesList.slice(startIdx, endIdx);
+            
+            viewport.innerHTML = '';
+            pageItems.forEach(node => {
+                const card = document.createElement('div');
+                card.className = 'node_card';
+                
+                card.innerHTML = `
+                    <div class="node_meta_row">
+                        <span>Doc ID: <span class="node_doc_id"></span></span>
+                        <span style="font-family: monospace;">Node ID: ${node.node_id}</span>
+                    </div>
+                    <textarea class="node_editor"></textarea>
+                    <div class="node_actions">
+                        <span class="node_status_tag" id="status-${node.node_id}">未做修改</span>
+                        <div style="display: flex; gap: 15px;">
+                            <button class="btn-delete-node btn-delete-doc" style="color: #fa8c16;">删除整档</button>
+                            <button class="btn-delete-node btn-delete-chunk">删除分块</button>
+                        </div>
+                    </div>
+                `;
+                
+                // 安全设置文本，避免 HTML 注入或解析崩溃
+                card.querySelector('.node_doc_id').textContent = node.doc_id || '自动生成';
+                
+                const textarea = card.querySelector('.node_editor');
+                textarea.value = node.text || '';
+                
+                // 绑定输入事件 (防抖)
+                const statusTag = card.querySelector('.node_status_tag');
+                textarea.addEventListener('input', (e) => {
+                    debouncedUpdateNode(node.node_id, e.target.value, statusTag);
+                });
+                
+                // 绑定按钮事件
+                card.querySelector('.btn-delete-doc').onclick = () => deleteDocByCard(node.doc_id);
+                card.querySelector('.btn-delete-chunk').onclick = () => deleteNodeByCard(node.node_id);
+                
+                viewport.appendChild(card);
+            });
+            
+            // 调整分页组件显示
+            pagBar.style.display = 'flex';
+            document.getElementById('page-indicator').innerText = `第 ${currentPage} / ${totalPages} 页 (共 ${totalItems} 项)`;
+            
+            document.getElementById('btn-prev-page').disabled = (currentPage === 1);
+            document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderNodesPage();
+                document.getElementById('node-list-viewport').scrollTop = 0;
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredNodesList.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderNodesPage();
+                document.getElementById('node-list-viewport').scrollTop = 0;
+            }
+        }
+
+        // 节点内容的防抖保存逻辑
+        function debouncedUpdateNode(nodeId, text, statusElement) {
+            statusElement.innerText = "正在输入...";
+            statusElement.style.color = "#fa8c16";
+            
+            if (updateTimers[nodeId]) {
+                clearTimeout(updateTimers[nodeId]);
+            }
+            
+            updateTimers[nodeId] = setTimeout(async () => {
+                statusElement.innerText = "正在自动保存...";
+                statusElement.style.color = "rgb(25, 84, 142)";
+                
+                try {
+                    const body = new URLSearchParams();
+                    body.append('text', text);
+                    
+                    const response = await fetch(`${baseURL}/${currentActiveIndex}/update?nodeId=${nodeId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: body.toString()
+                    });
+                    
+                    if (response.ok) {
+                        statusElement.innerText = "✓ 已自动保存";
+                        statusElement.style.color = "#52c41a";
+                        // 同步更新本地缓存数据中的text值
+                        const node = allNodesList.find(n => n.node_id === nodeId);
+                        if (node) node.text = text;
+                    } else {
+                        statusElement.innerText = "✗ 保存失败";
+                        statusElement.style.color = "#ff4d4f";
+                    }
+                } catch (error) {
+                    statusElement.innerText = "✗ 网络保存异常";
+                    statusElement.style.color = "#ff4d4f";
+                }
+            }, 1000); // 用户停止录入 1 秒后自动提交
+        }
+
+        // 删除单节点分块
+        async function deleteNodeByCard(nodeId) {
+            if (!confirm('确定要删除这个数据分块(Node)吗？此操作不可逆！')) {
+                return;
+            }
+            showLoading('正在删除数据分块...');
+            try {
+                const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteNode?node_id=${nodeId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (response.ok && data.status === 'deleted') {
+                    showToast('数据分块已成功删除', 'success');
+                    // 从本地缓存中踢出并重绘
+                    allNodesList = allNodesList.filter(n => n.node_id !== nodeId);
+                    applyFilterAndRender();
+                } else {
+                    showToast(data.message || '删除节点失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，删除节点失败', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 删除整档
+        async function deleteDocByCard(docId) {
+            if (!docId) {
+                showToast('该卡片无关联的 Doc ID，无法删除整档，请使用删除分块', 'error');
+                return;
+            }
+            if (!confirm(`确定要彻底删除文档 "${docId}" 及其所包含的所有分块吗？`)) {
+                return;
+            }
+            showLoading('正在删除文档及全部分块...');
+            try {
+                const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteDoc?doc_id=${docId}`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast('整档文件及其所有分块已成功清除', 'success');
+                    // 重新请求后端，以防有其它关联节点
+                    await loadIndexNodes(currentActiveIndex);
+                } else {
+                    showToast('删除整档文件失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，删除整档失败', 'error');
+            } finally {
+                hideLoading();
             }
         }
 
