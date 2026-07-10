@@ -625,8 +625,8 @@
                                 </svg>
                                 <p style="font-size: 13px; color: #555; font-weight: 500;">拖拽 TXT/PDF/Markdown 文件到这里，或者点击选择</p>
                                 <p style="font-size: 11px; color: #999; margin-top: 5px;">支持多文件一次性上传和自动解析分块</p>
-                                <input type="file" id="file-input" multiple style="display: none;">
                             </div>
+                            <input type="file" id="file-input" multiple style="display: none;">
                             <div id="upload-progress-list" style="margin-top: 15px; font-size: 12px; color: #666;"></div>
                         </div>
                         
@@ -875,7 +875,6 @@
                     statusTag.style.color = "rgb(25, 84, 142)";
                 }
                 
-                showLoading('正在保存摘要...');
                 try {
                     const body = new URLSearchParams();
                     body.append('summary', text);
@@ -891,22 +890,17 @@
                             statusTag.innerText = "✓ 已自动保存";
                             statusTag.style.color = "#52c41a";
                         }
-                        showToast('索引摘要更新成功', 'success');
                     } else {
                         if (statusTag) {
                             statusTag.innerText = "✗ 保存失败";
                             statusTag.style.color = "#ff4d4f";
                         }
-                        showToast('更新摘要失败', 'error');
                     }
                 } catch (error) {
                     if (statusTag) {
                         statusTag.innerText = "✗ 网络保存异常";
                         statusTag.style.color = "#ff4d4f";
                     }
-                    showToast('网络错误，更新摘要失败', 'error');
-                } finally {
-                    hideLoading();
                 }
             }, 1000);
         }
@@ -1009,7 +1003,7 @@
             document.querySelectorAll('.tab_btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab_content').forEach(content => content.classList.remove('active'));
             
-            const activeBtn = Array.from(document.querySelectorAll('.tab_btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
+            const activeBtn = Array.from(document.querySelectorAll('.tab_btn')).find(btn => btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId));
             if (activeBtn) activeBtn.classList.add('active');
             
             const content = document.getElementById(tabId);
@@ -1087,6 +1081,7 @@
                 progressList.innerHTML = `<p style="color: #ff4d4f;">✗ 网络连接错误</p>`;
             } finally {
                 hideLoading();
+                document.getElementById('file-input').value = '';
             }
         }
 
@@ -1170,18 +1165,18 @@
                 const data = await response.json();
                 if (response.ok) {
                     showToast('大模型 QA 数据生成并索引成功', 'success');
-                    fileInput.value = '';
                     promptInput.value = '';
                     if (typeof loadIndexNodes === 'function') {
                         loadIndexNodes(currentActiveIndex);
                     }
                 } else {
-                    showToast(data.message || 'QA 生成生成失败', 'error');
+                    showToast(data.message || 'QA 生成失败', 'error');
                 }
             } catch (error) {
                 showToast('网络错误，提交QA任务失败', 'error');
             } finally {
                 hideLoading();
+                document.getElementById('qa-file-input').value = '';
             }
         }
 
