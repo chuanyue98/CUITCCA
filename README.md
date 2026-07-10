@@ -10,7 +10,7 @@ cd CUITCCA
 ```
 安装依赖
 ```bash
-pip install -r backend/requirements.txt
+uv sync
 ```
 
 
