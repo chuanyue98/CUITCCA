@@ -414,7 +414,51 @@
             <!-- 核心内容工作区 -->
             <div class="dashboard_container">
                 <div class="panel_left" id="panel-left-container">
-                    <!-- 占位，Task 2 与 Task 3 将填充这里 -->
+                    <!-- 索引管理 card -->
+                    <div class="glass_card">
+                        <h3 style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="rgb(25, 84, 142)" class="bi bi-database" viewBox="0 0 16 16">
+                                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0Z"/>
+                                <path d="M8 1c-1.573 0-3 .107-4.03.284-1.018.173-1.977.48-2.693.94-.716.46-1.127 1.055-1.127 1.776v9c0 .721.411 1.316 1.127 1.776.716.46 1.675.767 2.693.94C5 15.893 6.427 16 8 16c.09 0 .18 0 .27-.002A4.989 4.989 0 0 1 7.02 14c-.33-.007-.66-.017-.98-.03-1.008-.04-1.92-.19-2.5-.47a1.642 1.642 0 0 1-.87-.79 2.22 2.22 0 0 1-.13-.71V11c0 .093.023.18.067.262.138.256.452.484.872.665.58.25 1.492.4 2.5.44.382.016.78.026 1.185.028-.109-.328-.17-.677-.17-1.04 0-.177.016-.35.046-.519-.344.004-.693.003-1.036-.005-1.008-.027-1.92-.148-2.5-.39a1.64 1.64 0 0 1-.87-.745 2.235 2.235 0 0 1-.13-.676V7c0 .093.023.18.067.262.138.256.452.484.872.665.58.25 1.492.4 2.5.44.596.024 1.2.035 1.79.032a4.994 4.994 0 0 1 1.012-1.944C9.55 6.02 8.788 6 8 6c-1.573 0-3-.107-4.03-.284-1.018-.173-1.977-.48-2.693-.94C.566 4.316 0 3.721 0 3c0-.721.411-1.316 1.127-1.776.716-.46 1.675-.767 2.693-.94C4.82 1.107 6.247 1 8 1Zm0 6c-1.573 0-3-.107-4.03-.284-1.018-.173-1.977-.48-2.693-.94C.566 2.316 0 1.721 0 1c0-.721.411-1.316 1.127-1.776.716-.46 1.675-.767 2.693-.94C4.82.107 6.247 0 8 0s3.18.107 4.203.284c1.018.173 1.977.48 2.693.94.716.46 1.127 1.055 1.127 1.776v3c0 .245-.048.483-.138.706a4.996 4.996 0 0 0-1.884-.702c.015-.027.022-.056.022-.086V4c0 .093-.023.18-.067.262-.138.256-.452.484-.872.665-.58.25-1.492.4-2.5.44-.382.016-.78.026-1.185.028-.109-.328-.17-.677-.17-1.04v-.03c0-.02-.002-.04-.002-.06 0-.33.047-.648.13-.948a4.98 4.98 0 0 1 .472.032Z"/>
+                            </svg>
+                            活跃知识库索引 (Indexes)
+                        </h3>
+                        
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <select id="index-select" style="flex-grow: 1; padding: 10px 15px; border-radius: 10px; border: 1px solid rgba(25, 84, 142, 0.2); outline: none; background: white; font-weight: 500;">
+                                <option value="">加载中...</option>
+                            </select>
+                            <button onclick="saveCurrentIndexDisk()" class="btn-primary" style="background: linear-gradient(135deg, #2c72b8, #19548e); color: white; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                                保存磁盘
+                            </button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                            <input type="text" id="new-index-name" placeholder="输入新索引名称..." style="flex-grow: 1; padding: 10px 15px; border-radius: 10px; border: 1px solid rgba(200,200,200,0.5); outline: none;">
+                            <button onclick="createNewIndex()" style="background: linear-gradient(135deg, #52c41a, #73d13d); color: white; border: none; padding: 0 20px; border-radius: 10px; cursor: pointer; font-weight: 500;">
+                                新建
+                            </button>
+                            <button onclick="deleteCurrentIndex()" style="background: linear-gradient(135deg, #ff4d4f, #ff7875); color: white; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; font-weight: 500;">
+                                删除当前
+                            </button>
+                        </div>
+                        
+                        <!-- 索引摘要 Summary 区域 -->
+                        <div style="border-top: 1px dashed rgba(200,200,200,0.5); padding-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: #555;">索引摘要 (Summary)</span>
+                                <button onclick="editCurrentSummary()" style="background: none; border: none; color: rgb(25, 84, 142); cursor: pointer; font-size: 13px; font-weight: 500;">
+                                    [ 编辑摘要 ]
+                                </button>
+                            </div>
+                            <div id="index-summary-display" style="background: #f8fafc; padding: 12px; border-radius: 10px; font-size: 13px; color: #666; line-height: 1.6; border: 1px solid rgba(0,0,0,0.03); max-height: 150px; overflow-y: auto;">
+                                选择一个索引以载入其摘要...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 数据导入 Card 占位 -->
+                    <div id="data-ingestion-placeholder"></div>
                 </div>
                 <div class="panel_right" id="panel-right-container">
                     <!-- 占位，Task 4 将填充这里 -->
@@ -468,6 +512,197 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
+
+        const baseURL = '/index';
+        let currentActiveIndex = null;
+
+        async function loadIndexes() {
+            try {
+                const response = await fetch(`${baseURL}/list`);
+                const data = await response.json();
+                const select = document.getElementById('index-select');
+                select.innerHTML = '';
+                
+                if (!data.indexes || data.indexes.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.innerText = '-- 暂无索引 --';
+                    select.appendChild(option);
+                    currentActiveIndex = null;
+                    updateSummaryDisplay('暂无索引，请在上方新建索引。');
+                    return;
+                }
+                
+                data.indexes.forEach(indexName => {
+                    const option = document.createElement('option');
+                    option.value = indexName;
+                    option.innerText = indexName;
+                    select.appendChild(option);
+                });
+                
+                // 默认选中第一个
+                if (!currentActiveIndex || !data.indexes.includes(currentActiveIndex)) {
+                    currentActiveIndex = data.indexes[0];
+                }
+                select.value = currentActiveIndex;
+                
+                // 加载摘要和节点
+                loadIndexSummary(currentActiveIndex);
+                if (typeof loadIndexNodes === 'function') {
+                    loadIndexNodes(currentActiveIndex);
+                }
+            } catch (error) {
+                showToast('获取索引列表失败', 'error');
+            }
+        }
+
+        // 绑定下拉选择事件
+        document.getElementById('index-select').addEventListener('change', (e) => {
+            currentActiveIndex = e.target.value;
+            if (currentActiveIndex) {
+                loadIndexSummary(currentActiveIndex);
+                if (typeof loadIndexNodes === 'function') {
+                    loadIndexNodes(currentActiveIndex);
+                }
+            } else {
+                updateSummaryDisplay('未选中任何活跃索引');
+            }
+        });
+
+        async function loadIndexSummary(indexName) {
+            const summaryDiv = document.getElementById('index-summary-display');
+            summaryDiv.innerText = '加载摘要中...';
+            try {
+                const response = await fetch(`${baseURL}/${indexName}/get_summary`);
+                const data = await response.json();
+                summaryDiv.innerText = data.summary || '该索引当前无摘要，您可点击上方[编辑]添加。';
+            } catch (error) {
+                summaryDiv.innerText = '读取摘要失败';
+            }
+        }
+
+        function updateSummaryDisplay(text) {
+            document.getElementById('index-summary-display').innerText = text;
+        }
+
+        // 创建索引
+        async function createNewIndex() {
+            const input = document.getElementById('new-index-name');
+            const name = input.value.trim();
+            if (!name) {
+                showToast('请输入新索引名称', 'error');
+                return;
+            }
+            
+            const body = new URLSearchParams();
+            body.append('index_name', name);
+            
+            try {
+                const response = await fetch(`${baseURL}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString()
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    showToast(`索引 ${name} 创建成功`, 'success');
+                    input.value = '';
+                    currentActiveIndex = name; // 切到新索引
+                    await loadIndexes();
+                } else {
+                    showToast(data.msg || '新建失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，创建索引失败', 'error');
+            }
+        }
+
+        // 删除索引
+        async function deleteCurrentIndex() {
+            if (!currentActiveIndex) {
+                showToast('当前没有选中的活跃索引', 'error');
+                return;
+            }
+            if (!confirm(`确定要删除知识库索引 "${currentActiveIndex}" 吗？此操作无法恢复！`)) {
+                return;
+            }
+            
+            const body = new URLSearchParams();
+            body.append('index_name', currentActiveIndex);
+            
+            try {
+                const response = await fetch(`${baseURL}/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString()
+                });
+                if (response.ok) {
+                    showToast(`索引 ${currentActiveIndex} 已删除`, 'success');
+                    currentActiveIndex = null;
+                    await loadIndexes();
+                } else {
+                    showToast('删除索引失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，删除索引失败', 'error');
+            }
+        }
+
+        // 保存索引到磁盘
+        async function saveCurrentIndexDisk() {
+            if (!currentActiveIndex) {
+                showToast('当前无选中的活跃索引', 'error');
+                return;
+            }
+            try {
+                const response = await fetch(`${baseURL}/${currentActiveIndex}/save`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast('索引已成功持久化至磁盘', 'success');
+                } else {
+                    showToast('保存磁盘失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，保存磁盘失败', 'error');
+            }
+        }
+
+        // 编辑摘要
+        async function editCurrentSummary() {
+            if (!currentActiveIndex) {
+                showToast('当前无选中的活跃索引', 'error');
+                return;
+            }
+            const oldSummary = document.getElementById('index-summary-display').innerText;
+            const newSummary = prompt('请输入该索引的新 Summary:', oldSummary);
+            if (newSummary === null) return;
+            
+            const body = new URLSearchParams();
+            body.append('summary', newSummary);
+            
+            try {
+                const response = await fetch(`${baseURL}/${currentActiveIndex}/set_summary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString()
+                });
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    showToast('索引摘要更新成功', 'success');
+                    document.getElementById('index-summary-display').innerText = data.summary;
+                } else {
+                    showToast('更新摘要失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，更新摘要失败', 'error');
+            }
+        }
+
+        // 页面初始加载
+        window.addEventListener('DOMContentLoaded', () => {
+            loadIndexes();
+        });
     </script>
 </body>
 </html>

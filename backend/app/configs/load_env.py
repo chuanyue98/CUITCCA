@@ -51,3 +51,6 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.md', '.csv', '.xlsx'}
 COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
 COOKIE_MAX_AGE = int(os.environ.get('COOKIE_MAX_AGE', '86400'))
+
+# Initialize variables on import
+reload_env_variables()
