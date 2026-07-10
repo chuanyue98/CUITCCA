@@ -1,0 +1,324 @@
+/* 全局基础样式与字体 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght:300;400;500;600;700&family=Outfit:wght:300;400;500;600;700&display=swap');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Inter', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f4f6fc 0%, #eef2fa 100%);
+}
+
+.outline {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+#side_left {
+    display: none;
+    border-right: 1px solid rgba(25, 84, 142, 0.1);
+    width: 300px;
+    height: 100%;
+    background-color: white;
+    flex-shrink: 0;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+}
+
+.side_left_flex {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.head_left {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    border-bottom: 1px solid rgba(209, 209, 209, 0.3);
+    background-color: #fafbfc;
+    width: 100%;
+    height: 60px;
+    padding: 10px 20px;
+}
+
+.head_logo {
+    border-radius: 10px;
+    width: 50px;
+    height: 35px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.head_logo img {
+    width: 100%;
+    height: auto;
+}
+
+.head_font {
+    flex-grow: 1;
+    font-size: 18px;
+    font-weight: 700;
+    color: rgb(25, 84, 142);
+    padding-left: 15px;
+}
+
+.side_menu {
+    display: flex;
+    flex-grow: 1;
+    width: 100%;
+    flex-direction: column;
+    background-color: white;
+    overflow-y: auto;
+    padding: 20px 10px;
+}
+
+.menu_mid {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.menu_mid1, .menu_mid2 {
+    flex: 1;
+}
+
+.menu_mid a {
+    text-decoration: none;
+    display: block;
+}
+
+.func {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 90px;
+    border-radius: 16px;
+    background-color: white;
+    border: 1px solid rgba(25, 84, 142, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+}
+
+.func:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(25, 84, 142, 0.1);
+    border-color: rgba(25, 84, 142, 0.3);
+}
+
+.func .img {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.side_menu a {
+    text-decoration: none;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.menu_item_row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 12px;
+    color: #555;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.menu_item_row:hover {
+    background-color: rgba(25, 84, 142, 0.05);
+    color: rgb(25, 84, 142);
+}
+
+.menu_item_row.active {
+    background-color: rgba(25, 84, 142, 0.1);
+    color: rgb(25, 84, 142);
+    font-weight: 600;
+    border: 1px solid rgba(25, 84, 142, 0.15);
+}
+
+.menu_item_row .img {
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.menu_font_row {
+    font-size: 15px;
+}
+
+.side_right {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100%;
+    background-color: transparent;
+    overflow: hidden;
+    position: relative;
+}
+
+.headline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 60px;
+    background-color: white;
+    border-bottom: 1px solid rgba(209, 209, 209, 0.3);
+    padding: 0 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.01);
+    flex-shrink: 0;
+}
+
+.headline_hidemenu button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgb(25, 84, 142);
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.headline_hidemenu button:hover {
+    background-color: #f0f2f5;
+}
+
+.headline_head {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+.share {
+    width: 50px;
+}
+
+.glass_card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    border: 1px solid rgba(25, 84, 142, 0.1);
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(31, 38, 135, 0.03);
+    backdrop-filter: blur(8px);
+}
+
+/* Toast 样式 */
+#toast-container {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    padding: 15px 25px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    min-width: 250px;
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-success { background: linear-gradient(135deg, #52c41a, #73d13d); }
+.toast-error { background: linear-gradient(135deg, #ff4d4f, #ff7875); }
+.toast-info { background: linear-gradient(135deg, #1890ff, #40a9ff); }
+
+/* 全局加载遮罩 */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    flex-direction: column;
+    gap: 15px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(25, 84, 142, 0.1);
+    border-top: 5px solid rgb(25, 84, 142);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgb(25, 84, 142);
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+    .dashboard_container {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .panel_left, .panel_right {
+        width: 100%;
+        height: auto;
+        overflow: visible;
+    }
+    .panel_right {
+        height: 500px;
+    }
+}
