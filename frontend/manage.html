@@ -554,6 +554,11 @@
         .btn-delete-node:hover {
             text-decoration: underline;
         }
+        
+        #pagination-bar button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -834,6 +839,10 @@
             if (summaryUpdateTimer) {
                 clearTimeout(summaryUpdateTimer);
             }
+            for (let timerId in updateTimers) {
+                clearTimeout(updateTimers[timerId]);
+            }
+            updateTimers = {};
             try {
                 const response = await fetch(`${baseURL}/list`);
                 const data = await response.json();
@@ -888,6 +897,10 @@
             if (summaryUpdateTimer) {
                 clearTimeout(summaryUpdateTimer);
             }
+            for (let timerId in updateTimers) {
+                clearTimeout(updateTimers[timerId]);
+            }
+            updateTimers = {};
             currentActiveIndex = e.target.value;
             if (currentActiveIndex) {
                 loadIndexSummary(currentActiveIndex);
