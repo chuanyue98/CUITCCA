@@ -33,7 +33,13 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = []
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
 
 [project.urls]
 Homepage = "https://github.com/ChuanYuei/CUITCCA"
