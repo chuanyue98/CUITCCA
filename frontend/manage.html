@@ -328,9 +328,54 @@
                 height: 500px;
             }
         }
+
+        /* 全局加载遮罩 */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            flex-direction: column;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(25, 84, 142, 0.1);
+            border-top: 5px solid rgb(25, 84, 142);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: rgb(25, 84, 142);
+        }
     </style>
 </head>
 <body>
+    <!-- 全局加载遮罩 -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">正在处理中...</div>
+    </div>
+    
     <div class="outline">
         <!-- 左侧边栏 -->
         <div id="side_left">
@@ -447,13 +492,9 @@
                         <div style="border-top: 1px dashed rgba(200,200,200,0.5); padding-top: 15px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span style="font-weight: 600; color: #555;">索引摘要 (Summary)</span>
-                                <button onclick="editCurrentSummary()" style="background: none; border: none; color: rgb(25, 84, 142); cursor: pointer; font-size: 13px; font-weight: 500;">
-                                    [ 编辑摘要 ]
-                                </button>
+                                <span id="summary-status-tag" style="font-size: 12px; color: #999; font-weight: 500;">未做修改</span>
                             </div>
-                            <div id="index-summary-display" style="background: #f8fafc; padding: 12px; border-radius: 10px; font-size: 13px; color: #666; line-height: 1.6; border: 1px solid rgba(0,0,0,0.03); max-height: 150px; overflow-y: auto;">
-                                选择一个索引以载入其摘要...
-                            </div>
+                            <textarea id="index-summary-textarea" oninput="debouncedUpdateSummary(this.value)" style="width: 100%; min-height: 80px; max-height: 150px; background: #f8fafc; padding: 12px; border-radius: 10px; font-size: 13px; color: #666; line-height: 1.6; border: 1px solid rgba(0,0,0,0.08); outline: none; resize: vertical;" placeholder="选择或载入索引以编辑其摘要..."></textarea>
                         </div>
                     </div>
                     
@@ -515,6 +556,20 @@
 
         const baseURL = '/index';
         let currentActiveIndex = null;
+        let summaryUpdateTimer = null;
+
+        // 全局加载遮罩控制
+        function showLoading(text = '正在处理中...') {
+            const overlay = document.getElementById('loading-overlay');
+            const textEl = overlay.querySelector('.loading-text');
+            if (textEl) textEl.innerText = text;
+            overlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = 'none';
+        }
 
         async function loadIndexes() {
             try {
@@ -530,6 +585,16 @@
                     select.appendChild(option);
                     currentActiveIndex = null;
                     updateSummaryDisplay('暂无索引，请在上方新建索引。');
+
+                    // 清理节点展示区域，防止残留数据
+                    const viewport = document.getElementById('node-list-viewport') || document.getElementById('panel-right-container');
+                    if (viewport) {
+                        viewport.innerHTML = '<div style="text-align: center; color: #999; margin-top: 40px;">暂无活跃索引</div>';
+                    }
+                    const pagBar = document.getElementById('pagination-bar');
+                    if (pagBar) {
+                        pagBar.style.display = 'none';
+                    }
                     return;
                 }
                 
@@ -566,23 +631,120 @@
                 }
             } else {
                 updateSummaryDisplay('未选中任何活跃索引');
+                const viewport = document.getElementById('node-list-viewport') || document.getElementById('panel-right-container');
+                if (viewport) {
+                    viewport.innerHTML = '<div style="text-align: center; color: #999; margin-top: 40px;">未选中任何活跃索引</div>';
+                }
+                const pagBar = document.getElementById('pagination-bar');
+                if (pagBar) {
+                    pagBar.style.display = 'none';
+                }
             }
         });
 
         async function loadIndexSummary(indexName) {
-            const summaryDiv = document.getElementById('index-summary-display');
-            summaryDiv.innerText = '加载摘要中...';
+            const textarea = document.getElementById('index-summary-textarea');
+            const statusTag = document.getElementById('summary-status-tag');
+            
+            if (textarea) {
+                textarea.disabled = true;
+                textarea.value = '加载摘要中...';
+            }
+            if (statusTag) {
+                statusTag.innerText = '加载中...';
+                statusTag.style.color = '#fa8c16';
+            }
             try {
                 const response = await fetch(`${baseURL}/${indexName}/get_summary`);
                 const data = await response.json();
-                summaryDiv.innerText = data.summary || '该索引当前无摘要，您可点击上方[编辑]添加。';
+                if (textarea) {
+                    textarea.value = data.summary || '';
+                    textarea.disabled = false;
+                }
+                if (statusTag) {
+                    statusTag.innerText = '已加载';
+                    statusTag.style.color = '#52c41a';
+                }
             } catch (error) {
-                summaryDiv.innerText = '读取摘要失败';
+                if (textarea) {
+                    textarea.value = '读取摘要失败';
+                }
+                if (statusTag) {
+                    statusTag.innerText = '错误';
+                    statusTag.style.color = '#ff4d4f';
+                }
             }
         }
 
         function updateSummaryDisplay(text) {
-            document.getElementById('index-summary-display').innerText = text;
+            const textarea = document.getElementById('index-summary-textarea');
+            if (textarea) {
+                textarea.value = text;
+                textarea.disabled = true;
+            }
+            const statusTag = document.getElementById('summary-status-tag');
+            if (statusTag) {
+                statusTag.innerText = '';
+            }
+        }
+
+        // 索引摘要防抖保存
+        function debouncedUpdateSummary(text) {
+            if (!currentActiveIndex) {
+                showToast('当前无选中的活跃索引', 'error');
+                return;
+            }
+            
+            const statusTag = document.getElementById('summary-status-tag');
+            if (statusTag) {
+                statusTag.innerText = "正在输入...";
+                statusTag.style.color = "#fa8c16";
+            }
+            
+            if (summaryUpdateTimer) {
+                clearTimeout(summaryUpdateTimer);
+            }
+            
+            summaryUpdateTimer = setTimeout(async () => {
+                if (statusTag) {
+                    statusTag.innerText = "保存中...";
+                    statusTag.style.color = "rgb(25, 84, 142)";
+                }
+                
+                showLoading('正在保存摘要...');
+                try {
+                    const body = new URLSearchParams();
+                    body.append('summary', text);
+                    
+                    const response = await fetch(`${baseURL}/${currentActiveIndex}/set_summary`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: body.toString()
+                    });
+                    const data = await response.json();
+                    if (data.status === 'ok') {
+                        if (statusTag) {
+                            statusTag.innerText = "✓ 已自动保存";
+                            statusTag.style.color = "#52c41a";
+                        }
+                        showToast('索引摘要更新成功', 'success');
+                    } else {
+                        if (statusTag) {
+                            statusTag.innerText = "✗ 保存失败";
+                            statusTag.style.color = "#ff4d4f";
+                        }
+                        showToast('更新摘要失败', 'error');
+                    }
+                } catch (error) {
+                    if (statusTag) {
+                        statusTag.innerText = "✗ 网络保存异常";
+                        statusTag.style.color = "#ff4d4f";
+                    }
+                    showToast('网络错误，更新摘要失败', 'error');
+                } finally {
+                    hideLoading();
+                }
+            }, 1000);
         }
 
         // 创建索引
@@ -594,9 +756,11 @@
                 return;
             }
             
+            const sanitized = name.replace(/[^\w\-]/g, '_');
             const body = new URLSearchParams();
             body.append('index_name', name);
             
+            showLoading('正在创建索引...');
             try {
                 const response = await fetch(`${baseURL}/create`, {
                     method: 'POST',
@@ -605,15 +769,17 @@
                 });
                 const data = await response.json();
                 if (data.status === 'success') {
-                    showToast(`索引 ${name} 创建成功`, 'success');
+                    showToast(`索引 ${sanitized} 创建成功`, 'success');
                     input.value = '';
-                    currentActiveIndex = name; // 切到新索引
+                    currentActiveIndex = sanitized; // 切到新索引
                     await loadIndexes();
                 } else {
                     showToast(data.msg || '新建失败', 'error');
                 }
             } catch (error) {
                 showToast('网络错误，创建索引失败', 'error');
+            } finally {
+                hideLoading();
             }
         }
 
@@ -630,6 +796,7 @@
             const body = new URLSearchParams();
             body.append('index_name', currentActiveIndex);
             
+            showLoading('正在删除索引...');
             try {
                 const response = await fetch(`${baseURL}/delete`, {
                     method: 'POST',
@@ -645,6 +812,8 @@
                 }
             } catch (error) {
                 showToast('网络错误，删除索引失败', 'error');
+            } finally {
+                hideLoading();
             }
         }
 
@@ -654,6 +823,7 @@
                 showToast('当前无选中的活跃索引', 'error');
                 return;
             }
+            showLoading('正在保存索引到磁盘...');
             try {
                 const response = await fetch(`${baseURL}/${currentActiveIndex}/save`, {
                     method: 'POST'
@@ -665,37 +835,8 @@
                 }
             } catch (error) {
                 showToast('网络错误，保存磁盘失败', 'error');
-            }
-        }
-
-        // 编辑摘要
-        async function editCurrentSummary() {
-            if (!currentActiveIndex) {
-                showToast('当前无选中的活跃索引', 'error');
-                return;
-            }
-            const oldSummary = document.getElementById('index-summary-display').innerText;
-            const newSummary = prompt('请输入该索引的新 Summary:', oldSummary);
-            if (newSummary === null) return;
-            
-            const body = new URLSearchParams();
-            body.append('summary', newSummary);
-            
-            try {
-                const response = await fetch(`${baseURL}/${currentActiveIndex}/set_summary`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: body.toString()
-                });
-                const data = await response.json();
-                if (data.status === 'ok') {
-                    showToast('索引摘要更新成功', 'success');
-                    document.getElementById('index-summary-display').innerText = data.summary;
-                } else {
-                    showToast('更新摘要失败', 'error');
-                }
-            } catch (error) {
-                showToast('网络错误，更新摘要失败', 'error');
+            } finally {
+                hideLoading();
             }
         }
 
