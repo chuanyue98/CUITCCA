@@ -339,13 +339,15 @@
             background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            display: none;
+            display: flex;
             justify-content: center;
             align-items: center;
             z-index: 99999;
             flex-direction: column;
             gap: 15px;
-            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
         
         .spinner {
@@ -563,15 +565,20 @@
             const overlay = document.getElementById('loading-overlay');
             const textEl = overlay.querySelector('.loading-text');
             if (textEl) textEl.innerText = text;
-            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+            overlay.style.visibility = 'visible';
         }
 
         function hideLoading() {
             const overlay = document.getElementById('loading-overlay');
-            overlay.style.display = 'none';
+            overlay.style.opacity = '0';
+            overlay.style.visibility = 'hidden';
         }
 
         async function loadIndexes() {
+            if (summaryUpdateTimer) {
+                clearTimeout(summaryUpdateTimer);
+            }
             try {
                 const response = await fetch(`${baseURL}/list`);
                 const data = await response.json();
@@ -623,6 +630,9 @@
 
         // 绑定下拉选择事件
         document.getElementById('index-select').addEventListener('change', (e) => {
+            if (summaryUpdateTimer) {
+                clearTimeout(summaryUpdateTimer);
+            }
             currentActiveIndex = e.target.value;
             if (currentActiveIndex) {
                 loadIndexSummary(currentActiveIndex);
