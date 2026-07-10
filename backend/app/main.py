@@ -1,15 +1,52 @@
+from contextlib import asynccontextmanager
+import json
 import os
 import threading
 import uuid
+from collections import defaultdict
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from dependencies import access_stats
+from dependencies.manage import access_stats as _mgmt_access_stats
+from configs.llm_predictor import init_settings
+from handlers.llama_handler import loadAllIndexes
+from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, access_stats_path
 from router import response_app, index_app, graph_app, manage_app, test_app
 from utils.security import ApiKeyMiddleware
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_settings()
+    loadAllIndexes()
+    for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+    try:
+        with open(access_stats_path, "r") as file:
+            access_stats_dict = json.load(file)
+            _mgmt_access_stats["total_visits"] = access_stats_dict["total_visits"]
+            _mgmt_access_stats["user_visits"] = defaultdict(int, access_stats_dict["user_visits"])
+            _mgmt_access_stats["endpoint_visits"] = defaultdict(int, access_stats_dict["endpoint_visits"])
+    except FileNotFoundError:
+        pass
+    _mgmt_access_stats["ip_count"] = len(_mgmt_access_stats["user_visits"])
+
+    yield
+
+    access_stats_dict = {
+        "total_visits": _mgmt_access_stats["total_visits"],
+        "user_visits": dict(_mgmt_access_stats["user_visits"]),
+        "endpoint_visits": dict(_mgmt_access_stats["endpoint_visits"]),
+    }
+    with open(access_stats_path, "w") as file:
+        json.dump(access_stats_dict, file)
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(index_app, prefix='/index', tags=['index'])
 app.include_router(graph_app, prefix='/graph', tags=['graph'])

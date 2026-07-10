@@ -1,4 +1,3 @@
-import json
 import os
 from collections import defaultdict
 from dotenv import dotenv_values, set_key
@@ -8,41 +7,13 @@ from starlette.requests import Request
 
 from utils.security import require_configured_api_key
 
-from configs.load_env import access_stats_path, reload_env_variables, PROJECT_ROOT
+from configs.load_env import PROJECT_ROOT, reload_env_variables
 from configs.llm_predictor import build_llm
 from dependencies.manage import access_stats
 from models.user import Feedback
 from utils.file import save_feedback_to_file
 
 manage_app = APIRouter()
-
-
-@manage_app.on_event("startup")
-async def startup():
-    """加载access_stats"""
-    try:
-        with open(access_stats_path, "r") as file:
-            access_stats_dict = json.load(file)
-            access_stats["total_visits"] = access_stats_dict["total_visits"]
-            access_stats["user_visits"] = defaultdict(int, access_stats_dict["user_visits"])
-            access_stats["endpoint_visits"] = defaultdict(int, access_stats_dict["endpoint_visits"])
-    except FileNotFoundError:
-        pass
-
-    access_stats["ip_count"] = len(access_stats["user_visits"])
-
-
-@manage_app.on_event("shutdown")
-def save_access_stats():
-    """保存access_stats"""
-    access_stats_dict = {
-        "total_visits": access_stats["total_visits"],
-        "user_visits": dict(access_stats["user_visits"]),
-        "endpoint_visits": dict(access_stats["endpoint_visits"])
-    }
-
-    with open(access_stats_path, "w") as file:
-        json.dump(access_stats_dict, file)
 
 
 @manage_app.get("/stats")

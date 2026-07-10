@@ -29,19 +29,6 @@ def _sanitize_index_name(name: str) -> str:
     return re.sub(r'[^\w\-]', '_', name)
 
 
-async def startup_event():
-    init_settings()
-    loadAllIndexes()
-    for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-
-@index_app.on_event("startup")
-async def startup():
-    await startup_event()
-
-
 @index_app.get("/")
 async def index():
     return {"status": "ok", "load": "ok"}
