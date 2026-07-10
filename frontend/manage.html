@@ -708,7 +708,7 @@
                                 <p style="font-size: 13px; color: #555; font-weight: 500;">拖拽 TXT/PDF/Markdown 文件到这里，或者点击选择</p>
                                 <p style="font-size: 11px; color: #999; margin-top: 5px;">支持多文件一次性上传和自动解析分块</p>
                             </div>
-                            <input type="file" id="file-input" multiple accept=".txt,.pdf,.md,.doc,.docx" style="display: none;">
+                            <input type="file" id="file-input" multiple accept=".txt,.pdf,.md,.csv,.xlsx,.docx" style="display: none;">
                             <div id="upload-progress-list" style="margin-top: 15px; font-size: 12px; color: #666;"></div>
                         </div>
                         
@@ -729,7 +729,7 @@
                         <div id="tab-qa" class="tab_content">
                             <div class="form_group">
                                 <label for="qa-file-input">选择数据源文件 (TXT / MD 等)</label>
-                                <input type="file" id="qa-file-input" accept=".txt,.pdf,.md,.doc,.docx">
+                                <input type="file" id="qa-file-input" accept=".txt,.pdf,.md,.csv,.xlsx,.docx">
                             </div>
                             <div class="form_group">
                                 <label for="qa-custom-prompt">QA 问答抽取 Prompt (可选)</label>
@@ -819,6 +819,7 @@
         const baseURL = '/index';
         let currentActiveIndex = null;
         let summaryUpdateTimer = null;
+        let updateTimers = {}; // 存储各个节点的定时器
 
         // 全局加载遮罩控制
         function showLoading(text = '正在处理中...') {
@@ -1298,7 +1299,7 @@
         let filteredNodesList = [];
         let currentPage = 1;
         const pageSize = 10;
-        let updateTimers = {}; // 存储各个节点的定时器
+        // updateTimers is declared at the top of the script block
 
         async function loadIndexNodes(indexName) {
             if (!indexName) {
