@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 import handlers.llama_handler as lh
+import configs.load_env as env_config
+import handlers.index_crud as index_crud
 
 
 class FakeIndex:
@@ -22,20 +24,20 @@ class FakeIndex:
 class LoadAllIndexesTest(unittest.TestCase):
     def setUp(self):
         lh.indexes.clear()
-        self._orig_get_folders_list = lh.get_folders_list
-        self._orig_storage_context = lh.StorageContext
-        self._orig_load_index = lh.load_index_from_storage
+        self._orig_get_folders_list = index_crud.get_folders_list
+        self._orig_storage_context = index_crud.StorageContext
+        self._orig_load_index = index_crud.load_index_from_storage
 
-        lh.get_folders_list = MagicMock(return_value=['a', 'b'])
-        lh.StorageContext = MagicMock()
-        lh.StorageContext.from_defaults = MagicMock(return_value='fake-storage-context')
-        lh.load_index_from_storage = MagicMock(side_effect=lambda ctx: FakeIndex())
+        index_crud.get_folders_list = MagicMock(return_value=['a', 'b'])
+        index_crud.StorageContext = MagicMock()
+        index_crud.StorageContext.from_defaults = MagicMock(return_value='fake-storage-context')
+        index_crud.load_index_from_storage = MagicMock(side_effect=lambda ctx: FakeIndex())
 
     def tearDown(self):
         lh.indexes.clear()
-        lh.get_folders_list = self._orig_get_folders_list
-        lh.StorageContext = self._orig_storage_context
-        lh.load_index_from_storage = self._orig_load_index
+        index_crud.get_folders_list = self._orig_get_folders_list
+        index_crud.StorageContext = self._orig_storage_context
+        index_crud.load_index_from_storage = self._orig_load_index
 
     def test_does_not_duplicate_on_repeated_calls(self):
         asyncio.run(lh.loadAllIndexes())
@@ -60,11 +62,15 @@ class EmbeddingQATest(unittest.TestCase):
 
 class SaveIndexTest(unittest.TestCase):
     def setUp(self):
-        self._orig_dir = lh.index_save_directory
-        lh.index_save_directory = 'data/indexes'  # no trailing slash
+        self._orig_dir = env_config.index_save_directory
+        env_config.index_save_directory = 'data/indexes'  # no trailing slash
+        # Also patch in index_crud since it imported the value at module load
+        self._orig_crud_dir = index_crud.index_save_directory
+        index_crud.index_save_directory = 'data/indexes'
 
     def tearDown(self):
-        lh.index_save_directory = self._orig_dir
+        env_config.index_save_directory = self._orig_dir
+        index_crud.index_save_directory = self._orig_crud_dir
 
     def test_uses_proper_path_join(self):
         index = FakeIndex(index_id='myindex')

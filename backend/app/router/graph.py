@@ -44,7 +44,7 @@ async def create_graph(request: Request):
     """创建graph"""
     client_id = _client_id(request)
     _prune_sessions(_graph_chat_engines, 100)
-    _graph_chat_engines[client_id] = compose_graph_chat_egine()
+    _graph_chat_engines[client_id] = await compose_graph_chat_egine()
     return {"status": "ok"}
 
 
@@ -56,7 +56,7 @@ async def chaty_graph_stream(request: Request, query: str = Form()):
     client_id = _client_id(request)
     chat_engine = _graph_chat_engines.get(client_id)
     if chat_engine is None:
-        chat_engine = compose_graph_chat_egine()
+        chat_engine = await compose_graph_chat_egine()
         _graph_chat_engines[client_id] = chat_engine
     query = query.strip()
     customer_logger.info(f"chat_stream: {query}")
