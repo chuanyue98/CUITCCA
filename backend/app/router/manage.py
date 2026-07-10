@@ -17,7 +17,7 @@ from utils.file import save_feedback_to_file
 manage_app = APIRouter()
 
 
-@manage_app.get("/stats", response_model=StatsResponse)
+@manage_app.get("/stats", response_model=StatsResponse, dependencies=[Depends(require_configured_api_key)])
 async def get_stats():
     """
     获取访问统计
@@ -30,7 +30,7 @@ async def get_stats():
     )
 
 
-@manage_app.post("/feedback", response_model=FeedbackResponse)
+@manage_app.post("/feedback", response_model=FeedbackResponse, dependencies=[Depends(require_configured_api_key)])
 def create_feedback(feedback: Feedback, request: Request):
     """
     创建反馈

@@ -12,9 +12,8 @@ from dependencies import access_stats
 from dependencies.manage import access_stats as _mgmt_access_stats
 from configs.llm_predictor import init_settings
 from handlers.llama_handler import loadAllIndexes
-from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, access_stats_path, reload_env_variables
+from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, access_stats_path, reload_env_variables, COOKIE_SECURE, COOKIE_MAX_AGE
 from router import response_app, index_app, graph_app, manage_app, test_app
-from utils.security import ApiKeyMiddleware
 
 
 @asynccontextmanager
@@ -79,7 +78,15 @@ async def session_and_stats_middleware(request, call_next):
 
     response = await call_next(request)
     if not has_session:
-        response.set_cookie(key=cookie_name, value=session_id, path="/", httponly=True, samesite="lax")
+        response.set_cookie(
+            key=cookie_name,
+            value=session_id,
+            path="/",
+            httponly=True,
+            samesite="lax",
+            secure=COOKIE_SECURE,
+            max_age=COOKIE_MAX_AGE,
+        )
     return response
 
 
@@ -90,12 +97,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-API_KEY = os.environ.get('CUITCCA_API_KEY', '')
-
-if API_KEY:
-    app.add_middleware(ApiKeyMiddleware, api_key=API_KEY)
 
 
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'frontend')
