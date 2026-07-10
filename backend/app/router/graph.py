@@ -11,6 +11,7 @@ from configs.load_env import VERBOSE
 from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
     format_source_nodes_list, get_index_by_name, _indexes_lock
+from models.response import QueryResponse, QuerySourcesResponse
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger, query_logger, error_logger
 
@@ -82,24 +83,24 @@ async def query_graph_stream(query: str = Form()):
 _last_query_response: dict[str, list] = {}
 
 
-@graph_app.post("/query_sources")
+@graph_app.post("/query_sources", response_model=QuerySourcesResponse)
 async def query_sources(request: Request):
     """返回的源为上一次query_stream所产生的"""
     source_nodes = _last_query_response.get(_client_id(request))
     if not source_nodes:
         return JSONResponse(content={"status": "detail", "message": "please query first"},
                             status_code=status.HTTP_400_BAD_REQUEST)
-    return {"source_nodes": [
+    return QuerySourcesResponse(source_nodes=[
         {
             'id': sn.node.id_,
             'text': sn.node.text,
             'score': sn.score,
         }
         for sn in source_nodes
-    ]}
+    ])
 
 
-@graph_app.post("/query")
+@graph_app.post("/query", response_model=QueryResponse)
 @id_not_found_exceptions
 async def query_graph(request: Request, query: str = Form()):
     query_logger.info(f"query: {query}")
@@ -118,10 +119,10 @@ async def query_graph(request: Request, query: str = Form()):
     query_logger.info(f"res: {response}")
     if response.response == "Empty Response":
         response.response = '我还不知道，请反馈给我吧'
-    return {"response": response.response}
+    return QueryResponse(response=response.response)
 
 
-@graph_app.post("/agent")
+@graph_app.post("/agent", response_model=QueryResponse)
 @id_not_found_exceptions
 async def agent(query: str = Form()):
     async with _indexes_lock:
@@ -145,7 +146,7 @@ async def agent(query: str = Form()):
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
-    return {"response": response.response}
+    return QueryResponse(response=response.response)
 
 
 @graph_app.websocket("/query")

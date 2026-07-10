@@ -31,6 +31,7 @@ from handlers.llama_handler import (
     citf,
 )
 from dependencies import get_index
+from models.response import IndexListResponse, QueryResponse
 from utils.file import read_file_contents, safe_filename, get_folders_list
 from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash, \
     build_qa_generation_prompt
@@ -47,11 +48,11 @@ async def index():
     return {"status": "ok", "load": "ok"}
 
 
-@index_app.get("/list")
+@index_app.get("/list", response_model=IndexListResponse)
 async def get_index_list():
     async with _indexes_lock:
         index_list = [index.index_id for index in indexes]
-    return JSONResponse(content={'indexes': index_list})
+    return IndexListResponse(indexes=index_list)
 
 
 @index_app.post("/create")
@@ -82,18 +83,18 @@ async def delete_index(index_name: str = Form()):
                             status_code=status.HTTP_404_NOT_FOUND)
 
 
-@index_app.post("/{index_name}/query")
+@index_app.post("/{index_name}/query", response_model=QueryResponse)
 async def query_index(index=Depends(get_index), query: str = Form()):
     customer_logger.info(f"query index {index.index_id} with query {query}")
 
     engine = index.as_query_engine(
-        text_qa_template=Prompts.QA_PROMPT.value,
-        refine_template=Prompts.REFINE_PROMPT.value,
+        text_qa_template=Prompts.QA_PROMPT.value.template,
+        refine_template=Prompts.REFINE_PROMPT.value.template,
         similarity_top_k=2,
     )
 
     response = await engine.aquery(query)
-    return {"response": str(response)}
+    return QueryResponse(response=str(response))
 
 
 @index_app.post("/{index_name}/update")

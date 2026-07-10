@@ -1,6 +1,6 @@
 from enum import Enum
 
-from llama_index.core import Prompt
+from llama_index.core import PromptTemplate
 
 
 class ResponseMode(str, Enum):
@@ -61,7 +61,7 @@ class PromptType(str, Enum):
 
 
 class Prompts(Enum):
-    QA_PROMPT = Prompt(
+    QA_PROMPT = PromptTemplate(
         "你是成都信息工程大学校园小助手，仅回答学校有关的问题，其他问题都不回答\n"
         "我们已提供以下上下文信息。 \n"
         "---------------------\n"
@@ -69,7 +69,7 @@ class Prompts(Enum):
         "\n---------------------\n"
         "根据这些信息，请回答问题：{query_str}\n"
     )
-    CONDENSE_QUESTION_PROMPT = Prompt("""\
+    CONDENSE_QUESTION_PROMPT = PromptTemplate("""\
                             给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, \
                             将消息改写成一个独立问题仅补充后续留言不改变后续留言意思。\
                             <Chat History> 
@@ -78,7 +78,7 @@ class Prompts(Enum):
                             {question}
                             <Standalone question>
                             """)
-    REFINE_PROMPT = Prompt("""原始问题如下: {query_str} 
+    REFINE_PROMPT = PromptTemplate("""原始问题如下: {query_str} 
                             我们已经提供了一个现有的答案: {existing_answer} 
                             我们有机会通过下面的一些更多上下文来完善现有的答案（仅在需要时）。
                             {context_msg}
