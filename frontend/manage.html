@@ -556,8 +556,8 @@
         }
         
         #pagination-bar button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+            cursor: not-allowed !important;
+            opacity: 0.5 !important;
         }
     </style>
 </head>
@@ -1481,6 +1481,10 @@
             if (!confirm('确定要删除这个数据分块(Node)吗？此操作不可逆！')) {
                 return;
             }
+            if (updateTimers[nodeId]) {
+                clearTimeout(updateTimers[nodeId]);
+                delete updateTimers[nodeId];
+            }
             showLoading('正在删除数据分块...');
             try {
                 const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteNode?node_id=${nodeId}`, {
@@ -1511,6 +1515,13 @@
             if (!confirm(`确定要彻底删除文档 "${docId}" 及其所包含的所有分块吗？`)) {
                 return;
             }
+            const docNodes = allNodesList.filter(n => n.doc_id === docId);
+            docNodes.forEach(node => {
+                if (updateTimers[node.node_id]) {
+                    clearTimeout(updateTimers[node.node_id]);
+                    delete updateTimers[node.node_id];
+                }
+            });
             showLoading('正在删除文档及全部分块...');
             try {
                 const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteDoc?doc_id=${docId}`, {
