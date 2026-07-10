@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse, StreamingResponse
 from configs.load_env import VERBOSE
 from exceptions.llama_exception import id_not_found_exceptions
 from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
-    format_source_nodes_list, get_index_by_name
+    format_source_nodes_list, get_index_by_name, _indexes_lock
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger, query_logger, error_logger
 
@@ -124,16 +124,17 @@ async def query_graph(request: Request, query: str = Form()):
 @graph_app.post("/agent")
 @id_not_found_exceptions
 async def agent(query: str = Form()):
-    query_engine_tools = [
-        QueryEngineTool(
-            query_engine=get_index_by_name(index.index_id).as_query_engine(),
-            metadata=ToolMetadata(
-                name=index.index_id,
-                description=index.summary,
-            ),
-        )
-        for index in indexes
-    ]
+    async with _indexes_lock:
+        query_engine_tools = [
+            QueryEngineTool(
+                query_engine=get_index_by_name(index.index_id).as_query_engine(),
+                metadata=ToolMetadata(
+                    name=index.index_id,
+                    description=index.summary,
+                ),
+            )
+            for index in indexes
+        ]
     agent_obj = ReActAgent.from_tools(query_engine_tools, verbose=VERBOSE)
     try:
         response = await agent_obj.achat(query)
@@ -185,7 +186,9 @@ async def graph_history(request: Request):
 
 @graph_app.post("/query_router")
 async def query_router(query: str = Form()):
-    query_engine_tools = generate_query_engine_tools(indexes)
+    async with _indexes_lock:
+        _indexes_snapshot = list(indexes)
+    query_engine_tools = generate_query_engine_tools(_indexes_snapshot)
     query_engine = RouterQueryEngine(
         selector=PydanticMultiSelector.from_defaults(),
         query_engine_tools=query_engine_tools,
