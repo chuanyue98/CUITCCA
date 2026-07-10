@@ -21,7 +21,7 @@ from utils.security import ApiKeyMiddleware
 async def lifespan(app: FastAPI):
     reload_env_variables()
     init_settings()
-    loadAllIndexes()
+    await loadAllIndexes()
     for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:
         if not os.path.exists(directory):
             os.makedirs(directory)

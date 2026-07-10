@@ -1,3 +1,4 @@
+import asyncio
 import os
 import unittest
 from unittest.mock import MagicMock, patch
@@ -37,10 +38,10 @@ class LoadAllIndexesTest(unittest.TestCase):
         lh.load_index_from_storage = self._orig_load_index
 
     def test_does_not_duplicate_on_repeated_calls(self):
-        lh.loadAllIndexes()
+        asyncio.run(lh.loadAllIndexes())
         self.assertEqual(len(lh.indexes), 2)
 
-        lh.loadAllIndexes()
+        asyncio.run(lh.loadAllIndexes())
         self.assertEqual(len(lh.indexes), 2, 'calling loadAllIndexes twice should not duplicate entries')
 
 

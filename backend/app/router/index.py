@@ -17,6 +17,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
 from configs.llm_predictor import build_llm, init_settings
 from handlers.llama_handler import (
+    _indexes_lock,
     indexes,
     createIndex,
     loadAllIndexes,
@@ -47,10 +48,9 @@ async def index():
 
 
 @index_app.get("/list")
-def get_index_list():
-    index_list = []
-    for index in indexes:
-        index_list.append(index.index_id)
+async def get_index_list():
+    async with _indexes_lock:
+        index_list = [index.index_id for index in indexes]
     return JSONResponse(content={'indexes': index_list})
 
 
@@ -60,7 +60,7 @@ async def create_index(index_name: str = Form()):
     if sanitized_name in get_folders_list(index_save_directory):
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(sanitized_name)
-    loadAllIndexes()
+    await loadAllIndexes()
     return JSONResponse(content={'status': 'success', 'msg': f'index {sanitized_name} created'})
 
 
@@ -71,11 +71,11 @@ async def index_info(index=Depends(get_index)):
 
 
 @index_app.post("/delete")
-def delete_index(index_name: str = Form()):
+async def delete_index(index_name: str = Form()):
     if index_name in get_folders_list(index_save_directory):
         index_path = os.path.join(index_save_directory, index_name)
         shutil.rmtree(index_path)
-        loadAllIndexes()
+        await loadAllIndexes()
         return {"status": "deleted"}
     else:
         return JSONResponse(content={'status': 'detail', 'message': 'index not exist'},

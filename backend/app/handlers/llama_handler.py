@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -21,6 +22,7 @@ from utils.llama import get_nodes_from_file
 from utils.logger import customer_logger
 
 indexes = []
+_indexes_lock = asyncio.Lock()
 
 def createIndex(index_name):
     """
@@ -34,7 +36,7 @@ def createIndex(index_name):
     index.storage_context.persist(os.path.join(index_save_directory, index_name))
 
 
-def loadAllIndexes():
+async def loadAllIndexes():
     """
     加载索引数据
     :param index_save_directory: 索引保存目录
@@ -42,23 +44,24 @@ def loadAllIndexes():
     """
     from configs.llm_predictor import init_settings
     init_settings()
-    indexes.clear()
-    for index_dir_name in get_folders_list(index_save_directory):
-        # 获取索引目录的完整路径
-        index_dir_path = os.path.join(index_save_directory, index_dir_name)
-        try:
-            storage_context = StorageContext.from_defaults(persist_dir=index_dir_path)
-            index = load_index_from_storage(storage_context)
-            # Load summary if summary.txt exists
-            summary_path = os.path.join(index_dir_path, 'summary.txt')
-            if os.path.exists(summary_path):
-                with open(summary_path, 'r', encoding='utf-8') as f:
-                    index.summary = f.read().strip()
-            else:
-                index.summary = ""
-            indexes.append(index)
-        except Exception as e:
-            logging.error(f"Error loading index {index_dir_name}: {e}")
+    async with _indexes_lock:
+        indexes.clear()
+        for index_dir_name in get_folders_list(index_save_directory):
+            # 获取索引目录的完整路径
+            index_dir_path = os.path.join(index_save_directory, index_dir_name)
+            try:
+                storage_context = StorageContext.from_defaults(persist_dir=index_dir_path)
+                index = load_index_from_storage(storage_context)
+                # Load summary if summary.txt exists
+                summary_path = os.path.join(index_dir_path, 'summary.txt')
+                if os.path.exists(summary_path):
+                    with open(summary_path, 'r', encoding='utf-8') as f:
+                        index.summary = f.read().strip()
+                else:
+                    index.summary = ""
+                indexes.append(index)
+            except Exception as e:
+                logging.error(f"Error loading index {index_dir_name}: {e}")
 
 
 async def insert_into_index(index, doc_file_path):
@@ -339,7 +342,8 @@ def get_docs_from_index(index, doc_id):
 
 
 if __name__ == "__main__":
-    loadAllIndexes()
+    import asyncio
+    asyncio.run(loadAllIndexes())
     graph = ComposableGraph.from_indices(
         TreeIndex,
         [get_index_by_name('test')],
