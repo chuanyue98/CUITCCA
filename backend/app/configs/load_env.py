@@ -45,3 +45,9 @@ def reload_env_variables():
     LOG_PATH = os.path.join(PROJECT_ROOT, LOG_PATH)
     FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
     access_stats_path = os.path.join(PROJECT_ROOT, '../access_stats.json')
+
+
+MAX_FILE_SIZE = 10 * 1024 * 1024
+ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.md', '.csv', '.xlsx'}
+COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
+COOKIE_MAX_AGE = int(os.environ.get('COOKIE_MAX_AGE', '86400'))

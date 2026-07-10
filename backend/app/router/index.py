@@ -31,10 +31,11 @@ from handlers.llama_handler import (
     citf,
 )
 from dependencies import get_index
-from models.response import IndexListResponse, QueryResponse
+from models.response import IndexListResponse, QueryResponse, UploadResponse
 from utils.file import read_file_contents, safe_filename, get_folders_list
 from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash, \
     build_qa_generation_prompt
+from utils.upload import validate_upload_file, FileTooLargeError, InvalidFileTypeError
 
 index_app = APIRouter()
 
@@ -107,8 +108,13 @@ async def update_doc(nodeId, index=Depends(get_index), text: str = Form()):
     return JSONResponse(content={"status": "updated"})
 
 
-@index_app.post("/{index_name}/uploadFile")
+@index_app.post("/{index_name}/uploadFile", response_model=UploadResponse)
 async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
+    try:
+        validate_upload_file(file)
+    except (FileTooLargeError, InvalidFileTypeError) as e:
+        return JSONResponse(content={"status": "detail", "message": str(e)},
+                            status_code=status.HTTP_400_BAD_REQUEST)
     filepath = None
     try:
         filename = safe_filename(file.filename)
@@ -128,14 +134,19 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
     finally:
         if filepath is not None and os.path.exists(filepath):
             os.remove(filepath)
-    return {"status": "inserted"}
+    return UploadResponse(status="inserted")
 
 
-@index_app.post("/{index_name}/uploadFiles")
+@index_app.post("/{index_name}/uploadFiles", response_model=UploadResponse)
 async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(...)):
     filepaths = []
     try:
         for file in files:
+            try:
+                validate_upload_file(file)
+            except (FileTooLargeError, InvalidFileTypeError) as e:
+                return JSONResponse(content={"status": "detail", "message": str(e)},
+                                    status_code=status.HTTP_400_BAD_REQUEST)
             filename = safe_filename(file.filename)
             unique_id = str(uuid.uuid4())
             filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
@@ -159,7 +170,7 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
             if filepath is not None and os.path.exists(filepath):
                 os.remove(filepath)
 
-    return {"status": "inserted"}
+    return UploadResponse(status="inserted")
 
 
 @index_app.post("/{index_name}/upload_file_by_QA")
