@@ -605,7 +605,7 @@
 
     function extractBestAnswer_backup(responsecontent) {
         try {
-            constresponseData = JSON.parse(responsecontent); // 尝试将JSON字符串解析成对象
+            const responseData = JSON.parse(responsecontent); // 尝试将JSON字符串解析成对象
             if (responseData && responseData.sources && responseData.sources.length > 0) {
                 let bestAnswer = { score: -Infinity, answer: '' };
                 responseData.sources.forEach(source => {
