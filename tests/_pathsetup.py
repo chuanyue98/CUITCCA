@@ -15,6 +15,9 @@ warnings.filterwarnings(
     category=Warning,
 )
 
+from configs.load_env import reload_env_variables
+reload_env_variables()
+
 import utils.logger  # noqa: E402  (triggers StreamHandler registration)
 _cust_logger = logging.getLogger('customer_logger')
 for _h in list(_cust_logger.handlers):

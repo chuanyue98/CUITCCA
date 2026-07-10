@@ -12,13 +12,14 @@ from dependencies import access_stats
 from dependencies.manage import access_stats as _mgmt_access_stats
 from configs.llm_predictor import init_settings
 from handlers.llama_handler import loadAllIndexes
-from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, access_stats_path
+from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, access_stats_path, reload_env_variables
 from router import response_app, index_app, graph_app, manage_app, test_app
 from utils.security import ApiKeyMiddleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    reload_env_variables()
     init_settings()
     loadAllIndexes()
     for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:

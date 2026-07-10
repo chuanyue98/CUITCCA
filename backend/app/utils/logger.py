@@ -2,7 +2,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-from configs import LOG_PATH
+from configs.load_env import reload_env_variables
+
+reload_env_variables()
+
+from configs.load_env import LOG_PATH
 
 if not os.path.exists(LOG_PATH):
     os.makedirs(LOG_PATH)

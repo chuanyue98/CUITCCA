@@ -45,6 +45,3 @@ def reload_env_variables():
     LOG_PATH = os.path.join(PROJECT_ROOT, LOG_PATH)
     FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
     access_stats_path = os.path.join(PROJECT_ROOT, '../access_stats.json')
-
-
-reload_env_variables()
