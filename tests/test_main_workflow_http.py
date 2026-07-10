@@ -29,7 +29,7 @@ class MainWorkflowHttpTest(unittest.TestCase):
         mock_folders.return_value = []
         response = self.client.post("/index/create", data={"index_name": "New Index"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "success", "msg": "index New_Index created"})
+        self.assertEqual(response.json(), {"status": "success", "msg": "index New_Index created", "index_name": "New_Index"})
         mock_create.assert_called_once_with("New_Index")
 
     @patch('router.index.insert_into_index')

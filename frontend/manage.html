@@ -708,7 +708,7 @@
                                 <p style="font-size: 13px; color: #555; font-weight: 500;">拖拽 TXT/PDF/Markdown 文件到这里，或者点击选择</p>
                                 <p style="font-size: 11px; color: #999; margin-top: 5px;">支持多文件一次性上传和自动解析分块</p>
                             </div>
-                            <input type="file" id="file-input" multiple style="display: none;">
+                            <input type="file" id="file-input" multiple accept=".txt,.pdf,.md,.doc,.docx" style="display: none;">
                             <div id="upload-progress-list" style="margin-top: 15px; font-size: 12px; color: #666;"></div>
                         </div>
                         
@@ -729,7 +729,7 @@
                         <div id="tab-qa" class="tab_content">
                             <div class="form_group">
                                 <label for="qa-file-input">选择数据源文件 (TXT / MD 等)</label>
-                                <input type="file" id="qa-file-input">
+                                <input type="file" id="qa-file-input" accept=".txt,.pdf,.md,.doc,.docx">
                             </div>
                             <div class="form_group">
                                 <label for="qa-custom-prompt">QA 问答抽取 Prompt (可选)</label>
@@ -1041,9 +1041,9 @@
                 });
                 const data = await response.json();
                 if (data.status === 'success') {
-                    showToast(`索引 ${sanitized} 创建成功`, 'success');
+                    showToast(`索引 ${name} 创建成功`, 'success');
                     input.value = '';
-                    currentActiveIndex = sanitized; // 切到新索引
+                    currentActiveIndex = data.index_name; // Use returned sanitized name
                     await loadIndexes();
                 } else {
                     showToast(data.msg || '新建失败', 'error');
@@ -1527,12 +1527,13 @@
                 const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteDoc?doc_id=${docId}`, {
                     method: 'POST'
                 });
-                if (response.ok) {
+                const data = await response.json();
+                if (response.ok && data.status === 'deleted') {
                     showToast('整档文件及其所有分块已成功清除', 'success');
                     // 重新请求后端，以防有其它关联节点
                     await loadIndexNodes(currentActiveIndex);
                 } else {
-                    showToast('删除整档文件失败', 'error');
+                    showToast(data.message || '删除整档文件失败', 'error');
                 }
             } catch (error) {
                 showToast('网络错误，删除整档失败', 'error');

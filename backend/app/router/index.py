@@ -63,7 +63,11 @@ async def create_index(index_name: str = Form()):
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(sanitized_name)
     await loadAllIndexes()
-    return JSONResponse(content={'status': 'success', 'msg': f'index {sanitized_name} created'})
+    return JSONResponse(content={
+        'status': 'success', 
+        'msg': f'index {sanitized_name} created',
+        'index_name': sanitized_name
+    })
 
 
 @index_app.get("/{index_name}/info")
@@ -194,7 +198,8 @@ async def delete_doc(doc_id, index=Depends(get_index)):
     try:
         deleteDocById(index, doc_id)
     except Exception as e:
-        return JSONResponse(content={"status": "detail", "message": f"delete doc error: {e}"})
+        return JSONResponse(content={"status": "detail", "message": f"delete doc error: {e}"},
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return {"status": "deleted"}
 
 
