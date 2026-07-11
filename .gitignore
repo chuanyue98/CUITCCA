@@ -4,6 +4,7 @@
 !/backend/app/
 !/backend/.env.example
 /frontend/*
+!/frontend/vendor/
 /indexes/*
 .venv/
 # uv.lock removed from gitignore to support CI --frozen
