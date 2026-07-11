@@ -13,11 +13,9 @@ dependencies = [
     "openai>=2.45.0",
     "llama-index-core>=0.14.23",
     "llama-index-embeddings-huggingface>=0.5.0",
-    "llama-index-llms-openai>=0.4.0",
-    "llama-index-readers-file>=0.2.0",
-    "langchain>=0.3.0",
-    "langchain-community>=0.3.0",
-    "langchain-text-splitters>=0.3.0",
+    "llama-index-llms-openai-like>=0.4.0",
+    "llama-index-vector-stores-chroma>=0.3.0",
+    "chromadb>=0.6.0",
     "requests>=2.34.2",
     "pandas>=2.2.3",
     "python-docx>=1.1.0",
@@ -29,7 +27,6 @@ dependencies = [
     "xlrd>=2.0.2",
     "XlsxWriter>=3.2.9",
     "tqdm>=4.68.3",
-    "llama-index-llms-openai-like>=0.4.0",
 ]
 
 [dependency-groups]
