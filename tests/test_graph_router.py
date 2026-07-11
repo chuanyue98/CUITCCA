@@ -256,6 +256,30 @@ class GraphRouterTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, "existing")
 
+    @patch('router.graph.compose_graph_chat_egine')
+    def test_chat_stream_populates_query_sources(self, mock_compose):
+        fake_engine = MagicMock()
+        source_node = MagicMock()
+        source_node.node.id_ = "n1"
+        source_node.node.text = "cited text"
+        source_node.score = 0.8
+
+        async def mock_astream_chat(q):
+            resp = MagicMock()
+            resp.response_gen = iter(["hello"])
+            resp.source_nodes = [source_node]
+            return resp
+        fake_engine.astream_chat = mock_astream_chat
+        mock_compose.return_value = fake_engine
+
+        self.client.post("/graph/chat_stream", data={"query": "hi"})
+        response = self.client.post("/graph/query_sources")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["source_nodes"]), 1)
+        self.assertEqual(data["source_nodes"][0]["id"], "n1")
+
 
 if __name__ == '__main__':
     unittest.main()

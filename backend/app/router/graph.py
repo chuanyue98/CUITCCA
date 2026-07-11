@@ -81,6 +81,7 @@ async def chat_graph_stream(request: Request, query: str = Form(max_length=5000)
     customer_logger.info(f"chat_stream: {query}")
     res = await chat_engine.astream_chat(query)
     customer_logger.info(f"res: {res}")
+    _last_query_response.set(client_id, getattr(res, "source_nodes", None) or [])
     return StreamingResponse(res.response_gen, media_type="text/plain")
 
 
