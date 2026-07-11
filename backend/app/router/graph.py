@@ -3,15 +3,14 @@ import secrets
 import time
 from collections import OrderedDict
 
-from exceptions.llama_exception import id_not_found_exceptions
 from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect
 from handlers.graph_builder import (
-    MultiIndexQueryEngine,
     compose_graph_chat_egine,
     compose_graph_query_engine,
     get_history_msg,
+    invalidate_query_engine_cache,
 )
-from handlers.index_crud import _indexes_lock, format_source_nodes_list, indexes
+from handlers.index_crud import format_source_nodes_list
 from models.response import QueryResponse, QuerySourcesResponse
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
@@ -68,7 +67,7 @@ _last_query_response: TTLCache = TTLCache()
 @graph_app.post("/create")
 async def create_graph(request: Request):
     client_id = _client_id(request)
-    _graph_chat_engines.set(client_id, await compose_graph_chat_egine())
+    _graph_chat_engines.set(client_id, compose_graph_chat_egine())
     return {"status": "ok"}
 
 
@@ -77,7 +76,7 @@ async def chat_graph_stream(request: Request, query: str = Form(max_length=5000)
     client_id = _client_id(request)
     chat_engine = _graph_chat_engines.get(client_id)
     if chat_engine is None:
-        chat_engine = await compose_graph_chat_egine()
+        chat_engine = compose_graph_chat_egine()
         _graph_chat_engines.set(client_id, chat_engine)
     query = query.strip()
     customer_logger.info(f"chat_stream: {query}")
@@ -115,7 +114,6 @@ async def query_sources(request: Request):
 
 
 @graph_app.post("/query", response_model=QueryResponse)
-@id_not_found_exceptions
 async def query_graph(request: Request, query: str = Form(max_length=5000)):
     query_logger.info(f"query: {query}")
     try:
@@ -136,7 +134,6 @@ async def query_graph(request: Request, query: str = Form(max_length=5000)):
 
 
 @graph_app.post("/agent", response_model=QueryResponse)
-@id_not_found_exceptions
 async def agent(query: str = Form(max_length=5000)):
     query_engine = compose_graph_query_engine()
     try:
@@ -195,9 +192,8 @@ async def graph_history(request: Request):
 
 @graph_app.post("/query_router")
 async def query_router(query: str = Form(max_length=5000)):
-    async with _indexes_lock:
-        indexes_snapshot = list(indexes)
-    query_engine = MultiIndexQueryEngine(indexes_snapshot=indexes_snapshot)
+    from handlers.graph_builder import MultiIndexQueryEngine
+    query_engine = MultiIndexQueryEngine(indexes_snapshot=list(indexes))
     customer_logger.info(f"query_router: {query}")
     response = await query_engine.aquery(query)
     customer_logger.info(f"res: {response}")

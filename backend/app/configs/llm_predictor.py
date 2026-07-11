@@ -11,6 +11,10 @@ _CONTEXT_WINDOWS = {
     'glm-5.2': 1048576,
     'sensenova-u1-fast': 262144,
 }
+_FUNCTION_CALLING_MODELS = frozenset({
+    'deepseek-v4-flash',
+    'glm-5.2',
+})
 _DEFAULT_CONTEXT_WINDOW = 32768
 _MAX_TOKENS = 4096
 
@@ -22,6 +26,7 @@ def build_llm() -> OpenAILike:
         api_key=env_config.openai_api_key,
         api_base=env_config.openai_api_base,
         is_chat_model=True,
+        is_function_calling_model=model in _FUNCTION_CALLING_MODELS,
         context_window=_CONTEXT_WINDOWS.get(model, _DEFAULT_CONTEXT_WINDOW),
         max_tokens=_MAX_TOKENS,
     )

@@ -1,5 +1,7 @@
+import asyncio
 import logging
 import re
+from typing import Any
 
 from configs.config import Prompts
 from configs.load_env import VERBOSE
@@ -31,7 +33,7 @@ class MultiIndexQueryEngine(BaseQueryEngine):
             for index in self._indexes_snapshot
         ]
 
-    async def _aquery(self, query: str) -> RESPONSE_TYPE:  # type: ignore[override]
+    async def _aquery(self, query: str) -> RESPONSE_TYPE:
         for engine in self._get_query_engines():
             try:
                 response = await engine.aquery(query)
@@ -42,8 +44,7 @@ class MultiIndexQueryEngine(BaseQueryEngine):
         from llama_index.core.response import Response
         return Response("Empty Response")
 
-    def _query(self, query: str) -> RESPONSE_TYPE:  # type: ignore[override]
-        import asyncio
+    def _query(self, query: str) -> RESPONSE_TYPE:
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
@@ -57,33 +58,12 @@ class MultiIndexQueryEngine(BaseQueryEngine):
         return []
 
 
-# Query engine 缓存
 _query_engine_cache: MultiIndexQueryEngine | None = None
-_query_engine_lock = None
 
 
-def _get_query_engine_lock():
-    global _query_engine_lock
-    if _query_engine_lock is None:
-        import asyncio
-        _query_engine_lock = asyncio.Lock()
-    return _query_engine_lock
-
-
-def _build_multi_query_engine(
-    streaming: bool = False,
-    indexes_snapshot: list | None = None,
-) -> MultiIndexQueryEngine:
-    if indexes_snapshot is None:
-        indexes_snapshot = list(indexes)
-    return MultiIndexQueryEngine(indexes_snapshot=indexes_snapshot, streaming=streaming)
-
-
-async def compose_graph_chat_egine() -> BaseChatEngine:
-    async with _indexes_lock:
-        indexes_snapshot = list(indexes)
-
-    query_engine = _build_multi_query_engine(streaming=True, indexes_snapshot=indexes_snapshot)
+def compose_graph_chat_egine() -> BaseChatEngine:
+    indexes_snapshot = list(indexes)
+    query_engine = MultiIndexQueryEngine(indexes_snapshot=indexes_snapshot, streaming=True)
 
     chat_engine = CondenseQuestionChatEngine.from_defaults(
         query_engine=query_engine,
@@ -95,15 +75,13 @@ async def compose_graph_chat_egine() -> BaseChatEngine:
 
 
 def compose_graph_query_engine(streaming: bool = False) -> BaseQueryEngine:
-    """获取查询引擎，使用缓存避免每次请求重建"""
     global _query_engine_cache
     if _query_engine_cache is None:
-        _query_engine_cache = _build_multi_query_engine(streaming=streaming)
+        _query_engine_cache = MultiIndexQueryEngine(indexes_snapshot=list(indexes), streaming=streaming)
     return _query_engine_cache
 
 
 def invalidate_query_engine_cache():
-    """索引变更时调用，清除缓存"""
     global _query_engine_cache
     _query_engine_cache = None
 
