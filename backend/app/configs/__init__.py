@@ -11,5 +11,6 @@ from .load_env import (
     openai_api_base,
     openai_model,
     VERBOSE,
+    chroma_db_path,
     reload_env_variables,
 )

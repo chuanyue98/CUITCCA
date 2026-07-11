@@ -1,12 +1,10 @@
 import asyncio
-import json
 import re
 from typing import List, Any
 
-from langchain_core.messages import ChatMessage
 from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.core.indices.base import BaseIndex
-from llama_index.core.node_parser import SimpleNodeParser, SentenceSplitter
+from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.tools import QueryEngineTool
 
 from configs.config import Prompts
@@ -36,12 +34,11 @@ def get_nodes_from_file(file_path):
     :param file_path: 文件路径
     :return:
     """
-    # 加载文本分词器
-    parser = SimpleNodeParser.from_defaults()
+    splitter = SentenceSplitter.from_defaults()
     documents = SimpleDirectoryReader(input_files=[file_path], filename_as_id=True).load_data()
     for doc in documents:
         doc.id_ = extract_content_after_backslash(doc.id_)
-    return parser.get_nodes_from_documents(documents)
+    return splitter.get_nodes_from_documents(documents)
 
 
 def extract_content_after_backslash(string: str) -> str:

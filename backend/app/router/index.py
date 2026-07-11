@@ -1,23 +1,19 @@
 import logging
 import os
-import shutil
 import re
 import uuid
 from typing import List
 
 import aiofiles
-import torch
 from fastapi import APIRouter, Form, File, UploadFile, status, Depends, HTTPException
-from llama_index.core.evaluation import ResponseEvaluator
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core import Settings, Document
 from starlette.responses import JSONResponse
 
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-
 from configs.config import Prompts
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
 from configs.llm_predictor import build_llm, init_settings
+from handlers import list_index_names, delete_collection
 from handlers.graph_builder import summary_index
 from handlers.llama_handler import (
     _indexes_lock,
@@ -36,7 +32,7 @@ from handlers.llama_handler import (
 from utils.logger import customer_logger
 from dependencies import get_index
 from models.response import IndexListResponse, QueryResponse, UploadResponse
-from utils.file import read_file_contents, safe_filename, get_folders_list
+from utils.file import read_file_contents, safe_filename
 from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash, \
     build_qa_generation_prompt
 from utils.upload import validate_upload_file, FileTooLargeError, InvalidFileTypeError
@@ -63,7 +59,7 @@ async def get_index_list():
 @index_app.post("/create")
 async def create_index(index_name: str = Form()):
     sanitized_name = _sanitize_index_name(index_name)
-    if sanitized_name in get_folders_list(index_save_directory):
+    if sanitized_name in list_index_names():
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(sanitized_name)
     await loadAllIndexes()
@@ -83,9 +79,8 @@ async def index_info(index=Depends(get_index)):
 @index_app.post("/delete")
 async def delete_index(index_name: str = Form()):
     sanitized_name = _sanitize_index_name(index_name)
-    if sanitized_name in get_folders_list(index_save_directory):
-        index_path = os.path.join(index_save_directory, sanitized_name)
-        shutil.rmtree(index_path)
+    if sanitized_name in list_index_names():
+        delete_collection(sanitized_name)
         await loadAllIndexes()
         return {"status": "deleted"}
     else:
@@ -245,7 +240,7 @@ async def insert_docs(text=Form(), doc_id=Form(None), index=Depends(get_index)):
     else:
         doc_id = doc_id.replace("\\\\", "\\")
         doc = Document(text=text, doc_id=doc_id)
-    index.insert(doc)
+    index.insert_nodes([doc])
     saveIndex(index)
     return {"status": "ok"}
 
@@ -264,8 +259,12 @@ async def get_file(index=Depends(get_index)):
 
 @index_app.post("/{index_name}/evaluator")
 async def evaluator(index=Depends(get_index), query: str = Form()):
-    evaluator = ResponseEvaluator()
+    from llama_index.core.evaluation import ResponseEvaluator
+    from configs.llm_predictor import build_llm
+
+    llm = build_llm()
+    evaluator = ResponseEvaluator(llm=llm)
     query_engine = index.as_query_engine()
     response = await query_engine.aquery(query)
-    eval_result = await evaluator.aevaluate(response)
+    eval_result = await evaluator.aevaluate(response=response, query=query)
     return {"result": str(eval_result)}
