@@ -1,21 +1,20 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-import tests._pathsetup  # noqa: F401
-
 from fastapi.testclient import TestClient
-
 from main import app
-from router.graph import _graph_chat_engines, _prune_sessions
+from router.graph import _graph_chat_engines
+
+import tests._pathsetup  # noqa: F401
 
 
 class SessionIsolationTest(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
-        _graph_chat_engines.clear()
+        _graph_chat_engines._data.clear()
 
     def tearDown(self):
-        _graph_chat_engines.clear()
+        _graph_chat_engines._data.clear()
 
     @patch('router.graph.compose_graph_chat_egine')
     def test_different_clients_get_different_engines(self, mock_compose):
@@ -29,14 +28,12 @@ class SessionIsolationTest(unittest.TestCase):
         # Verify engine was created
         self.assertIsNotNone(_graph_chat_engines)
 
-    def test_prune_sessions_respects_max_size(self):
+    def test_ttl_cache_respects_max_size(self):
         # Fill up sessions
-        for i in range(5):
-            _graph_chat_engines[f"client_{i}"] = MagicMock()
+        for i in range(10):
+            _graph_chat_engines.set(f"client_{i}", MagicMock())
 
-        _prune_sessions(_graph_chat_engines, max_size=3)
-
-        self.assertLessEqual(len(_graph_chat_engines), 3)
+        self.assertLessEqual(len(_graph_chat_engines), _graph_chat_engines._max_size)
 
 
 if __name__ == '__main__':

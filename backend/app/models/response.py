@@ -1,9 +1,9 @@
+
 from pydantic import BaseModel
-from typing import List, Optional
 
 
 class IndexListResponse(BaseModel):
-    indexes: List[str]
+    indexes: list[str]
 
 
 class QueryResponse(BaseModel):
@@ -13,11 +13,11 @@ class QueryResponse(BaseModel):
 class SourceNode(BaseModel):
     id: str
     text: str
-    score: Optional[float] = None
+    score: float | None = None
 
 
 class QuerySourcesResponse(BaseModel):
-    source_nodes: List[SourceNode]
+    source_nodes: list[SourceNode]
 
 
 class UploadResponse(BaseModel):

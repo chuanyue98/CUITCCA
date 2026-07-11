@@ -16,7 +16,7 @@ class ResponseMode(str, Enum):
     """
     Refine 是一种迭代生成响应的方式。我们首先使用第一个节点中的上下文，以及查询，\
     生成一个初始答案。然后，我们将这个答案、查询和第二个节点的上下文作为输入，\
-    传递到“refine prompt”中生成一个更精细的答案。我们通过 N-1 个节点进行细化，\
+    传递到"refine prompt"中生成一个更精细的答案。我们通过 N-1 个节点进行细化，\
     其中 N 是节点的总数。
     """
 
@@ -50,13 +50,9 @@ class ResponseMode(str, Enum):
 
 
 class PromptType(str, Enum):
-    """
-       使用 QA 提示生成答案。
-    """
+    """使用 QA 提示生成答案。"""
     QA_PROMPT = 'QA_PROMPT'
-    """
-        使用 condense_question_prompt 提示生成答案。
-    """
+    """使用 condense_question_prompt 提示生成答案。"""
     CONDENSE_QUESTION_PROMPT = 'CONDENSE_QUESTION_PROMPT'
 
 
@@ -69,21 +65,21 @@ class Prompts(Enum):
         "\n---------------------\n"
         "根据这些信息，请回答问题：{query_str}\n"
     )
-    CONDENSE_QUESTION_PROMPT = PromptTemplate("""\
-                            给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, \
-                            将消息改写成一个独立问题仅补充后续留言不改变后续留言意思。\
-                            <Chat History> 
-                            {chat_history}
-                            <Follow Up Message>
-                            {question}
-                            <Standalone question>
-                            """)
-    REFINE_PROMPT = PromptTemplate("""原始问题如下: {query_str} 
-                            我们已经提供了一个现有的答案: {existing_answer} 
-                            我们有机会通过下面的一些更多上下文来完善现有的答案（仅在需要时）。
-                            {context_msg}
-                            利用新的上下文和您自己的知识，更新或重复现有的答案,如果答案与问题不符，请直接回答我不知道。
-                            """)
+    CONDENSE_QUESTION_PROMPT = PromptTemplate(
+        "给定一段人类用户与AI助手之间的对话历史和人类用户的后续留言, "
+        "将消息改写成一个独立问题仅补充后续留言不改变后续留言意思。"
+        "<Chat History> {chat_history} "
+        "<Follow Up Message> {question} "
+        "<Standalone question>"
+    )
+    REFINE_PROMPT = PromptTemplate(
+        "原始问题如下: {query_str} "
+        "我们已经提供了一个现有的答案: {existing_answer} "
+        "我们有机会通过下面的一些更多上下文来完善现有的答案（仅在需要时）。"
+        "{context_msg} "
+        "利用新的上下文和您自己的知识，更新或重复现有的答案,"
+        "如果答案与问题不符，请直接回答我不知道。"
+    )
 
 
 if __name__ == '__main__':

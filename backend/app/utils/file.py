@@ -5,9 +5,8 @@ from datetime import datetime
 from io import BytesIO
 
 import aiofiles
+from configs.load_env import FEEDBACK_PATH, PROJECT_ROOT
 from fastapi import UploadFile
-
-from configs.load_env import PROJECT_ROOT, FEEDBACK_PATH
 from models.user import Feedback
 
 

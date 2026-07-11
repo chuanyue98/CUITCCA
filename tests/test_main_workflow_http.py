@@ -1,18 +1,19 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import tests._pathsetup  # noqa: F401
 from fastapi.testclient import TestClient
-
 from main import app
 from router.index import get_index
+
+import tests._pathsetup  # noqa: F401
+
 
 class MainWorkflowHttpTest(unittest.TestCase):
     def setUp(self):
         self.fake_index = MagicMock()
         self.fake_index.index_id = "test_index"
         self.fake_index.summary = "This is a test summary"
-        
+
         # Override dependency
         app.dependency_overrides[get_index] = lambda: self.fake_index
         self.client = TestClient(app)
@@ -27,7 +28,11 @@ class MainWorkflowHttpTest(unittest.TestCase):
         mock_list.return_value = []
         response = self.client.post("/index/create", data={"index_name": "New Index"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "success", "msg": "index New_Index created", "index_name": "New_Index"})
+        self.assertEqual(response.json(), {
+            "status": "success",
+            "msg": "index New_Index created",
+            "index_name": "New_Index"
+        })
         mock_create.assert_called_once_with("New_Index")
 
     @patch('router.index.insert_into_index')

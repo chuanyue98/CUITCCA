@@ -1,11 +1,13 @@
 import asyncio
 import unittest
-from unittest.mock import MagicMock, patch
 from io import BytesIO
+from unittest.mock import MagicMock, patch
+
 from fastapi import UploadFile
+from utils.file import read_file_contents
 
 import tests._pathsetup  # noqa: F401
-from utils.file import read_file_contents
+
 
 class DocumentParsersTest(unittest.TestCase):
     @patch('utils.file.tempfile.NamedTemporaryFile')
@@ -46,7 +48,7 @@ class DocumentParsersTest(unittest.TestCase):
         self.assertEqual(content, "Hello PDF page 1.Hello PDF page 2.")
 
     def test_txt_parser_utf8(self):
-        fake_file = UploadFile(filename="test.txt", file=BytesIO("你好 UTF-8".encode("utf-8")))
+        fake_file = UploadFile(filename="test.txt", file=BytesIO("你好 UTF-8".encode()))
         content = asyncio.run(read_file_contents(fake_file))
         self.assertEqual(content, "你好 UTF-8")
 

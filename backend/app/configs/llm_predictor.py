@@ -1,10 +1,9 @@
-from llama_index.core import Settings
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.llms.openai_like import OpenAILike
-import torch
-
 import configs.load_env as env_config
+import torch
+from llama_index.core import Settings
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.llms.openai_like import OpenAILike
 
 _CONTEXT_WINDOWS = {
     'sensenova-6.7-flash-lite': 262144,

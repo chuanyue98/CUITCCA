@@ -6,12 +6,16 @@ on:
   pull_request:
     branches: [master, main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -54,10 +58,9 @@ jobs:
 
       - name: Run pip-audit
         run: uv run pip-audit --desc
-        continue-on-error: true
 
       - name: Run bandit
-        run: uv run bandit -r backend/app/ -f json -o bandit-report.json || true
+        run: uv run bandit -r backend/app/ -f json -o bandit-report.json -ll || true
 
       - name: Upload bandit report
         uses: actions/upload-artifact@v4

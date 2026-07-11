@@ -1,11 +1,11 @@
 import asyncio
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+import handlers.index_crud as index_crud
+import handlers.index_crud as lh
 
 import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
-import handlers.index_crud as lh
-import handlers.index_crud as index_crud
 
 
 class FakeIndex:
@@ -53,8 +53,9 @@ class EmbeddingQATest(unittest.TestCase):
         index1 = FakeIndex()
         index2 = FakeIndex()
 
-        lh.embeddingQA(index1, ['q1', 'a1'])
-        lh.embeddingQA(index2, ['q2', 'a2'])
+        # embeddingQA is now async
+        asyncio.run(lh.embeddingQA(index1, ['q1', 'a1']))
+        asyncio.run(lh.embeddingQA(index2, ['q2', 'a2']))
 
         id1 = index1.inserted_docs[0].id_
         id2 = index2.inserted_docs[0].id_
@@ -80,15 +81,21 @@ class SaveIndexTest(unittest.TestCase):
 
 
 class UpdateNodeByIdTest(unittest.TestCase):
+    def setUp(self):
+        self._fake_collection = MagicMock()
+        self._fake_collection.get.return_value = {'ids': ['n1'], 'documents': ['old text'], 'metadatas': [{}]}
+        self._fake_client = MagicMock()
+        self._fake_client.get_collection.return_value = self._fake_collection
+        self._patcher = patch('handlers.index_crud._get_client', return_value=self._fake_client)
+        self._patcher.start()
+
+    def tearDown(self):
+        self._patcher.stop()
+
     def test_updates_node_content(self):
-        node = MagicMock()
         index = FakeIndex(index_id='myindex')
-        index.docstore.docs = {'n1': node}
-
         lh.updateNodeById(index, 'n1', 'new text')
-
-        node.set_content.assert_called_once_with('new text')
-        index.docstore.add_documents.assert_called_once_with([node])
+        self._fake_collection.update.assert_called_once_with(ids=['n1'], documents=['new text'])
 
 
 if __name__ == '__main__':

@@ -3,9 +3,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
 import configs.load_env as env_config
+
+import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 
 class ReloadEnvVariablesOverrideTest(unittest.TestCase):

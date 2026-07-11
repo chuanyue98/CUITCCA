@@ -1,8 +1,8 @@
 import unittest
 
-import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
 import utils.file as f
+
+import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 
 class SafeFilenameTest(unittest.TestCase):

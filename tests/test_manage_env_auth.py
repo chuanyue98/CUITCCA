@@ -3,17 +3,20 @@ import os
 import unittest
 from unittest.mock import patch
 
-import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
+import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 
 def _load_manage_module():
     """Load router/manage.py standalone, bypassing router/__init__.py
     (which eagerly instantiates a HuggingFace embedding model on import)."""
     app_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'app')
-    spec = importlib.util.spec_from_file_location('router_manage_standalone', os.path.join(app_dir, 'router', 'manage.py'))
+    spec = importlib.util.spec_from_file_location(
+        'router_manage_standalone',
+        os.path.join(app_dir, 'router', 'manage.py')
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

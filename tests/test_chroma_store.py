@@ -1,5 +1,5 @@
-import unittest
 import tempfile
+import unittest
 
 import tests._pathsetup  # noqa: F401
 

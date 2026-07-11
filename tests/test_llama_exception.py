@@ -1,9 +1,9 @@
 import inspect
 import unittest
 
-import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
 from exceptions.llama_exception import id_not_found_exceptions
+
+import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 
 class IdNotFoundExceptionsSignatureTest(unittest.TestCase):

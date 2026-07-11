@@ -1,4 +1,6 @@
+import logging
 import os
+
 from dotenv import load_dotenv
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +17,8 @@ openai_api_base = ''
 openai_model = ''
 VERBOSE = False
 chroma_db_path = ''
+COOKIE_SECURE = False
+COOKIE_MAX_AGE = 86400
 
 
 def reload_env_variables():
@@ -43,14 +47,16 @@ def reload_env_variables():
     FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
     chroma_db_path = os.path.join(PROJECT_ROOT, chroma_db_path)
     access_stats_path = os.path.join(PROJECT_ROOT, '../access_stats.json')
-    global COOKIE_SECURE, COOKIE_MAX_AGE
+
     COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
     COOKIE_MAX_AGE = int(os.environ.get('COOKIE_MAX_AGE', '86400'))
+
+    # 启动时校验必需的 env 变量
+    if not openai_api_key:
+        logging.warning("OPENAI_API_KEY is not set. LLM queries will fail until configured.")
 
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.md', '.csv', '.xlsx'}
-COOKIE_SECURE = False
-COOKIE_MAX_AGE = 86400
 
 reload_env_variables()

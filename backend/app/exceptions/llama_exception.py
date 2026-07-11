@@ -1,7 +1,6 @@
 import functools
 
 from fastapi import HTTPException
-
 from utils.logger import error_logger
 
 

@@ -16,8 +16,8 @@ cd CUITCCA
 uv sync
 
 # 配置环境变量
-cp .env.example .env
-# 编辑 .env 填入 OPENAI_API_KEY 等配置
+cp backend/.env.example backend/.env
+# 编辑 backend/.env 填入 OPENAI_API_KEY 等配置
 
 # 启动后端
 cd backend
@@ -28,21 +28,26 @@ uv run python app/main.py
 
 ```
 CUITCCA/
-├── backend/          # FastAPI 后端
+├── backend/              # FastAPI 后端
 │   └── app/
-│       ├── main.py              # 应用入口
-│       ├── router/              # API 路由
-│       ├── handlers/            # 业务逻辑处理
-│       ├── models/              # Pydantic 数据模型
-│       ├── dependencies/        # 依赖注入
-│       ├── exceptions/          # 异常处理
-│       ├── utils/               # 工具函数
-│       └── configs/             # 配置 (LLM, 环境变量)
-├── frontend/         # 前端页面 (HTML/CSS/JS)
-├── tests/            # 测试文件 (unittest)
-├── data/             # 数据存储 (索引, 上传文件)
-├── docs/             # 开发文档
-└── pyproject.toml    # 项目依赖配置
+│       ├── main.py                  # 应用入口
+│       ├── router/                  # API 路由
+│       ├── handlers/                # 业务逻辑处理
+│       ├── models/                  # Pydantic 数据模型
+│       ├── dependencies/            # 依赖注入
+│       ├── exceptions/              # 异常处理
+│       ├── utils/                   # 工具函数
+│       └── configs/                 # 配置 (LLM, 环境变量)
+├── frontend/             # 前端页面 (HTML/CSS/JS)
+├── tests/                # 测试文件 (pytest)
+├── data/                 # 数据存储 (索引, 上传文件)
+├── docs/                 # 开发文档
+├── .github/              # CI/CD 与 Dependabot 配置
+├── backend.bash          # Linux/macOS 启动脚本
+├── backend.bat           # Windows 启动脚本
+├── pyproject.toml        # 项目依赖与工具配置
+├── uv.lock               # uv 锁定的依赖版本
+└── .python-version       # Python 版本声明
 ```
 
 ## 主要功能
@@ -68,12 +73,12 @@ CUITCCA/
 ## 运行测试
 
 ```bash
-python -m unittest discover -s tests -v
+uv run pytest tests/ -v --cov=backend/app
 ```
 
 ## 技术栈
 
-- **后端**: Python 3.12, FastAPI, LlamaIndex, LangChain
+- **后端**: Python 3.12, FastAPI, LlamaIndex
 - **AI**: OpenAI API / 兼容接口, HuggingFace Embeddings
 - **前端**: HTML, CSS, JavaScript (无框架)
-- **测试**: unittest
+- **测试**: pytest
