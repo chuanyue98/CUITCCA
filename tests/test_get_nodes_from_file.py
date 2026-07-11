@@ -2,9 +2,9 @@ import os
 import tempfile
 import unittest
 
-import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
 import utils.llama as llama_utils
+
+import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 
 class GetNodesFromFileTest(unittest.TestCase):

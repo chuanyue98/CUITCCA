@@ -23,5 +23,16 @@ start_application() {
 
 # 执行检测端口、激活环境和启动应用程序的操作
 check_port
+
+if [ ! -d ".venv" ]; then
+    echo "Virtual environment not found. Running uv sync..."
+    uv sync
+fi
+
+if [ ! -f "backend/.env" ]; then
+    echo "Copying .env.example to .env..."
+    cp backend/.env.example backend/.env
+fi
+
 activate_venv
 start_application

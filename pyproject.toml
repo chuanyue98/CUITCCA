@@ -26,6 +26,7 @@ dependencies = [
     "xlrd>=2.0.2",
     "XlsxWriter>=3.2.9",
     "tqdm>=4.68.3",
+    "llama-index-readers-file>=0.6.0",
 ]
 
 [dependency-groups]
@@ -41,3 +42,19 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/ChuanYuei/CUITCCA"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=backend/app --cov-report=term"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["N802", "N803", "N806", "UP042"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true

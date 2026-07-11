@@ -1,14 +1,11 @@
 import asyncio
 import re
-from typing import List
 
-from llama_index.core import SimpleDirectoryReader, Settings
+from configs.config import Prompts
+from llama_index.core import Settings, SimpleDirectoryReader
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.tools import QueryEngineTool
-
-from configs.config import Prompts
-
 
 _DEFAULT_QA_INSTRUCTION = (
     "请根据以下内容生成尽可能多的问答对。\n"
@@ -95,7 +92,7 @@ async def generate_qa_batched(contents: str, prompt: str | None = None):
     return qa_pairs
 
 
-def generate_query_engine_tools(indexes: List[BaseIndex]) -> List[QueryEngineTool]:
+def generate_query_engine_tools(indexes: list[BaseIndex]) -> list[QueryEngineTool]:
     query_engine_tools = []
     for index in indexes:
         query_engine = index.as_query_engine(streaming=True,
@@ -109,6 +106,10 @@ def generate_query_engine_tools(indexes: List[BaseIndex]) -> List[QueryEngineToo
 
 
 if __name__ == '__main__':
-    res = asyncio.run(generate_qa_batched(
-        "本科招生http://zjc.cuit.edu.cn/Index.htm研究生招生https://yjsc.cuit.edu.cn/继续教育招生https://cjy.cuit.edu.cn/", ))
+    _test_urls = (
+        "本科招生http://zjc.cuit.edu.cn/Index.htm"
+        "研究生招生https://yjsc.cuit.edu.cn/"
+        "继续教育招生https://cjy.cuit.edu.cn/"
+    )
+    res = asyncio.run(generate_qa_batched(_test_urls))
     print(res)

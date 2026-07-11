@@ -1,6 +1,6 @@
 import os
 
-from configs.load_env import MAX_FILE_SIZE, ALLOWED_EXTENSIONS
+from configs.load_env import ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 
 
 class FileTooLargeError(Exception):

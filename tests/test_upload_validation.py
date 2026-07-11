@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import MagicMock
 
-import tests._pathsetup  # noqa: F401
+from utils.upload import FileTooLargeError, InvalidFileTypeError, validate_upload_file
 
-from utils.upload import validate_upload_file, FileTooLargeError, InvalidFileTypeError
+import tests._pathsetup  # noqa: F401
 
 
 class UploadValidationTest(unittest.TestCase):
@@ -11,7 +11,7 @@ class UploadValidationTest(unittest.TestCase):
         mock_file = MagicMock()
         mock_file.size = 20 * 1024 * 1024  # 20MB
         mock_file.filename = "test.pdf"
-        
+
         with self.assertRaises(FileTooLargeError):
             validate_upload_file(mock_file)
 
@@ -19,14 +19,14 @@ class UploadValidationTest(unittest.TestCase):
         mock_file = MagicMock()
         mock_file.size = 1024
         mock_file.filename = "test.pdf"
-        
+
         validate_upload_file(mock_file)  # should not raise
 
     def test_rejects_exe(self):
         mock_file = MagicMock()
         mock_file.size = 1024
         mock_file.filename = "malware.exe"
-        
+
         with self.assertRaises(InvalidFileTypeError):
             validate_upload_file(mock_file)
 

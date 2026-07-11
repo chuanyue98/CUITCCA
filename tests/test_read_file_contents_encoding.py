@@ -2,11 +2,10 @@ import asyncio
 import io
 import unittest
 
-import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
+import utils.file as file_utils
 from fastapi import UploadFile
 
-import utils.file as file_utils
+import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 
 class ReadFileContentsEncodingTest(unittest.TestCase):

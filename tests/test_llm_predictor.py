@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import patch
 
-import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
-import configs.load_env as env_config
 import configs.llm_predictor as llm_predictor
+import configs.load_env as env_config
 from llama_index.llms.openai_like import OpenAILike
+
+import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 
 class BuildLlmTest(unittest.TestCase):

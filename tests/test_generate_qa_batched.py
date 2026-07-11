@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
 import utils.llama as llama_utils
+
+import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
 
 class GenerateQaBatchedUsesConfiguredLlmTest(unittest.TestCase):

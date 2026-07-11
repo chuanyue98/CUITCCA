@@ -1,40 +1,41 @@
-import logging
 import os
 import re
 import uuid
-from typing import List
 
 import aiofiles
-from fastapi import APIRouter, Form, File, UploadFile, status, Depends
-from llama_index.core import Document
-from starlette.responses import JSONResponse
-
 from configs.config import Prompts
-from configs.load_env import SAVE_PATH, LOAD_PATH
 from configs.llm_predictor import build_llm
-from handlers import list_index_names, delete_collection
-from handlers.graph_builder import summary_index
+from configs.load_env import LOAD_PATH, SAVE_PATH
+from dependencies import get_index
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from handlers import delete_collection, list_index_names
+from handlers.graph_builder import invalidate_query_engine_cache, summary_index
 from handlers.index_crud import (
     _indexes_lock,
-    indexes,
+    citf,
     createIndex,
-    loadAllIndexes,
-    insert_into_index,
+    deleteDocById,
+    deleteNodeById,
     embeddingQA,
     get_all_docs,
-    updateNodeById,
-    deleteNodeById,
-    deleteDocById,
+    indexes,
+    insert_into_index,
+    loadAllIndexes,
     saveIndex,
-    citf,
+    updateNodeById,
 )
-from utils.logger import customer_logger
-from dependencies import get_index
+from llama_index.core import Document
 from models.response import IndexListResponse, QueryResponse, UploadResponse
+from starlette.responses import JSONResponse
 from utils.file import read_file_contents, safe_filename
-from utils.llama import formatted_pairs, generate_qa_batched, extract_content_after_backslash, \
-    build_qa_generation_prompt
-from utils.upload import validate_upload_file, FileTooLargeError, InvalidFileTypeError
+from utils.llama import (
+    build_qa_generation_prompt,
+    extract_content_after_backslash,
+    formatted_pairs,
+    generate_qa_batched,
+)
+from utils.logger import customer_logger, error_logger
+from utils.upload import FileTooLargeError, InvalidFileTypeError, validate_upload_file
 
 index_app = APIRouter()
 
@@ -56,14 +57,15 @@ async def get_index_list():
 
 
 @index_app.post("/create")
-async def create_index(index_name: str = Form()):
+async def create_index(index_name: str = Form(max_length=100)):
     sanitized_name = _sanitize_index_name(index_name)
     if sanitized_name in list_index_names():
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(sanitized_name)
     await loadAllIndexes()
+    invalidate_query_engine_cache()
     return JSONResponse(content={
-        'status': 'success', 
+        'status': 'success',
         'msg': f'index {sanitized_name} created',
         'index_name': sanitized_name
     })
@@ -76,11 +78,12 @@ async def index_info(index=Depends(get_index)):
 
 
 @index_app.post("/delete")
-async def delete_index(index_name: str = Form()):
+async def delete_index(index_name: str = Form(max_length=100)):
     sanitized_name = _sanitize_index_name(index_name)
     if sanitized_name in list_index_names():
         delete_collection(sanitized_name)
         await loadAllIndexes()
+        invalidate_query_engine_cache()
         return {"status": "deleted"}
     else:
         return JSONResponse(content={'status': 'detail', 'message': 'index not exist'},
@@ -88,7 +91,7 @@ async def delete_index(index_name: str = Form()):
 
 
 @index_app.post("/{index_name}/query", response_model=QueryResponse)
-async def query_index(index=Depends(get_index), query: str = Form()):
+async def query_index(index=Depends(get_index), query: str = Form(max_length=5000)):
     customer_logger.info(f"query index {index.index_id} with query {query}")
 
     engine = index.as_query_engine(
@@ -102,7 +105,7 @@ async def query_index(index=Depends(get_index), query: str = Form()):
 
 
 @index_app.post("/{index_name}/update")
-async def update_doc(nodeId, index=Depends(get_index), text: str = Form()):
+async def update_doc(nodeId, index=Depends(get_index), text: str = Form(max_length=10000)):
     try:
         updateNodeById(index, nodeId, text)
     except (ValueError, KeyError):
@@ -132,9 +135,10 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
         async with aiofiles.open(savepath, 'wb') as f:
             await f.write(file_bytes)
         await insert_into_index(index, filepath)
+        invalidate_query_engine_cache()
     except Exception as e:
-        logging.error(f"Error while handling file: {str(e)}")
-        return JSONResponse(content={"status": "detail", "message": "Error while handling file: {}".format(str(e))},
+        error_logger.error(f"Error while handling file: {str(e)}")
+        return JSONResponse(content={"status": "detail", "message": "文件处理出错，请检查文件格式或联系管理员"},
                             status_code=status.HTTP_400_BAD_REQUEST)
     finally:
         if filepath is not None and os.path.exists(filepath):
@@ -143,8 +147,9 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
 
 
 @index_app.post("/{index_name}/uploadFiles", response_model=UploadResponse)
-async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(...)):
+async def upload_files(index=Depends(get_index), files: list[UploadFile] = File(...)):
     filepaths = []
+    saved_paths = []
     try:
         for file in files:
             try:
@@ -154,21 +159,35 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
                                     status_code=status.HTTP_400_BAD_REQUEST)
             filename = safe_filename(file.filename)
             unique_id = str(uuid.uuid4())
+            os.makedirs(LOAD_PATH, exist_ok=True)
             filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
             savepath = os.path.join(SAVE_PATH, index.index_id, filename)
             file_bytes = await file.read()
             async with aiofiles.open(filepath, 'wb') as f:
                 await f.write(file_bytes)
-            if not os.path.exists(savepath):
-                os.makedirs(os.path.dirname(savepath), exist_ok=True)
+            os.makedirs(os.path.dirname(savepath), exist_ok=True)
             async with aiofiles.open(savepath, 'wb') as f:
                 await f.write(file_bytes)
             filepaths.append(filepath)
+            saved_paths.append(savepath)
+
+        # 批量插入，最后一次摘要生成（避免 N+1 LLM 调用）
         for fp in filepaths:
-            await insert_into_index(index, fp)
+            await insert_into_index(index, fp, skip_summary=True)
+        # 所有文件插入完成后，生成一次摘要
+        from handlers.graph_builder import summary_index
+        index.summary = await summary_index(index)
+        from handlers.index_crud import _save_summary
+        _save_summary(index)
+        invalidate_query_engine_cache()
 
     except Exception as e:
-        return JSONResponse(content={"status": "detail", "message": f"Error while handling file: {str(e)}"},
+        error_logger.error(f"Error while handling files: {str(e)}")
+        # 回滚已写入的永久文件
+        for sp in saved_paths:
+            if os.path.exists(sp):
+                os.remove(sp)
+        return JSONResponse(content={"status": "detail", "message": "文件处理出错，请检查文件格式或联系管理员"},
                             status_code=status.HTTP_400_BAD_REQUEST)
     finally:
         for filepath in filepaths:
@@ -179,18 +198,18 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
 
 
 @index_app.post("/{index_name}/upload_file_by_QA")
-async def upload_qa(index=Depends(get_index), prompt: str = Form(None), file: UploadFile = File(...)):
+async def upload_qa(index=Depends(get_index), prompt: str = Form(None, max_length=5000), file: UploadFile = File(...)):
     contents = await read_file_contents(file)
     safe_prompt = build_qa_generation_prompt(prompt)
     qa_pairs = await generate_qa_batched(contents, safe_prompt)
     qa_data = formatted_pairs(qa_pairs)
     id = extract_content_after_backslash(file.filename)
-    embeddingQA(index, qa_data, id)
+    await embeddingQA(index, qa_data, id)
     return {"status": 'ok'}
 
 
 @index_app.post("/{index_name}/deleteDoc")
-async def delete_doc(doc_id: str = Form(), index=Depends(get_index)):
+async def delete_doc(doc_id: str = Query(max_length=200), index=Depends(get_index)):
     documents = get_all_docs(index)
     doc_ids = list(set(doc["doc_id"] for doc in documents))
     if doc_id not in doc_ids:
@@ -199,13 +218,14 @@ async def delete_doc(doc_id: str = Form(), index=Depends(get_index)):
     try:
         deleteDocById(index, doc_id)
     except Exception as e:
-        return JSONResponse(content={"status": "detail", "message": f"delete doc error: {e}"},
+        error_logger.error(f"delete doc error: {e}")
+        return JSONResponse(content={"status": "detail", "message": "删除文档时出错"},
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return {"status": "deleted"}
 
 
 @index_app.post("/{index_name}/deleteNode")
-async def delete_node(node_id: str = Form(), index=Depends(get_index)):
+async def delete_node(node_id: str = Query(max_length=200), index=Depends(get_index)):
     try:
         deleteNodeById(index, node_id)
         return {"status": "deleted"}
@@ -220,7 +240,7 @@ async def get_summary(index=Depends(get_index)):
 
 
 @index_app.post("/{index_name}/set_summary")
-async def set_summary(index=Depends(get_index), summary: str = Form()):
+async def set_summary(index=Depends(get_index), summary: str = Form(max_length=5000)):
     index.summary = summary
     saveIndex(index)
     return {"status": "ok", "summary": index.summary}
@@ -235,7 +255,11 @@ async def generate_summary(index=Depends(get_index)):
 
 
 @index_app.post("/{index_name}/insertdoc")
-async def insert_docs(text=Form(), doc_id=Form(None), index=Depends(get_index)):
+async def insert_docs(
+    text: str = Form(max_length=50000),
+    doc_id: str = Form(None, max_length=200),
+    index=Depends(get_index),
+):
     if doc_id is None:
         doc = Document(text=text)
     else:
@@ -259,7 +283,7 @@ async def get_file(index=Depends(get_index)):
 
 
 @index_app.post("/{index_name}/evaluator")
-async def evaluator(index=Depends(get_index), query: str = Form()):
+async def evaluator(index=Depends(get_index), query: str = Form(max_length=5000)):
     from llama_index.core.evaluation import ResponseEvaluator
 
     llm = build_llm()

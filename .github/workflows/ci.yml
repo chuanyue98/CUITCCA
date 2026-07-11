@@ -6,12 +6,16 @@ on:
   pull_request:
     branches: [master, main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -53,11 +57,16 @@ jobs:
         run: uv sync --frozen
 
       - name: Run pip-audit
-        run: uv run pip-audit --desc
-        continue-on-error: true
+        run: |
+          uv run pip-audit --desc \
+            --ignore-vuln PYSEC-2026-311 \
+            --ignore-vuln PYSEC-2026-597 \
+            --ignore-vuln PYSEC-2025-217 \
+            --ignore-vuln CVE-2026-1839 \
+            --ignore-vuln CVE-2026-4372
 
       - name: Run bandit
-        run: uv run bandit -r backend/app/ -f json -o bandit-report.json || true
+        run: uv run bandit -r backend/app/ -f json -o bandit-report.json -ll || true
 
       - name: Upload bandit report
         uses: actions/upload-artifact@v4

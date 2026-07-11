@@ -1,68 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="./icon.png" type="image/x-icon">
     <link rel="stylesheet" href="./style.css">
     <title>成信大校园助手 - 使用指南</title>
-    <style>
-        .guide_container {
-            display: flex;
-            flex-direction: row;
-            flex-grow: 1;
-            width: 100%;
-            padding: 30px;
-            overflow-y: auto;
-            justify-content: center;
-        }
-
-        .guide_card {
-            max-width: 800px;
-            width: 100%;
-            padding: 30px 35px;
-        }
-
-        .guide_card p {
-            margin-bottom: 12px;
-            line-height: 1.8;
-            color: #444;
-            font-size: 14px;
-        }
-
-        .guide_card ul {
-            margin: 8px 0 14px 20px;
-        }
-
-        .guide_card li {
-            margin-bottom: 6px;
-            line-height: 1.7;
-            color: #555;
-            font-size: 14px;
-        }
-
-        .guide_card strong {
-            color: rgb(25, 84, 142);
-        }
-    </style>
 </head>
 <body>
     <div class="outline">
-        <div id="side_left"></div>
+        <nav id="side_left"></nav>
 
         <!-- 右侧工作区 -->
-        <div class="side_right">
-            <div class="headline">
+        <main class="side_right">
+            <header class="headline">
                 <div class="headline_hidemenu">
                     <button id="button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                             <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8Zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5Z"/>
                         </svg>
                     </button>
                 </div>
                 <div class="headline_head">使用指南</div>
                 <div class="share"></div>
-            </div>
+            </header>
 
             <div class="guide_container">
                 <div class="glass_card guide_card">
@@ -88,7 +49,7 @@
                     <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;成信大校园助手将不断更新和完善，为您提供更好的服务。感谢您选择成信大校园助手，希望它能成为你校园生活中的得力助手！</p>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="./sidebar.js" data-active="use_function"></script>

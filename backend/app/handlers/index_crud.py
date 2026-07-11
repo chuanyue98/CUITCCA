@@ -3,20 +3,30 @@ import logging
 import os
 import uuid
 
-from llama_index.core import VectorStoreIndex, Document
-
 from configs.load_env import FILE_PATH
 from handlers.vector_store import (
-    create_empty_index,
+    _get_client,
     build_index_from_collection,
-    list_index_names,
+    create_empty_index,
     delete_collection,
     get_or_create_collection,
+    list_index_names,
 )
+from llama_index.core import Document, VectorStoreIndex
 from utils.logger import customer_logger
 
 indexes: list[VectorStoreIndex] = []
 _indexes_lock = asyncio.Lock()
+_index_locks: dict[str, asyncio.Lock] = {}
+_index_locks_guard = asyncio.Lock()
+
+
+async def _get_index_lock(index_id: str) -> asyncio.Lock:
+    """获取指定索引的锁，使用 guard 锁防止 TOCTOU 竞争"""
+    async with _index_locks_guard:
+        if index_id not in _index_locks:
+            _index_locks[index_id] = asyncio.Lock()
+        return _index_locks[index_id]
 
 
 def createIndex(index_name: str):
@@ -42,18 +52,21 @@ async def loadAllIndexes():
                 logging.error(f"Error loading index {name}: {e}")
 
 
-async def insert_into_index(index: VectorStoreIndex, doc_file_path: str):
+async def insert_into_index(index: VectorStoreIndex, doc_file_path: str, skip_summary: bool = False):
     from handlers.graph_builder import summary_index
     from utils.llama import get_nodes_from_file
 
-    async with _indexes_lock:
-        nodes = get_nodes_from_file(doc_file_path)
+    nodes = get_nodes_from_file(doc_file_path)
+
+    lock = await _get_index_lock(index.index_id)
+    async with lock:
         index.insert_nodes(nodes)
-        index.summary = await summary_index(index)
-        _save_summary(index)
+        if not skip_summary:
+            index.summary = await summary_index(index)
+            _save_summary(index)
 
 
-def embeddingQA(index: VectorStoreIndex, qa_pairs: list, id: str | None = None):
+async def embeddingQA(index: VectorStoreIndex, qa_pairs: list, id: str | None = None):
     if id is None:
         id = str(uuid.uuid4())
 
@@ -67,33 +80,75 @@ def embeddingQA(index: VectorStoreIndex, qa_pairs: list, id: str | None = None):
             customer_logger.info(f"{doc.text}")
             docs.append(doc)
 
-    index.insert_nodes(docs)
-    _save_summary(index)
+    lock = await _get_index_lock(index.index_id)
+    async with lock:
+        index.insert_nodes(docs)
+        _save_summary(index)
 
 
-def get_all_docs(index: VectorStoreIndex) -> list[dict]:
-    docs = [
-        {"doc_id": doc.ref_doc_id, "node_id": doc.node_id, "text": doc.get_content()}
-        for doc in index.docstore.docs.values()
-    ]
-    return sorted(docs, key=lambda x: x["doc_id"])
+def get_all_docs(index: VectorStoreIndex, limit: int = 0, offset: int = 0) -> list[dict]:
+    try:
+        client = _get_client()
+        collection = client.get_collection(index.index_id)
+        kwargs = {}
+        if limit > 0:
+            kwargs['limit'] = limit
+        if offset > 0:
+            kwargs['offset'] = offset
+        data = collection.get(**kwargs)
+        if not data or not data.get('ids'):
+            return []
+        docs = [
+            {
+                "doc_id": (data['metadatas'][i] or {}).get('ref_doc_id', '') if data.get('metadatas') else '',
+                "node_id": data['ids'][i],
+                "text": data['documents'][i] if data.get('documents') else '',
+            }
+            for i in range(len(data['ids']))
+        ]
+        return sorted(docs, key=lambda x: x["doc_id"])
+    except Exception as e:
+        logging.error(f"Error getting docs from ChromaDB: {e}")
+        return []
 
 
 def updateNodeById(index: VectorStoreIndex, id_: str, text: str):
-    node = index.docstore.docs[id_]
-    node.set_content(text)
-    index.docstore.add_documents([node])
+    client = _get_client()
+    collection = client.get_collection(index.index_id)
+    data = collection.get(ids=[id_])
+    if not data or not data['ids']:
+        raise KeyError(f"node_id {id_} not found")
+    collection.update(ids=[id_], documents=[text])
 
 
 def deleteNodeById(index: VectorStoreIndex, id_: str):
-    index.docstore.delete_document(id_)
-    if hasattr(index, 'index_struct') and hasattr(index.index_struct, 'nodes_dict'):
-        if id_ in index.index_struct.nodes_dict:
-            del index.index_struct.nodes_dict[id_]
+    client = _get_client()
+    collection = client.get_collection(index.index_id)
+    data = collection.get(ids=[id_])
+    if not data or not data['ids']:
+        raise KeyError(f"node_id {id_} not found")
+    collection.delete(ids=[id_])
 
 
 def deleteDocById(index: VectorStoreIndex, doc_id: str):
-    index.delete_ref_doc(doc_id, delete_from_docstore=True)
+    client = _get_client()
+    collection = client.get_collection(index.index_id)
+    try:
+        data = collection.get(where={"ref_doc_id": doc_id})
+    except Exception:
+        data = collection.get()
+        if not data or not data['ids']:
+            return
+        ids_to_delete = [
+            data['ids'][i]
+            for i in range(len(data['ids']))
+            if (data['metadatas'][i] or {}).get('ref_doc_id') == doc_id
+        ]
+    else:
+        ids_to_delete = data.get('ids', []) if data else []
+
+    if ids_to_delete:
+        collection.delete(ids=ids_to_delete)
 
 
 def saveIndex(index: VectorStoreIndex):
@@ -107,12 +162,20 @@ def _save_summary(index: VectorStoreIndex):
 
 
 def get_index_by_name(index_name: str) -> VectorStoreIndex | None:
-    index: VectorStoreIndex | None = None
+    result: VectorStoreIndex | None = None
     for i in indexes:
         if i.index_id == index_name:
-            index = i
+            result = i
             break
-    return index
+    return result
+
+
+async def get_index_by_name_async(index_name: str) -> VectorStoreIndex | None:
+    async with _indexes_lock:
+        for i in indexes:
+            if i.index_id == index_name:
+                return i
+    return None
 
 
 async def convert_index_to_file(index_name: str, file_name: str):

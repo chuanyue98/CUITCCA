@@ -16,6 +16,7 @@ warnings.filterwarnings(
 )
 
 import configs.load_env as _load_env  # noqa: E402
+
 _load_env.reload_env_variables()
 
 _cust_logger = logging.getLogger('customer_logger')

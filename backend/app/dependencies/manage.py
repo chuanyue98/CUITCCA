@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-
 # 存储访问信息的字典
 access_stats = {
     "total_visits": 0,

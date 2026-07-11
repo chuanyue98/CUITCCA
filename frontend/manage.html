@@ -1,237 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="./icon.png" type="image/x-icon">
     <link rel="stylesheet" href="./style.css">
     <title>成信大校园助手 - 知识库管理</title>
-    <style>
-        /* 主工作面板 (一体化工作台) */
-        .dashboard_container {
-            display: flex;
-            flex-direction: row;
-            flex-grow: 1;
-            width: 100%;
-            padding: 20px;
-            gap: 20px;
-            overflow: hidden;
-        }
-        
-        /* 分栏设计: 左侧控制与上传，右侧节点显示 */
-        .panel_left {
-            display: flex;
-            flex-direction: column;
-            width: 45%;
-            min-width: 400px;
-            gap: 20px;
-            height: 100%;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-        
-        .panel_right {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            height: 100%;
-            background: white;
-            border-radius: 20px;
-            border: 1px solid rgba(25, 84, 142, 0.1);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
-            overflow: hidden;
-        }
-        
-        /* Tabs 样式 */
-        .tabs_header {
-            display: flex;
-            border-bottom: 1px solid rgba(200, 200, 200, 0.3);
-            margin-bottom: 15px;
-            gap: 15px;
-        }
-        
-        .tab_btn {
-            padding: 10px 5px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            color: #777;
-            font-weight: 500;
-            position: relative;
-            transition: color 0.2s;
-        }
-        
-        .tab_btn:hover {
-            color: rgb(25, 84, 142);
-        }
-        
-        .tab_btn.active {
-            color: rgb(25, 84, 142);
-            font-weight: 600;
-        }
-        
-        .tab_btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: rgb(25, 84, 142);
-        }
-        
-        .tab_content {
-            display: none;
-        }
-        
-        .tab_content.active {
-            display: block;
-        }
-        
-        /* 拖拽上传框 */
-        .drag_zone {
-            border: 2px dashed rgba(25, 84, 142, 0.25);
-            border-radius: 15px;
-            padding: 30px 20px;
-            text-align: center;
-            background: rgba(25, 84, 142, 0.01);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .drag_zone.dragover {
-            border-color: rgb(25, 84, 142);
-            background-color: rgba(25, 84, 142, 0.05);
-        }
-        
-        .drag_zone svg {
-            color: rgba(25, 84, 142, 0.5);
-            margin-bottom: 10px;
-        }
-        
-        .form_group {
-            margin-bottom: 12px;
-        }
-        
-        .form_group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 13px;
-            color: #555;
-        }
-        
-        .form_group input, .form_group textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(200, 200, 200, 0.8);
-            outline: none;
-            font-size: 13px;
-        }
-        
-        .form_group input:focus, .form_group textarea:focus {
-            border-color: rgb(25, 84, 142);
-        }
-        
-        .btn-submit {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #19548e, #2c72b8);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        
-        .btn-submit:hover {
-            opacity: 0.9;
-        }
-        
-        /* 节点卡片样式 */
-        .node_card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid rgba(200, 200, 200, 0.4);
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            transition: box-shadow 0.2s, border-color 0.2s;
-        }
-        
-        .node_card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            border-color: rgba(25, 84, 142, 0.2);
-        }
-        
-        .node_meta_row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-            color: #888;
-            border-bottom: 1px solid rgba(0,0,0,0.02);
-            padding-bottom: 8px;
-        }
-        
-        .node_doc_id {
-            background-color: rgba(25, 84, 142, 0.05);
-            color: rgb(25, 84, 142);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        
-        .node_editor {
-            width: 100%;
-            min-height: 80px;
-            resize: vertical;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(200, 200, 200, 0.6);
-            font-size: 13px;
-            line-height: 1.6;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        
-        .node_editor:focus {
-            border-color: rgb(25, 84, 142);
-        }
-        
-        .node_actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .node_status_tag {
-            font-size: 11px;
-            color: #999;
-            font-weight: 500;
-        }
-        
-        .btn-delete-node {
-            background: none;
-            border: none;
-            color: #ff4d4f;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .btn-delete-node:hover {
-            text-decoration: underline;
-        }
-        
-        #pagination-bar button:disabled {
-            cursor: not-allowed !important;
-            opacity: 0.5 !important;
-        }
-    </style>
 </head>
 <body>
     <!-- 全局加载遮罩 -->
@@ -239,89 +13,85 @@
         <div class="spinner"></div>
         <div class="loading-text">正在处理中...</div>
     </div>
-    
+
     <div class="outline">
         <!-- 左侧边栏 -->
-        <div id="side_left"></div>
+        <nav id="side_left"></nav>
 
         <!-- 右侧工作区 -->
-        <div class="side_right">
-            <div class="headline">
+        <main class="side_right">
+            <header class="headline">
                 <div class="headline_hidemenu">
                     <button id="button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                             <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8Zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5Z"/>
                         </svg>
                     </button>
                 </div>
                 <div class="headline_head">知识库管理工作台</div>
                 <div class="share"></div>
-            </div>
-            
+            </header>
+
             <!-- 核心内容工作区 -->
             <div class="dashboard_container">
                 <div class="panel_left" id="panel-left-container">
                     <!-- 索引管理 card -->
                     <div class="glass_card">
-                        <h3 style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="rgb(25, 84, 142)" class="bi bi-database" viewBox="0 0 16 16">
+                        <h3 class="panel-heading">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="rgb(25, 84, 142)" class="bi bi-database" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                                 <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0Z"/>
                                 <path d="M8 1c-1.573 0-3 .107-4.03.284-1.018.173-1.977.48-2.693.94-.716.46-1.127 1.055-1.127 1.776v9c0 .721.411 1.316 1.127 1.776.716.46 1.675.767 2.693.94C5 15.893 6.427 16 8 16c.09 0 .18 0 .27-.002A4.989 4.989 0 0 1 7.02 14c-.33-.007-.66-.017-.98-.03-1.008-.04-1.92-.19-2.5-.47a1.642 1.642 0 0 1-.87-.79 2.22 2.22 0 0 1-.13-.71V11c0 .093.023.18.067.262.138.256.452.484.872.665.58.25 1.492.4 2.5.44.382.016.78.026 1.185.028-.109-.328-.17-.677-.17-1.04 0-.177.016-.35.046-.519-.344.004-.693.003-1.036-.005-1.008-.027-1.92-.148-2.5-.39a1.64 1.64 0 0 1-.87-.745 2.235 2.235 0 0 1-.13-.676V7c0 .093.023.18.067.262.138.256.452.484.872.665.58.25 1.492.4 2.5.44.596.024 1.2.035 1.79.032a4.994 4.994 0 0 1 1.012-1.944C9.55 6.02 8.788 6 8 6c-1.573 0-3-.107-4.03-.284-1.018-.173-1.977-.48-2.693-.94C.566 4.316 0 3.721 0 3c0-.721.411-1.316 1.127-1.776.716-.46 1.675-.767 2.693-.94C4.82 1.107 6.247 1 8 1Zm0 6c-1.573 0-3-.107-4.03-.284-1.018-.173-1.977-.48-2.693-.94C.566 2.316 0 1.721 0 1c0-.721.411-1.316 1.127-1.776.716-.46 1.675-.767 2.693-.94C4.82.107 6.247 0 8 0s3.18.107 4.203.284c1.018.173 1.977.48 2.693.94.716.46 1.127 1.055 1.127 1.776v3c0 .245-.048.483-.138.706a4.996 4.996 0 0 0-1.884-.702c.015-.027.022-.056.022-.086V4c0 .093-.023.18-.067.262-.138.256-.452.484-.872.665-.58.25-1.492.4-2.5.44-.382.016-.78.026-1.185.028-.109-.328-.17-.677-.17-1.04v-.03c0-.02-.002-.04-.002-.06 0-.33.047-.648.13-.948a4.98 4.98 0 0 1 .472.032Z"/>
                             </svg>
                             活跃知识库索引 (Indexes)
                         </h3>
-                        
-                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                            <select id="index-select" style="flex-grow: 1; padding: 10px 15px; border-radius: 10px; border: 1px solid rgba(25, 84, 142, 0.2); outline: none; background: white; font-weight: 500;">
+
+                        <div class="index_action_row">
+                            <select id="index-select" class="index_select">
                                 <option value="">加载中...</option>
                             </select>
-                            <button onclick="saveCurrentIndexDisk()" class="btn-primary" style="background: linear-gradient(135deg, #2c72b8, #19548e); color: white; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                            <button onclick="saveCurrentIndexDisk()" class="btn btn-primary btn_save_disk">
                                 保存磁盘
                             </button>
                         </div>
-                        
-                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                            <input type="text" id="new-index-name" placeholder="输入新索引名称..." style="flex-grow: 1; padding: 10px 15px; border-radius: 10px; border: 1px solid rgba(200,200,200,0.5); outline: none;">
-                            <button onclick="createNewIndex()" style="background: linear-gradient(135deg, #52c41a, #73d13d); color: white; border: none; padding: 0 20px; border-radius: 10px; cursor: pointer; font-weight: 500;">
-                                新建
-                            </button>
-                            <button onclick="deleteCurrentIndex()" style="background: linear-gradient(135deg, #ff4d4f, #ff7875); color: white; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; font-weight: 500;">
-                                删除当前
-                            </button>
+
+                        <div class="index_create_row">
+                            <input type="text" id="new-index-name" class="new_index_input" placeholder="输入新索引名称...">
+                            <button onclick="createNewIndex()" class="btn btn-success">新建</button>
+                            <button onclick="deleteCurrentIndex()" class="btn btn-danger">删除当前</button>
                         </div>
-                        
+
                         <!-- 索引摘要 Summary 区域 -->
-                        <div style="border-top: 1px dashed rgba(200,200,200,0.5); padding-top: 15px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600; color: #555;">索引摘要 (Summary)</span>
-                                <span id="summary-status-tag" style="font-size: 12px; color: #999; font-weight: 500;">未做修改</span>
+                        <div class="summary_section">
+                            <div class="summary_header">
+                                <span class="summary_label">索引摘要 (Summary)</span>
+                                <span id="summary-status-tag">未做修改</span>
                             </div>
-                            <textarea id="index-summary-textarea" oninput="debouncedUpdateSummary(this.value)" style="width: 100%; min-height: 80px; max-height: 150px; background: #f8fafc; padding: 12px; border-radius: 10px; font-size: 13px; color: #666; line-height: 1.6; border: 1px solid rgba(0,0,0,0.08); outline: none; resize: vertical;" placeholder="选择或载入索引以编辑其摘要..."></textarea>
+                            <textarea id="index-summary-textarea" class="summary_textarea" oninput="debouncedUpdateSummary(this.value)" placeholder="选择或载入索引以编辑其摘要..."></textarea>
                         </div>
                     </div>
-                    
-                    <!-- 数据导入 Card 占位 -->
-                    <div class="glass_card" style="margin-top: 20px;">
+
+                    <!-- 数据导入 Card -->
+                    <div class="glass_card glass_card_mt">
                         <div class="tabs_header">
                             <button class="tab_btn active" onclick="switchTab('tab-upload')">文件上传</button>
                             <button class="tab_btn" onclick="switchTab('tab-text')">文本录入</button>
                             <button class="tab_btn" onclick="switchTab('tab-qa')">QA生成导入</button>
                         </div>
-                        
+
                         <!-- Tab 1: 文件拖拽上传 -->
                         <div id="tab-upload" class="tab_content active">
                             <div class="drag_zone" id="drag-zone" onclick="document.getElementById('file-input').click()">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-cloud-arrow-up" viewBox="0 0 16 16" style="margin: 0 auto 10px auto; display: block;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-cloud-arrow-up" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                                     <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
                                     <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.743 2.185 12 3.78 12h8.906c1.23 0 2.313-.984 2.313-2.227 0-1.226-1.02-2.127-2.23-2.203l-.683-.043-.058-.68C11.783 4.685 10.024 3 8 3c-1.528 0-2.88.948-3.418 2.223l-.147.348-.348.147zm.255 5.673a.5.5 0 0 1-.708-.708L6.293 7.5H4.5a.5.5 0 0 1 0-1h1.793L4.646 4.854a.5.5 0 1 1 .708-.708l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5z"/>
                                 </svg>
-                                <p style="font-size: 13px; color: #555; font-weight: 500;">拖拽 TXT/PDF/Markdown 文件到这里，或者点击选择</p>
-                                <p style="font-size: 11px; color: #999; margin-top: 5px;">支持多文件一次性上传和自动解析分块</p>
+                                <p class="drag_zone_main_text">拖拽 TXT/PDF/Markdown 文件到这里，或者点击选择</p>
+                                <p class="drag_zone_hint_text">支持多文件一次性上传和自动解析分块</p>
                             </div>
-                            <input type="file" id="file-input" multiple accept=".txt,.pdf,.md,.csv,.xlsx,.docx" style="display: none;">
-                            <div id="upload-progress-list" style="margin-top: 15px; font-size: 12px; color: #666;"></div>
+                            <input type="file" id="file-input" multiple accept=".txt,.pdf,.md,.csv,.xlsx,.docx" class="file_input_hidden">
+                            <div id="upload-progress-list" class="upload_progress_list"></div>
                         </div>
-                        
+
                         <!-- Tab 2: 直接文本录入 -->
                         <div id="tab-text" class="tab_content">
                             <div class="form_group">
@@ -334,7 +104,7 @@
                             </div>
                             <button onclick="submitDirectText()" class="btn-submit">确认插入文档</button>
                         </div>
-                        
+
                         <!-- Tab 3: QA 生成式上传 -->
                         <div id="tab-qa" class="tab_content">
                             <div class="form_group">
@@ -345,797 +115,45 @@
                                 <label for="qa-custom-prompt">QA 问答抽取 Prompt (可选)</label>
                                 <textarea id="qa-custom-prompt" rows="3" placeholder="默认会将文件内容切割为多块，并为每块生成对应的标准问答对..."></textarea>
                             </div>
-                            <button onclick="submitQAGeneration()" class="btn-submit" style="background: linear-gradient(135deg, #722ed1, #9254de);">生成 QA 并导入</button>
+                            <button onclick="submitQAGeneration()" class="btn-submit btn-submit-qa">生成 QA 并导入</button>
                         </div>
                     </div>
                 </div>
-                <div class="panel_right" id="panel-right-container" style="display: flex; flex-direction: column;">
+                <section class="panel_right" id="panel-right-container">
                     <!-- 搜索头部栏 -->
-                    <div style="padding: 20px; border-bottom: 1px solid rgba(25, 84, 142, 0.1); display: flex; align-items: center; gap: 15px; flex-shrink: 0; background: #fafbfc;">
-                        <h3 style="font-size: 16px; font-weight: 600; color: #333; margin-right: auto; display: flex; align-items: center; gap: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="rgb(25, 84, 142)" class="bi bi-list-check" viewBox="0 0 16 16">
+                    <div class="node_search_header">
+                        <h3 class="panel-heading panel-heading_inline">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="rgb(25, 84, 142)" class="bi bi-list-check" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                                 <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.5.5 1.146-1.147a.5.5 0 0 1 .708 0z"/>
                             </svg>
                             数据分块浏览器 (Nodes)
                         </h3>
-                        
-                        <input type="text" id="node-search" placeholder="搜索关键词 / Doc ID..." style="width: 200px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200, 200, 200, 0.8); outline: none; font-size: 13px;">
+
+                        <input type="text" id="node-search" class="node_search_input" placeholder="搜索关键词 / Doc ID...">
                     </div>
-                    
+
                     <!-- 节点展示主区 (滚动容器) -->
-                    <div id="node-list-viewport" style="flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background-color: #fcfdfe;">
-                        <div style="text-align: center; color: #999; margin-top: 40px;">选择或载入索引以查看分块数据</div>
+                    <div id="node-list-viewport" class="node_list_viewport">
+                        <div class="node_empty_hint">选择或载入索引以查看分块数据</div>
                     </div>
-                    
+
                     <!-- 分页控制栏 -->
-                    <div id="pagination-bar" style="height: 50px; border-top: 1px solid rgba(25, 84, 142, 0.1); background: #fafbfc; display: none; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0;">
-                        <span id="page-indicator" style="font-size: 12px; color: #666; font-weight: 500;">第 1 / 1 页 (共 0 项)</span>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="prevPage()" id="btn-prev-page" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 12px; font-weight: 500;">上一页</button>
-                            <button onclick="nextPage()" id="btn-next-page" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 12px; font-weight: 500;">下一页</button>
+                    <div id="pagination-bar">
+                        <span id="page-indicator">第 1 / 1 页 (共 0 项)</span>
+                        <div class="pagination_buttons">
+                            <button onclick="prevPage()" id="btn-prev-page" class="pagination_btn">上一页</button>
+                            <button onclick="nextPage()" id="btn-next-page" class="pagination_btn">下一页</button>
                         </div>
                     </div>
-                </div>
+                </section>
             </div>
-        </div>
+        </main>
     </div>
-    
+
     <!-- Toast 通知浮层 -->
     <div id="toast-container"></div>
-    
+
     <script src="./sidebar.js" data-active="manage"></script>
-    <script>
-        // 响应式菜单折叠监听
-        // Toast 工具函数
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerText = message;
-            container.appendChild(toast);
-            
-            // 触发淡入动画
-            setTimeout(() => toast.classList.add('show'), 50);
-            
-            // 3秒后移除
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        const baseURL = '/index';
-        let currentActiveIndex = null;
-        let summaryUpdateTimer = null;
-        let updateTimers = {}; // 存储各个节点的定时器
-
-        // 全局加载遮罩控制
-        function showLoading(text = '正在处理中...') {
-            const overlay = document.getElementById('loading-overlay');
-            const textEl = overlay.querySelector('.loading-text');
-            if (textEl) textEl.innerText = text;
-            overlay.style.opacity = '1';
-            overlay.style.visibility = 'visible';
-        }
-
-        function hideLoading() {
-            const overlay = document.getElementById('loading-overlay');
-            overlay.style.opacity = '0';
-            overlay.style.visibility = 'hidden';
-        }
-
-        async function loadIndexes() {
-            if (summaryUpdateTimer) {
-                clearTimeout(summaryUpdateTimer);
-            }
-            for (let timerId in updateTimers) {
-                clearTimeout(updateTimers[timerId]);
-            }
-            updateTimers = {};
-            try {
-                const response = await fetch(`${baseURL}/list`);
-                const data = await response.json();
-                const select = document.getElementById('index-select');
-                select.innerHTML = '';
-                
-                if (!data.indexes || data.indexes.length === 0) {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.innerText = '-- 暂无索引 --';
-                    select.appendChild(option);
-                    currentActiveIndex = null;
-                    updateSummaryDisplay('暂无索引，请在上方新建索引。');
-
-                    // 清理节点展示区域，防止残留数据
-                    const viewport = document.getElementById('node-list-viewport') || document.getElementById('panel-right-container');
-                    if (viewport) {
-                        viewport.innerHTML = '<div style="text-align: center; color: #999; margin-top: 40px;">暂无活跃索引</div>';
-                    }
-                    const pagBar = document.getElementById('pagination-bar');
-                    if (pagBar) {
-                        pagBar.style.display = 'none';
-                    }
-                    return;
-                }
-                
-                data.indexes.forEach(indexName => {
-                    const option = document.createElement('option');
-                    option.value = indexName;
-                    option.innerText = indexName;
-                    select.appendChild(option);
-                });
-                
-                // 默认选中第一个
-                if (!currentActiveIndex || !data.indexes.includes(currentActiveIndex)) {
-                    currentActiveIndex = data.indexes[0];
-                }
-                select.value = currentActiveIndex;
-                
-                // 加载摘要和节点
-                loadIndexSummary(currentActiveIndex);
-                if (typeof loadIndexNodes === 'function') {
-                    loadIndexNodes(currentActiveIndex);
-                }
-            } catch (error) {
-                showToast('获取索引列表失败', 'error');
-            }
-        }
-
-        // 绑定下拉选择事件
-        document.getElementById('index-select').addEventListener('change', (e) => {
-            if (summaryUpdateTimer) {
-                clearTimeout(summaryUpdateTimer);
-            }
-            for (let timerId in updateTimers) {
-                clearTimeout(updateTimers[timerId]);
-            }
-            updateTimers = {};
-            currentActiveIndex = e.target.value;
-            if (currentActiveIndex) {
-                loadIndexSummary(currentActiveIndex);
-                if (typeof loadIndexNodes === 'function') {
-                    loadIndexNodes(currentActiveIndex);
-                }
-            } else {
-                updateSummaryDisplay('未选中任何活跃索引');
-                const viewport = document.getElementById('node-list-viewport') || document.getElementById('panel-right-container');
-                if (viewport) {
-                    viewport.innerHTML = '<div style="text-align: center; color: #999; margin-top: 40px;">未选中任何活跃索引</div>';
-                }
-                const pagBar = document.getElementById('pagination-bar');
-                if (pagBar) {
-                    pagBar.style.display = 'none';
-                }
-            }
-        });
-
-        async function loadIndexSummary(indexName) {
-            const textarea = document.getElementById('index-summary-textarea');
-            const statusTag = document.getElementById('summary-status-tag');
-            
-            if (textarea) {
-                textarea.disabled = true;
-                textarea.value = '加载摘要中...';
-            }
-            if (statusTag) {
-                statusTag.innerText = '加载中...';
-                statusTag.style.color = '#fa8c16';
-            }
-            try {
-                const response = await fetch(`${baseURL}/${indexName}/get_summary`);
-                const data = await response.json();
-                if (textarea) {
-                    textarea.value = data.summary || '';
-                    textarea.disabled = false;
-                }
-                if (statusTag) {
-                    statusTag.innerText = '已加载';
-                    statusTag.style.color = '#52c41a';
-                }
-            } catch (error) {
-                if (textarea) {
-                    textarea.value = '读取摘要失败';
-                }
-                if (statusTag) {
-                    statusTag.innerText = '错误';
-                    statusTag.style.color = '#ff4d4f';
-                }
-            }
-        }
-
-        function updateSummaryDisplay(text) {
-            const textarea = document.getElementById('index-summary-textarea');
-            if (textarea) {
-                textarea.value = text;
-                textarea.disabled = true;
-            }
-            const statusTag = document.getElementById('summary-status-tag');
-            if (statusTag) {
-                statusTag.innerText = '';
-            }
-        }
-
-        // 索引摘要防抖保存
-        function debouncedUpdateSummary(text) {
-            if (!currentActiveIndex) {
-                showToast('当前无选中的活跃索引', 'error');
-                return;
-            }
-            
-            const statusTag = document.getElementById('summary-status-tag');
-            if (statusTag) {
-                statusTag.innerText = "正在输入...";
-                statusTag.style.color = "#fa8c16";
-            }
-            
-            if (summaryUpdateTimer) {
-                clearTimeout(summaryUpdateTimer);
-            }
-            
-            summaryUpdateTimer = setTimeout(async () => {
-                if (statusTag) {
-                    statusTag.innerText = "保存中...";
-                    statusTag.style.color = "rgb(25, 84, 142)";
-                }
-                
-                try {
-                    const body = new URLSearchParams();
-                    body.append('summary', text);
-                    
-                    const response = await fetch(`${baseURL}/${currentActiveIndex}/set_summary`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: body.toString()
-                    });
-                    const data = await response.json();
-                    if (data.status === 'ok') {
-                        if (statusTag) {
-                            statusTag.innerText = "✓ 已自动保存";
-                            statusTag.style.color = "#52c41a";
-                        }
-                    } else {
-                        if (statusTag) {
-                            statusTag.innerText = "✗ 保存失败";
-                            statusTag.style.color = "#ff4d4f";
-                        }
-                    }
-                } catch (error) {
-                    if (statusTag) {
-                        statusTag.innerText = "✗ 网络保存异常";
-                        statusTag.style.color = "#ff4d4f";
-                    }
-                }
-            }, 1000);
-        }
-
-        // 创建索引
-        async function createNewIndex() {
-            const input = document.getElementById('new-index-name');
-            const name = input.value.trim();
-            if (!name) {
-                showToast('请输入新索引名称', 'error');
-                return;
-            }
-            
-            const sanitized = name.replace(/[^\w\-]/g, '_');
-            const body = new URLSearchParams();
-            body.append('index_name', name);
-            
-            showLoading('正在创建索引...');
-            try {
-                const response = await fetch(`${baseURL}/create`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: body.toString()
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    showToast(`索引 ${name} 创建成功`, 'success');
-                    input.value = '';
-                    currentActiveIndex = data.index_name; // Use returned sanitized name
-                    await loadIndexes();
-                } else {
-                    showToast(data.msg || '新建失败', 'error');
-                }
-            } catch (error) {
-                showToast('网络错误，创建索引失败', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // 删除索引
-        async function deleteCurrentIndex() {
-            if (!currentActiveIndex) {
-                showToast('当前没有选中的活跃索引', 'error');
-                return;
-            }
-            if (!confirm(`确定要删除知识库索引 "${currentActiveIndex}" 吗？此操作无法恢复！`)) {
-                return;
-            }
-            
-            const body = new URLSearchParams();
-            body.append('index_name', currentActiveIndex);
-            
-            showLoading('正在删除索引...');
-            try {
-                const response = await fetch(`${baseURL}/delete`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: body.toString()
-                });
-                if (response.ok) {
-                    showToast(`索引 ${currentActiveIndex} 已删除`, 'success');
-                    currentActiveIndex = null;
-                    await loadIndexes();
-                } else {
-                    showToast('删除索引失败', 'error');
-                }
-            } catch (error) {
-                showToast('网络错误，删除索引失败', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // 保存索引到磁盘
-        async function saveCurrentIndexDisk() {
-            if (!currentActiveIndex) {
-                showToast('当前无选中的活跃索引', 'error');
-                return;
-            }
-            showLoading('正在保存索引到磁盘...');
-            try {
-                const response = await fetch(`${baseURL}/${currentActiveIndex}/save`, {
-                    method: 'POST'
-                });
-                if (response.ok) {
-                    showToast('索引已成功持久化至磁盘', 'success');
-                } else {
-                    showToast('保存磁盘失败', 'error');
-                }
-            } catch (error) {
-                showToast('网络错误，保存磁盘失败', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Tab 切换逻辑
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab_btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab_content').forEach(content => content.classList.remove('active'));
-            
-            const activeBtn = Array.from(document.querySelectorAll('.tab_btn')).find(btn => btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId));
-            if (activeBtn) activeBtn.classList.add('active');
-            
-            const content = document.getElementById(tabId);
-            if (content) content.classList.add('active');
-        }
-
-        // 拖拽区域监听
-        let dragZoneInitialized = false;
-        function initDragZone() {
-            const dragZone = document.getElementById('drag-zone');
-            if (!dragZone || dragZoneInitialized) return;
-            
-            dragZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dragZone.classList.add('dragover');
-            });
-
-            dragZone.addEventListener('dragleave', () => {
-                dragZone.classList.remove('dragover');
-            });
-
-            dragZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dragZone.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    uploadFiles(files);
-                }
-            });
-
-            document.getElementById('file-input').addEventListener('change', (e) => {
-                const files = e.target.files;
-                if (files.length > 0) {
-                    uploadFiles(files);
-                }
-            });
-            dragZoneInitialized = true;
-        }
-
-        // 多文件上传
-        async function uploadFiles(files) {
-            if (!currentActiveIndex) {
-                showToast('请先选择或新建一个活跃索引', 'error');
-                return;
-            }
-            
-            const progressList = document.getElementById('upload-progress-list');
-            progressList.innerHTML = `<p style="color: rgb(25, 84, 142); font-weight: 500;">开始上传 ${files.length} 个文件...</p>`;
-            
-            const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append('files', files[i]);
-            }
-            
-            showLoading(`正在上传并解析 ${files.length} 个文件，请稍候...`);
-            try {
-                const response = await fetch(`${baseURL}/${currentActiveIndex}/uploadFiles`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-                if (response.ok && data.status === 'inserted') {
-                    showToast(`成功解析并插入 ${files.length} 个文件`, 'success');
-                    progressList.innerHTML = `<p style="color: #52c41a; font-weight: 500;">✓ 全部文件上传成功！</p>`;
-                    // 重新载入节点列表
-                    if (typeof loadIndexNodes === 'function') {
-                        loadIndexNodes(currentActiveIndex);
-                    }
-                } else {
-                    showToast(data.message || '文件上传解析失败', 'error');
-                    progressList.innerHTML = `<p style="color: #ff4d4f;">✗ 上传失败: ${data.message || '未知错误'}</p>`;
-                }
-            } catch (error) {
-                showToast('网络错误，文件上传失败', 'error');
-                progressList.innerHTML = `<p style="color: #ff4d4f;">✗ 网络连接错误</p>`;
-            } finally {
-                hideLoading();
-                document.getElementById('file-input').value = '';
-            }
-        }
-
-        // 直接文本插入
-        async function submitDirectText() {
-            if (!currentActiveIndex) {
-                showToast('请先选择活跃索引', 'error');
-                return;
-            }
-            const docIdInput = document.getElementById('input-doc-id');
-            const docTextInput = document.getElementById('input-doc-text');
-            const docId = docIdInput.value.trim();
-            const text = docTextInput.value.trim();
-            
-            if (!text) {
-                showToast('请输入文档内容文本', 'error');
-                return;
-            }
-            
-            const body = new URLSearchParams();
-            body.append('text', text);
-            if (docId) {
-                body.append('doc_id', docId);
-            }
-            
-            showLoading('正在插入文档...');
-            try {
-                const response = await fetch(`${baseURL}/${currentActiveIndex}/insertdoc`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: body.toString()
-                });
-                if (response.ok) {
-                    showToast('文档插入成功', 'success');
-                    docIdInput.value = '';
-                    docTextInput.value = '';
-                    if (typeof loadIndexNodes === 'function') {
-                        loadIndexNodes(currentActiveIndex);
-                    }
-                } else {
-                    showToast('文档插入失败', 'error');
-                }
-            } catch (error) {
-                showToast('网络错误，插入文档失败', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // QA生成式上传
-        async function submitQAGeneration() {
-            if (!currentActiveIndex) {
-                showToast('请先选择活跃索引', 'error');
-                return;
-            }
-            
-            const fileInput = document.getElementById('qa-file-input');
-            const promptInput = document.getElementById('qa-custom-prompt');
-            const file = fileInput.files[0];
-            const prompt = promptInput.value.trim();
-            
-            if (!file) {
-                showToast('请选择源文件', 'error');
-                return;
-            }
-            
-            showToast('正在向大模型提交QA抽取申请，请稍候...', 'info');
-            showLoading('正在生成 QA 并导入，大模型处理可能需要较长时间，请稍候...');
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            if (prompt) {
-                formData.append('prompt', prompt);
-            }
-            
-            try {
-                const response = await fetch(`${baseURL}/${currentActiveIndex}/upload_file_by_QA`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    showToast('大模型 QA 数据生成并索引成功', 'success');
-                    promptInput.value = '';
-                    if (typeof loadIndexNodes === 'function') {
-                        loadIndexNodes(currentActiveIndex);
-                    }
-                } else {
-                    showToast(data.message || 'QA 生成失败', 'error');
-                }
-            } catch (error) {
-                showToast('网络错误，提交QA任务失败', 'error');
-            } finally {
-                hideLoading();
-                document.getElementById('qa-file-input').value = '';
-            }
-        }
-
-        let allNodesList = [];
-        let filteredNodesList = [];
-        let currentPage = 1;
-        const pageSize = 10;
-        // updateTimers is declared at the top of the script block
-
-        async function loadIndexNodes(indexName) {
-            if (!indexName) {
-                const viewport = document.getElementById('node-list-viewport');
-                if (viewport) {
-                    viewport.innerHTML = '<div style="text-align: center; color: #999; margin-top: 40px;">选择或载入索引以查看分块数据</div>';
-                }
-                const pagBar = document.getElementById('pagination-bar');
-                if (pagBar) {
-                    pagBar.style.display = 'none';
-                }
-                return;
-            }
-            
-            const viewport = document.getElementById('node-list-viewport');
-            viewport.innerHTML = '<div style="text-align: center; color: rgb(25, 84, 142); margin-top: 40px; font-weight: 500;">正在加载节点数据...</div>';
-            const pagBar = document.getElementById('pagination-bar');
-            if (pagBar) pagBar.style.display = 'none';
-            
-            try {
-                const response = await fetch(`${baseURL}/${indexName}/info`);
-                const data = await response.json();
-                allNodesList = data.docs || [];
-                
-                // 执行过滤与渲染
-                applyFilterAndRender();
-            } catch (error) {
-                viewport.innerHTML = '<div style="text-align: center; color: #ff4d4f; margin-top: 40px;">数据分块加载失败</div>';
-                showToast('获取索引节点数据失败', 'error');
-            }
-        }
-
-        // 绑定搜索输入事件
-        document.getElementById('node-search').addEventListener('input', () => {
-            currentPage = 1;
-            applyFilterAndRender();
-        });
-
-        function applyFilterAndRender() {
-            const keyword = document.getElementById('node-search').value.trim().toLowerCase();
-            
-            if (!keyword) {
-                filteredNodesList = [...allNodesList];
-            } else {
-                filteredNodesList = allNodesList.filter(node => 
-                    (node.text && String(node.text).toLowerCase().includes(keyword)) ||
-                    (node.doc_id && String(node.doc_id).toLowerCase().includes(keyword)) ||
-                    (node.node_id && String(node.node_id).toLowerCase().includes(keyword))
-                );
-            }
-            
-            currentPage = 1;
-            renderNodesPage();
-        }
-
-        function renderNodesPage() {
-            const viewport = document.getElementById('node-list-viewport');
-            const pagBar = document.getElementById('pagination-bar');
-            
-            if (filteredNodesList.length === 0) {
-                viewport.innerHTML = '<div style="text-align: center; color: #999; margin-top: 40px;">无匹配的节点数据</div>';
-                pagBar.style.display = 'none';
-                return;
-            }
-            
-            const totalItems = filteredNodesList.length;
-            const totalPages = Math.ceil(totalItems / pageSize);
-            
-            // 分页区间
-            const startIdx = (currentPage - 1) * pageSize;
-            const endIdx = Math.min(startIdx + pageSize, totalItems);
-            const pageItems = filteredNodesList.slice(startIdx, endIdx);
-            
-            viewport.innerHTML = '';
-            pageItems.forEach(node => {
-                const card = document.createElement('div');
-                card.className = 'node_card';
-                
-                card.innerHTML = `
-                    <div class="node_meta_row">
-                        <span>Doc ID: <span class="node_doc_id"></span></span>
-                        <span style="font-family: monospace;">Node ID: ${node.node_id}</span>
-                    </div>
-                    <textarea class="node_editor"></textarea>
-                    <div class="node_actions">
-                        <span class="node_status_tag" id="status-${node.node_id}">未做修改</span>
-                        <div style="display: flex; gap: 15px;">
-                            <button class="btn-delete-node btn-delete-doc" style="color: #fa8c16;">删除整档</button>
-                            <button class="btn-delete-node btn-delete-chunk">删除分块</button>
-                        </div>
-                    </div>
-                `;
-                
-                // 安全设置文本，避免 HTML 注入或解析崩溃
-                card.querySelector('.node_doc_id').textContent = node.doc_id || '自动生成';
-                
-                const textarea = card.querySelector('.node_editor');
-                textarea.value = node.text || '';
-                
-                // 绑定输入事件 (防抖)
-                const statusTag = card.querySelector('.node_status_tag');
-                textarea.addEventListener('input', (e) => {
-                    debouncedUpdateNode(node.node_id, e.target.value, statusTag);
-                });
-                
-                // 绑定按钮事件
-                card.querySelector('.btn-delete-doc').onclick = () => deleteDocByCard(node.doc_id);
-                card.querySelector('.btn-delete-chunk').onclick = () => deleteNodeByCard(node.node_id);
-                
-                viewport.appendChild(card);
-            });
-            
-            // 调整分页组件显示
-            pagBar.style.display = 'flex';
-            document.getElementById('page-indicator').innerText = `第 ${currentPage} / ${totalPages} 页 (共 ${totalItems} 项)`;
-            
-            document.getElementById('btn-prev-page').disabled = (currentPage === 1);
-            document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
-        }
-
-        function prevPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                renderNodesPage();
-                document.getElementById('node-list-viewport').scrollTop = 0;
-            }
-        }
-
-        function nextPage() {
-            const totalPages = Math.ceil(filteredNodesList.length / pageSize);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderNodesPage();
-                document.getElementById('node-list-viewport').scrollTop = 0;
-            }
-        }
-
-        // 节点内容的防抖保存逻辑
-        function debouncedUpdateNode(nodeId, text, statusElement) {
-            statusElement.innerText = "正在输入...";
-            statusElement.style.color = "#fa8c16";
-            
-            if (updateTimers[nodeId]) {
-                clearTimeout(updateTimers[nodeId]);
-            }
-            
-            updateTimers[nodeId] = setTimeout(async () => {
-                statusElement.innerText = "正在自动保存...";
-                statusElement.style.color = "rgb(25, 84, 142)";
-                
-                try {
-                    const body = new URLSearchParams();
-                    body.append('text', text);
-                    
-                    const response = await fetch(`${baseURL}/${currentActiveIndex}/update?nodeId=${nodeId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: body.toString()
-                    });
-                    
-                    if (response.ok) {
-                        statusElement.innerText = "✓ 已自动保存";
-                        statusElement.style.color = "#52c41a";
-                        // 同步更新本地缓存数据中的text值
-                        const node = allNodesList.find(n => n.node_id === nodeId);
-                        if (node) node.text = text;
-                    } else {
-                        statusElement.innerText = "✗ 保存失败";
-                        statusElement.style.color = "#ff4d4f";
-                    }
-                } catch (error) {
-                    statusElement.innerText = "✗ 网络保存异常";
-                    statusElement.style.color = "#ff4d4f";
-                }
-            }, 1000); // 用户停止录入 1 秒后自动提交
-        }
-
-        // 删除单节点分块
-        async function deleteNodeByCard(nodeId) {
-            if (!confirm('确定要删除这个数据分块(Node)吗？此操作不可逆！')) {
-                return;
-            }
-            if (updateTimers[nodeId]) {
-                clearTimeout(updateTimers[nodeId]);
-                delete updateTimers[nodeId];
-            }
-            showLoading('正在删除数据分块...');
-            try {
-                const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteNode?node_id=${nodeId}`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                if (response.ok && data.status === 'deleted') {
-                    showToast('数据分块已成功删除', 'success');
-                    // 从本地缓存中踢出并重绘
-                    allNodesList = allNodesList.filter(n => n.node_id !== nodeId);
-                    applyFilterAndRender();
-                } else {
-                    showToast(data.message || '删除节点失败', 'error');
-                }
-            } catch (error) {
-                showToast('网络错误，删除节点失败', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // 删除整档
-        async function deleteDocByCard(docId) {
-            if (!docId) {
-                showToast('该卡片无关联的 Doc ID，无法删除整档，请使用删除分块', 'error');
-                return;
-            }
-            if (!confirm(`确定要彻底删除文档 "${docId}" 及其所包含的所有分块吗？`)) {
-                return;
-            }
-            const docNodes = allNodesList.filter(n => n.doc_id === docId);
-            docNodes.forEach(node => {
-                if (updateTimers[node.node_id]) {
-                    clearTimeout(updateTimers[node.node_id]);
-                    delete updateTimers[node.node_id];
-                }
-            });
-            showLoading('正在删除文档及全部分块...');
-            try {
-                const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteDoc?doc_id=${docId}`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                if (response.ok && data.status === 'deleted') {
-                    showToast('整档文件及其所有分块已成功清除', 'success');
-                    // 重新请求后端，以防有其它关联节点
-                    await loadIndexNodes(currentActiveIndex);
-                } else {
-                    showToast(data.message || '删除整档文件失败', 'error');
-                }
-            } catch (error) {
-                showToast('网络错误，删除整档失败', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // 页面初始加载
-        window.addEventListener('DOMContentLoaded', () => {
-            loadIndexes();
-            initDragZone();
-        });
-    </script>
+    <script src="./manage.js"></script>
 </body>
 </html>

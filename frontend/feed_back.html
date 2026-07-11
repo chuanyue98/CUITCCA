@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,79 +9,36 @@
 </head>
 <body>
     <div class="outline">
-        <div id="side_left"></div>
+        <nav id="side_left"></nav>
         <!-- 右边 -->
-        <div class="side_right">
-            <div class="headline">
+        <main class="side_right">
+            <header class="headline">
                 <div class="headline_hidemenu">
                     <button id="button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                             <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8Zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5Z"/>
                         </svg>
                     </button>
                 </div>
                 <div class="headline_head">问题反馈</div>
                 <div class="share"></div>
-            </div>
-            <div style="flex-grow: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; align-items: center;">
-                <div class="glass_card" style="width: 600px; max-width: 100%;">
+            </header>
+            <div class="feedback_container">
+                <div class="glass_card feedback_card">
                     <input type="email" id="email" class="feedback_email" placeholder="请输入您的邮箱地址..." required>
                     <textarea id="feedback" cols="10" rows="10" class="feedback_textarea" placeholder="请输入您的宝贵意见..."></textarea>
-                    <div style="display: flex; justify-content: center; margin-top: 20px;">
+                    <div class="feedback_submit_wrap">
                         <button class="feedback_submit" id="feedbackButton" onclick="submitFeedback()">
                             提交反馈
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
+            <div id="toast-container" class="feedback-top"></div>
+        </main>
     </div>
 
     <script src="./sidebar.js" data-active="feed_back"></script>
-    <script>
-        async function submitFeedback() {
-            var emailInput = document.getElementById("email");
-            if (!emailInput.checkValidity()) {
-                alert("请输入有效的邮箱地址。");
-                return;
-            }
-
-            var text = document.getElementById("feedback").value;
-            if (text.trim() === "") {
-                alert("请填写反馈内容。");
-                return;
-            }
-
-            var feedbackButton = document.getElementById("feedbackButton");
-            feedbackButton.disabled = true;
-
-            try {
-                const response = await fetch('/manage/feedback', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + (localStorage.getItem('api_key') || '')
-                    },
-                    body: JSON.stringify({
-                        email: emailInput.value,
-                        message: text
-                    })
-                });
-
-                if (response.ok) {
-                    alert("发送成功！期待您的下次反馈！");
-                    document.getElementById("email").value = "";
-                    document.getElementById("feedback").value = "";
-                } else {
-                    alert("发送失败: " + response.status);
-                }
-            } catch (error) {
-                console.error("请求失败:", error);
-                alert("发送失败: " + error.message);
-            } finally {
-                feedbackButton.disabled = false;
-            }
-        }
-    </script>
+    <script src="./feedback.js"></script>
 </body>
 </html>

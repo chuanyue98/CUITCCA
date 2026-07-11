@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,245 +9,54 @@
 </head>
 <body>
     <div class="outline">
-        <div id="side_left"></div>
+        <nav id="side_left" aria-label="主导航"></nav>
         <!-- 右边 -->
-        <div class="side_right">
-            <div class="headline">
+        <main class="side_right">
+            <header class="headline">
                 <div class="headline_hidemenu">
                     <button id="button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                             <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8Zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5Z"/>
                         </svg>
                     </button>
                 </div>
                 <div class="headline_head">测试版小助手</div>
                 <div class="share"></div>
-            </div>
+            </header>
             <div class="talk_outline">
                 <div class="talk_outlinein">
-                    <div class="talk_content" id="chatbox"></div>
+                    <div class="talk_content" id="chatbox" aria-live="polite" aria-label="对话记录">
+                        <div class="message">
+                            <div class="sender_bot"></div>
+                            <div class="content_bot">你好！我是成信大校园助手，你可以问我关于学校的任何问题，比如：学校有哪些社团？图书馆怎么借书？</div>
+                            <div class="content_bot_img"></div>
+                            <div class="box_side"></div>
+                        </div>
+                    </div>
                     <div class="chat_bottom"></div>
                     <footer class="foot_fix">
                         <div class="chat_container">
-                            <button class="clear" onclick="clearAllMessage()" title="清空对话">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-slack" viewBox="0 0 16 16">
+                            <button class="clear" onclick="clearAllMessage()" title="清空对话" aria-label="清空对话">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-slack" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                                     <path d="M3.362 10.11c0 .926-.756 1.681-1.681 1.681S0 11.036 0 10.111C0 9.186.756 8.43 1.68 8.43h1.682v1.68zm .846 0c0-.924.756-1.68 1.681-1.68s1.681.756 1.681 1.68v4.21c0 .924-.756 1.68-1.68 1.68a1.685 1.685 0 0 1-1.682-1.68v-4.21zM5.89 3.362c-.926 0-1.682-.756-1.682-1.681S4.964 0 5.89 0s1.68.756 1.68 1.68v1.682H5.89zm0 .846c.924 0 1.68.756 1.68 1.681S6.814 7.57 5.89 7.57H1.68C.757 7.57 0 6.814 0 5.89c0-.926.756-1.682 1.68-1.682h4.21zm6.749 1.682c0-.926.755-1.682 1.68-1.682.925 0 1.681.756 1.681 1.681s-.756 1.681-1.68 1.681h-1.681V5.89zm-.848 0c0 .924-.755 1.68-1.68 1.68A1.685 1.685 0 0 1 8.43 5.89V1.68C8.43.757 9.186 0 10.11 0c.926 0 1.681.756 1.681 1.68v4.21zm-1.681 6.748c.926 0 1.682.756 1.682 1.681S11.036 16 10.11 16s-1.681-.756-1.681-1.68v-1.682h1.68zm0-.847c-.924 0-1.68-.755-1.68-1.68 0-.925.756-1.681 1.68-1.681h4.21c.924 0 1.68.756 1.68 1.68 0 .926-.756 1.681-1.68 1.681h-4.21z"/>
                                 </svg>
                             </button>
                             <div class="chat_talk_container" id="changeborder_div">
                                 <div class="chat_textarea">
                                     <div class="textarea">
-                                        <textarea name="" id="input" cols="10" rows="1"></textarea>
+                                        <textarea name="" id="input" cols="10" rows="1" aria-label="输入问题" placeholder="输入你的问题..."></textarea>
                                     </div>
                                 </div>
-                                <button class="chat_talk_submit" id="submit" onclick="sendMessage()">&#10140</button>
+                                <button class="chat_talk_submit" id="submit" onclick="sendMessage()" aria-label="发送">&#10140</button>
                             </div>
                         </div>
                     </footer>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="./sidebar.js" data-active="index"></script>
-    <script>
-        // ===== 输入框事件 =====
-        const inputEl = document.getElementById('input');
-        inputEl.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                document.getElementById("submit").click();
-            }
-        });
-
-        const changeborderDiv = document.getElementById('changeborder_div');
-        inputEl.addEventListener('focus', () => {
-            changeborderDiv.style.borderColor = 'rgb(151, 204, 242)';
-            changeborderDiv.style.boxShadow = "0 12px 16px 0 rgb(0,0,0,.24),0 17px 50px 0 rgb(0,0,0,.19)";
-        });
-        inputEl.addEventListener('blur', () => {
-            changeborderDiv.style.borderColor = 'rgb(209, 209, 209)';
-            changeborderDiv.style.boxShadow = '';
-        });
-
-        // ===== 工具函数 =====
-        function uuid() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                var r = Math.random() * 16 | 0;
-                var v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-
-        function escapeHTML(str) {
-            if (!str || typeof str !== 'string') return '';
-            return str.replace(/[&<>'"]/g,
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag)
-            );
-        }
-
-        function resizeBox(box) {
-            var width = window.innerWidth > 1300 ? window.innerWidth - 1300 : 0;
-            box.style.width = width + "px";
-        }
-
-        window.addEventListener("resize", function() {
-            document.querySelectorAll(".box_side").forEach(function(box) {
-                resizeBox(box);
-            });
-        });
-
-        // ===== 聊天逻辑 =====
-        function sendMessage() {
-            var input = document.getElementById("input");
-            var chatbox = document.getElementById("chatbox");
-            var question = input.value;
-
-            if (input.value.trim() === "") return;
-
-            var message = document.createElement("div");
-            var sender = document.createElement("div");
-            var content = document.createElement("div");
-            var img = document.createElement("div");
-            var box_side = document.createElement("div");
-
-            content.textContent = input.value;
-            message.classList.add("message");
-            sender.classList.add("sender_man");
-            content.classList.add("content_man");
-            img.classList.add("content_man_img");
-            box_side.classList.add("box_side");
-            message.appendChild(sender);
-            message.appendChild(content);
-            message.appendChild(img);
-            message.appendChild(box_side);
-            chatbox.appendChild(message);
-            resizeBox(box_side);
-            input.value = "";
-
-            var reply = document.createElement("div");
-            var replySender = document.createElement("div");
-            var replyContent = document.createElement("div");
-            var replyImg = document.createElement("div");
-            var replybox_side = document.createElement("div");
-
-            reply.classList.add("message");
-            replySender.classList.add("sender_bot");
-            replyContent.classList.add("content_bot");
-            replyImg.classList.add("content_bot_img");
-            replybox_side.classList.add("box_side");
-
-            var replyId = uuid();
-            replyContent.setAttribute("id", replyId);
-
-            var replyContent_Answer = document.createElement("div");
-            var content_id = uuid();
-            replyContent_Answer.setAttribute("id", content_id);
-            replyContent_Answer.classList.add("replycontent");
-            replyContent.appendChild(replyContent_Answer);
-
-            var cursor = document.createElement("span");
-            cursor.classList.add("cursor");
-            cursor.setAttribute("id", "cursor");
-            replyContent.appendChild(cursor);
-
-            reply.appendChild(replybox_side);
-            reply.appendChild(replyImg);
-            reply.appendChild(replyContent);
-            reply.appendChild(replySender);
-            chatbox.appendChild(reply);
-            resizeBox(replybox_side);
-
-            document.getElementById(replyId).scrollIntoView({ behavior: "smooth", inline: "nearest" });
-
-            document.getElementById("submit").disabled = true;
-            sendQuery(question, content_id);
-        }
-
-        async function sendQuery(query, content_id) {
-            try {
-                const response = await fetch('/graph/query', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'query=' + encodeURIComponent(query)
-                });
-
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
-
-                const data = await response.json();
-                var answer = data.response ? data.response.trim() : "未找到有效的回答";
-                answer = escapeHTML(answer);
-                typeText(content_id, answer, 0, "");
-            } catch (error) {
-                console.error("请求失败:", error);
-                typeText(content_id, "请求失败: " + error.message, 0, "");
-            } finally {
-                document.getElementById("submit").disabled = false;
-            }
-        }
-
-        function clearAllMessage() {
-            var chatbox = document.getElementById('chatbox');
-            while (chatbox.firstChild) {
-                chatbox.removeChild(chatbox.firstChild);
-            }
-        }
-
-        // ===== 打字机效果 =====
-        function typeText(name, givenText, currentIndex, currentHTML) {
-            const outputElement = document.getElementById(name);
-            if (!outputElement || givenText.length === 0) return;
-
-            if (currentIndex < givenText.length) {
-                const currentChar = givenText.charAt(currentIndex);
-                const nextChar = givenText.charAt(currentIndex + 1);
-
-                if (currentChar === "<") {
-                    const closingTagIndex = givenText.indexOf(">", currentIndex);
-                    currentHTML += givenText.slice(currentIndex, closingTagIndex + 1);
-                    currentIndex = closingTagIndex + 1;
-                } else if (currentChar === "&") {
-                    const closingSemicolonIndex = givenText.indexOf(";", currentIndex);
-                    if (closingSemicolonIndex !== -1 && closingSemicolonIndex - currentIndex < 10) {
-                        currentHTML += givenText.slice(currentIndex, closingSemicolonIndex + 1);
-                        currentIndex = closingSemicolonIndex + 1;
-                    } else {
-                        currentHTML += currentChar;
-                        currentIndex++;
-                    }
-                } else if (currentChar === "\\" && nextChar === "n" && currentIndex > 5) {
-                    currentHTML += "<br>";
-                    currentIndex += 2;
-                } else if (currentChar === "\\" && nextChar === "n" && currentIndex <= 5) {
-                    currentIndex += 2;
-                } else if (currentChar === "\"") {
-                    currentHTML += "&nbsp;&nbsp;&nbsp;&nbsp;";
-                    currentIndex++;
-                } else {
-                    currentHTML += currentChar;
-                    currentIndex++;
-                }
-
-                outputElement.innerHTML = currentHTML;
-                setTimeout(function() {
-                    typeText(name, givenText, currentIndex, currentHTML);
-                }, 100);
-            } else {
-                const cursorElement = document.getElementById("cursor");
-                if (cursorElement) {
-                    cursorElement.classList.remove("cursor");
-                    cursorElement.setAttribute("id", uuid());
-                }
-            }
-        }
-    </script>
+    <script src="./chat.js"></script>
 </body>
 </html>

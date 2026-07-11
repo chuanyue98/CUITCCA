@@ -1,54 +1,69 @@
-import re
+import asyncio
 import logging
-
-from llama_index.core.chat_engine import CondenseQuestionChatEngine
-from llama_index.core.chat_engine.types import BaseChatEngine
-from llama_index.core.indices.query.base import BaseQueryEngine
-from llama_index.core.query_engine import RouterQueryEngine
-from llama_index.core.selectors.pydantic_selectors import PydanticMultiSelector
-from llama_index.core.tools import QueryEngineTool, ToolMetadata
+import re
 
 from configs.config import Prompts
 from configs.load_env import VERBOSE
-from handlers.index_crud import indexes, _indexes_lock
+from handlers.index_crud import indexes
+from llama_index.core.base.response.schema import RESPONSE_TYPE
+from llama_index.core.callbacks import CallbackManager
+from llama_index.core.chat_engine import CondenseQuestionChatEngine
+from llama_index.core.chat_engine.types import BaseChatEngine
+from llama_index.core.indices.query.base import BaseQueryEngine
 
 
-def _build_router_query_engine(
-    streaming: bool = False,
-    indexes_snapshot: list | None = None,
-) -> RouterQueryEngine:
-    target_indexes = indexes_snapshot if indexes_snapshot is not None else indexes
-    query_engine_tools = []
-    for index in target_indexes:
-        engine = index.as_query_engine(
-            streaming=streaming,
-            text_qa_template=Prompts.QA_PROMPT.value,
-            refine_template=Prompts.REFINE_PROMPT.value,
-            similarity_top_k=3,
-            verbose=VERBOSE,
-        )
-        tool = QueryEngineTool(
-            query_engine=engine,
-            metadata=ToolMetadata(
-                name=index.index_id,
-                description=getattr(index, 'summary', '') or index.index_id,
-            ),
-        )
-        query_engine_tools.append(tool)
+class MultiIndexQueryEngine(BaseQueryEngine):
+    """Queries all indexes and returns the first non-empty response."""
 
-    query_engine = RouterQueryEngine(
-        selector=PydanticMultiSelector.from_defaults(),
-        query_engine_tools=query_engine_tools,
-        verbose=VERBOSE,
-    )
-    return query_engine
+    def __init__(self, indexes_snapshot: list, streaming: bool = False):
+        self._indexes_snapshot = indexes_snapshot
+        self._streaming = streaming
+        super().__init__(callback_manager=CallbackManager())
+
+    def _get_query_engines(self):
+        return [
+            index.as_query_engine(
+                streaming=self._streaming,
+                text_qa_template=Prompts.QA_PROMPT.value,
+                refine_template=Prompts.REFINE_PROMPT.value,
+                similarity_top_k=3,
+                verbose=VERBOSE,
+            )
+            for index in self._indexes_snapshot
+        ]
+
+    async def _aquery(self, query: str) -> RESPONSE_TYPE:  # type: ignore[override]
+        for engine in self._get_query_engines():
+            try:
+                response = await engine.aquery(query)
+                if str(response) and str(response) != "Empty Response":
+                    return response
+            except Exception:
+                continue
+        from llama_index.core.response import Response
+        return Response("Empty Response")
+
+    def _query(self, query: str) -> RESPONSE_TYPE:  # type: ignore[override]
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import nest_asyncio
+                nest_asyncio.apply()
+                return loop.run_until_complete(self._aquery(query))
+        except RuntimeError:
+            pass
+        return asyncio.run(self._aquery(query))
+
+    def _get_prompt_modules(self):
+        return []
 
 
-async def compose_graph_chat_egine() -> BaseChatEngine:
-    async with _indexes_lock:
-        indexes_snapshot = list(indexes)
+_query_engine_cache: MultiIndexQueryEngine | None = None
 
-    query_engine = _build_router_query_engine(streaming=True, indexes_snapshot=indexes_snapshot)
+
+def compose_graph_chat_egine() -> BaseChatEngine:
+    indexes_snapshot = list(indexes)
+    query_engine = MultiIndexQueryEngine(indexes_snapshot=indexes_snapshot, streaming=True)
 
     chat_engine = CondenseQuestionChatEngine.from_defaults(
         query_engine=query_engine,
@@ -60,7 +75,15 @@ async def compose_graph_chat_egine() -> BaseChatEngine:
 
 
 def compose_graph_query_engine(streaming: bool = False) -> BaseQueryEngine:
-    return _build_router_query_engine(streaming=streaming)
+    global _query_engine_cache
+    if _query_engine_cache is None:
+        _query_engine_cache = MultiIndexQueryEngine(indexes_snapshot=list(indexes), streaming=streaming)
+    return _query_engine_cache
+
+
+def invalidate_query_engine_cache():
+    global _query_engine_cache
+    _query_engine_cache = None
 
 
 async def summary_index(index):

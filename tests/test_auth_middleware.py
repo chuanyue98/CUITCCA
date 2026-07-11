@@ -2,13 +2,12 @@ import os
 import unittest
 from unittest.mock import patch
 
-import tests._pathsetup  # noqa: F401
-
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from router.manage import manage_app
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_503_SERVICE_UNAVAILABLE
 
-from router.manage import manage_app
+import tests._pathsetup  # noqa: F401
 
 
 class RequireConfiguredApiKeyTest(unittest.TestCase):

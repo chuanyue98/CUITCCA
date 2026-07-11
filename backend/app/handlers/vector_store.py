@@ -1,8 +1,7 @@
 import chromadb
-from llama_index.core import VectorStoreIndex, Settings
-from llama_index.vector_stores.chroma import ChromaVectorStore
-
 from configs.load_env import chroma_db_path
+from llama_index.core import Settings, VectorStoreIndex
+from llama_index.vector_stores.chroma import ChromaVectorStore
 
 _client_instance = None
 
