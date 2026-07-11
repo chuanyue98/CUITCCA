@@ -122,6 +122,8 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
     try:
         filename = safe_filename(file.filename)
         unique_id = str(uuid.uuid4())
+        os.makedirs(LOAD_PATH, exist_ok=True)
+        os.makedirs(SAVE_PATH, exist_ok=True)
         filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
         savepath = os.path.join(SAVE_PATH, filename)
         file_bytes = await file.read()
