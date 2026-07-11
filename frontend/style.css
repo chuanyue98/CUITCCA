@@ -41,7 +41,7 @@
   body, html { background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); }
   #side_left, .headline, .panel_right, .node_card, .glass_card, .guide_card { background-color: var(--surface) !important; }
   .foot_fix { background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); }
-  .chat_talk_container, .clear, .chat_talk_stop { background-color: var(--surface); color: var(--text-primary); }
+  .chat_talk_container, .clear, .chat_talk_stop { background-color: var(--surface) !important; color: var(--text-primary) !important; }
   textarea, .node_editor, .summary_textarea, .form_group input, .form_group textarea, .index_select, .new_index_input, .node_search_input { background-color: var(--surface); color: var(--text-primary); }
 }
 
@@ -548,8 +548,8 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
     box-shadow: 0 2px 20px rgba(157, 157, 157, 0.15);
     line-height: 1.6;
 }
-.message .content_man { background-color: var(--primary-bg); }
-.message .content_bot { background-color: var(--surface-alt); }
+.message .content_man { background-color: var(--primary-bg); color: var(--text-primary); }
+.message .content_bot { background-color: var(--surface-alt); color: var(--text-primary); }
 .message .content_bot p, .message .content_man p { margin-bottom: 6px; }
 .message .content_bot p:last-child, .message .content_man p:last-child { margin-bottom: 0; }
 .message .content_bot ul, .message .content_bot ol { margin: 4px 0 4px 20px; }
