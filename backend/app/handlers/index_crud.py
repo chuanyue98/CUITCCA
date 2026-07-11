@@ -64,7 +64,8 @@ def embeddingQA(index: VectorStoreIndex, qa_pairs: list, id: str | None = None):
         q = qa_pairs[i]
         if i + 1 < len(qa_pairs):
             a = qa_pairs[i + 1]
-            doc = Document(text=f"{q} {a}", id_=id)
+            doc_id = f"{id}_{i//2}"
+            doc = Document(text=f"{q} {a}", id_=doc_id)
             customer_logger.info(f"{doc.text}")
             docs.append(doc)
 
@@ -116,7 +117,8 @@ def get_index_by_name(index_name: str) -> VectorStoreIndex | None:
     return index
 
 
-def convert_index_to_file(index_name: str, file_name: str):
+async def convert_index_to_file(index_name: str, file_name: str):
+    import aiofiles
     path = os.path.join(FILE_PATH, file_name)
     if not os.path.exists(FILE_PATH):
         os.makedirs(FILE_PATH)
@@ -132,11 +134,12 @@ def convert_index_to_file(index_name: str, file_name: str):
             node_text = node_text.strip().replace('\n', '').replace('\r', '')
             text_list.append(node_text)
 
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(text_list))
+    async with aiofiles.open(path, 'w', encoding='utf-8') as f:
+        await f.write('\n'.join(text_list))
 
 
-def citf(index: VectorStoreIndex, name: str):
+async def citf(index: VectorStoreIndex, name: str):
+    import aiofiles
     path = os.path.join(FILE_PATH, name)
     if not os.path.exists(FILE_PATH):
         os.makedirs(FILE_PATH)
@@ -147,8 +150,8 @@ def citf(index: VectorStoreIndex, name: str):
         node_text = node_text.strip().replace('\n', '').replace('\r', '')
         text_list.append(node_text)
 
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(text_list))
+    async with aiofiles.open(path, 'w', encoding='utf-8') as f:
+        await f.write('\n'.join(text_list))
 
 
 def format_source_nodes_list(node_with_score_list):

@@ -50,11 +50,12 @@ async def create_graph(request: Request):
 
 
 @graph_app.post("/chat_stream")
-async def chaty_graph_stream(request: Request, query: str = Form()):
+async def chat_graph_stream(request: Request, query: str = Form()):
     """
     流式的查询，返回的是一个stream
     """
     client_id = _client_id(request)
+    _prune_sessions(_graph_chat_engines, 100)
     chat_engine = _graph_chat_engines.get(client_id)
     if chat_engine is None:
         chat_engine = await compose_graph_chat_egine()
@@ -67,7 +68,7 @@ async def chaty_graph_stream(request: Request, query: str = Form()):
 
 
 @graph_app.post("/query_stream")
-async def query_graph_stream(query: str = Form()):
+async def query_graph_stream(request: Request, query: str = Form()):
     """
     流式的查询，返回的是一个stream
     """
@@ -76,6 +77,9 @@ async def query_graph_stream(query: str = Form()):
     customer_logger.info(f"query_stream: {query}")
     response = await query_engine.aquery(query)
     customer_logger.info(f"res: {response.get_formatted_sources()}")
+    client_id = _client_id(request)
+    _prune_sessions(_last_query_response, 100)
+    _last_query_response[client_id] = response.source_nodes
     return StreamingResponse(response.response_gen, media_type="text/plain")
 
 

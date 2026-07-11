@@ -16,9 +16,11 @@ from handlers.index_crud import indexes, _indexes_lock
 
 def _build_router_query_engine(
     streaming: bool = False,
+    indexes_snapshot: list | None = None,
 ) -> RouterQueryEngine:
+    target_indexes = indexes_snapshot if indexes_snapshot is not None else indexes
     query_engine_tools = []
-    for index in indexes:
+    for index in target_indexes:
         engine = index.as_query_engine(
             streaming=streaming,
             text_qa_template=Prompts.QA_PROMPT.value,
@@ -45,9 +47,9 @@ def _build_router_query_engine(
 
 async def compose_graph_chat_egine() -> BaseChatEngine:
     async with _indexes_lock:
-        _indexes_snapshot = list(indexes)
+        indexes_snapshot = list(indexes)
 
-    query_engine = _build_router_query_engine(streaming=True)
+    query_engine = _build_router_query_engine(streaming=True, indexes_snapshot=indexes_snapshot)
 
     chat_engine = CondenseQuestionChatEngine.from_defaults(
         query_engine=query_engine,

@@ -6,11 +6,12 @@
 /frontend/*
 /indexes/*
 .venv/
-uv.lock
+# uv.lock removed from gitignore to support CI --frozen
+# uv.lock
 .env
 __pycache__/
 *.pyc
-access_stats.json
+access_stats.pkl
 fastapi.log
 /log/
 backend.log
@@ -18,3 +19,7 @@ backend.log
 /信息搜集汇总/*
 test.py
 .superpowers/
+.DS_Store
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

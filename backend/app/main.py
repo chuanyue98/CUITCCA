@@ -13,7 +13,7 @@ from dependencies.manage import access_stats as _mgmt_access_stats
 from configs.llm_predictor import init_settings
 from handlers.llama_handler import loadAllIndexes
 from configs.load_env import chroma_db_path, SAVE_PATH, LOAD_PATH, access_stats_path, reload_env_variables, COOKIE_SECURE, COOKIE_MAX_AGE
-from router import response_app, index_app, graph_app, manage_app, test_app
+from router import response_app, index_app, graph_app, manage_app
 
 
 @asynccontextmanager
@@ -52,7 +52,6 @@ app.include_router(index_app, prefix='/index', tags=['index'])
 app.include_router(graph_app, prefix='/graph', tags=['graph'])
 app.include_router(response_app, prefix='/response', tags=['response'])
 app.include_router(manage_app, prefix='/manage', tags=['manage'])
-app.include_router(test_app, prefix='/test', tags=['test'])
 
 access_stats_lock = asyncio.Lock()
 
@@ -92,9 +91,9 @@ async def session_and_stats_middleware(request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost", "http://localhost:8000", "http://127.0.0.1", "http://127.0.0.1:8000"],
     allow_credentials=False,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 

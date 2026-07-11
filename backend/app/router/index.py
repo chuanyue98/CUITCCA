@@ -179,7 +179,7 @@ async def upload_files(index=Depends(get_index), files: List[UploadFile] = File(
 
 @index_app.post("/{index_name}/upload_file_by_QA")
 async def upload_qa(index=Depends(get_index), prompt: str = Form(None), file: UploadFile = File(...)):
-    contents = read_file_contents(file)
+    contents = await read_file_contents(file)
     safe_prompt = build_qa_generation_prompt(prompt)
     qa_pairs = await generate_qa_batched(contents, safe_prompt)
     qa_data = formatted_pairs(qa_pairs)
@@ -253,7 +253,7 @@ async def save_index(index=Depends(get_index)):
 
 @index_app.post("/{index_name}/getfile")
 async def get_file(index=Depends(get_index)):
-    citf(index, f"{index.index_id}.txt")
+    await citf(index, f"{index.index_id}.txt")
     return {"status": "ok"}
 
 

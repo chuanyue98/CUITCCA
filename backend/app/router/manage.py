@@ -31,12 +31,12 @@ async def get_stats():
 
 
 @manage_app.post("/feedback", response_model=FeedbackResponse, dependencies=[Depends(require_configured_api_key)])
-def create_feedback(feedback: Feedback, request: Request):
+async def create_feedback(feedback: Feedback, request: Request):
     """
     创建反馈
     """
     client_ip = request.client.host
-    save_feedback_to_file(feedback, client_ip)
+    await save_feedback_to_file(feedback, client_ip)
     return FeedbackResponse(message="Feedback received")
 
 

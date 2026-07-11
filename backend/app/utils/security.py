@@ -1,4 +1,5 @@
 import os
+import secrets
 
 from fastapi import HTTPException, status
 from starlette.requests import Request
@@ -17,5 +18,8 @@ def require_configured_api_key(request: Request) -> None:
             detail="此接口需要先配置 CUITCCA_API_KEY 才能使用",
         )
     auth = request.headers.get('Authorization', '')
-    if not auth.startswith('Bearer ') or auth.removeprefix('Bearer ') != api_key:
+    if not auth.startswith('Bearer '):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    provided_key = auth.removeprefix('Bearer ')
+    if not secrets.compare_digest(provided_key, api_key):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
