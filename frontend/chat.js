@@ -198,7 +198,11 @@ async function streamAnswer(query, answerEl, citationsEl) {
         await loadCitations(citationsEl);
     } catch (error) {
         if (error.name === 'AbortError') {
-            if (fullText) appendHistory('bot', fullText);
+            if (fullText) {
+                appendHistory('bot', fullText);
+            } else {
+                answerEl.innerHTML = renderMarkdown('*已停止生成*');
+            }
             return;
         }
         console.error('请求失败:', error);
