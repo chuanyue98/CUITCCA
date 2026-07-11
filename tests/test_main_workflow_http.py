@@ -1,5 +1,3 @@
-import os
-import tempfile
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -22,14 +20,14 @@ class MainWorkflowHttpTest(unittest.TestCase):
     def tearDown(self):
         app.dependency_overrides.clear()
 
-    @patch('router.index.get_folders_list')
+    @patch('router.index.list_index_names')
     @patch('router.index.createIndex')
     @patch('router.index.loadAllIndexes')
-    def test_create_index_workflow(self, mock_load, mock_create, mock_folders):
-        mock_folders.return_value = []
+    def test_create_index_workflow(self, mock_load, mock_create, mock_list):
+        mock_list.return_value = []
         response = self.client.post("/index/create", data={"index_name": "New Index"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "success", "msg": "index New_Index created"})
+        self.assertEqual(response.json(), {"status": "success", "msg": "index New_Index created", "index_name": "New_Index"})
         mock_create.assert_called_once_with("New_Index")
 
     @patch('router.index.insert_into_index')
@@ -67,15 +65,15 @@ class MainWorkflowHttpTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"response": "answer text"})
 
-    @patch('router.index.get_folders_list')
-    @patch('router.index.shutil.rmtree')
+    @patch('router.index.list_index_names')
+    @patch('router.index.delete_collection')
     @patch('router.index.loadAllIndexes')
-    def test_delete_index_workflow(self, mock_load, mock_rmtree, mock_folders):
-        mock_folders.return_value = ["test_index"]
+    def test_delete_index_workflow(self, mock_load, mock_delete, mock_list):
+        mock_list.return_value = ["test_index"]
         response = self.client.post("/index/delete", data={"index_name": "test_index"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "deleted"})
-        mock_rmtree.assert_called_once()
+        mock_delete.assert_called_once_with("test_index")
 
 if __name__ == '__main__':
     unittest.main()

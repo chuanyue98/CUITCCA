@@ -9,8 +9,9 @@ from starlette.responses import JSONResponse, StreamingResponse
 
 from configs.load_env import VERBOSE
 from exceptions.llama_exception import id_not_found_exceptions
-from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
-    format_source_nodes_list, get_index_by_name
+from handlers.graph_builder import compose_graph_chat_egine, get_history_msg, compose_graph_query_engine
+from handlers.index_crud import indexes, format_source_nodes_list, get_index_by_name, _indexes_lock
+from models.response import QueryResponse, QuerySourcesResponse
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger, query_logger, error_logger
 
@@ -44,19 +45,20 @@ async def create_graph(request: Request):
     """创建graph"""
     client_id = _client_id(request)
     _prune_sessions(_graph_chat_engines, 100)
-    _graph_chat_engines[client_id] = compose_graph_chat_egine()
+    _graph_chat_engines[client_id] = await compose_graph_chat_egine()
     return {"status": "ok"}
 
 
 @graph_app.post("/chat_stream")
-async def chaty_graph_stream(request: Request, query: str = Form()):
+async def chat_graph_stream(request: Request, query: str = Form()):
     """
     流式的查询，返回的是一个stream
     """
     client_id = _client_id(request)
+    _prune_sessions(_graph_chat_engines, 100)
     chat_engine = _graph_chat_engines.get(client_id)
     if chat_engine is None:
-        chat_engine = compose_graph_chat_egine()
+        chat_engine = await compose_graph_chat_egine()
         _graph_chat_engines[client_id] = chat_engine
     query = query.strip()
     customer_logger.info(f"chat_stream: {query}")
@@ -66,7 +68,7 @@ async def chaty_graph_stream(request: Request, query: str = Form()):
 
 
 @graph_app.post("/query_stream")
-async def query_graph_stream(query: str = Form()):
+async def query_graph_stream(request: Request, query: str = Form()):
     """
     流式的查询，返回的是一个stream
     """
@@ -75,6 +77,9 @@ async def query_graph_stream(query: str = Form()):
     customer_logger.info(f"query_stream: {query}")
     response = await query_engine.aquery(query)
     customer_logger.info(f"res: {response.get_formatted_sources()}")
+    client_id = _client_id(request)
+    _prune_sessions(_last_query_response, 100)
+    _last_query_response[client_id] = response.source_nodes
     return StreamingResponse(response.response_gen, media_type="text/plain")
 
 
@@ -82,24 +87,24 @@ async def query_graph_stream(query: str = Form()):
 _last_query_response: dict[str, list] = {}
 
 
-@graph_app.post("/query_sources")
+@graph_app.post("/query_sources", response_model=QuerySourcesResponse)
 async def query_sources(request: Request):
     """返回的源为上一次query_stream所产生的"""
     source_nodes = _last_query_response.get(_client_id(request))
     if not source_nodes:
         return JSONResponse(content={"status": "detail", "message": "please query first"},
                             status_code=status.HTTP_400_BAD_REQUEST)
-    return {"source_nodes": [
+    return QuerySourcesResponse(source_nodes=[
         {
             'id': sn.node.id_,
             'text': sn.node.text,
             'score': sn.score,
         }
         for sn in source_nodes
-    ]}
+    ])
 
 
-@graph_app.post("/query")
+@graph_app.post("/query", response_model=QueryResponse)
 @id_not_found_exceptions
 async def query_graph(request: Request, query: str = Form()):
     query_logger.info(f"query: {query}")
@@ -118,23 +123,24 @@ async def query_graph(request: Request, query: str = Form()):
     query_logger.info(f"res: {response}")
     if response.response == "Empty Response":
         response.response = '我还不知道，请反馈给我吧'
-    return {"response": response.response}
+    return QueryResponse(response=response.response)
 
 
-@graph_app.post("/agent")
+@graph_app.post("/agent", response_model=QueryResponse)
 @id_not_found_exceptions
 async def agent(query: str = Form()):
-    query_engine_tools = [
-        QueryEngineTool(
-            query_engine=get_index_by_name(index.index_id).as_query_engine(),
-            metadata=ToolMetadata(
-                name=index.index_id,
-                description=index.summary,
-            ),
-        )
-        for index in indexes
-    ]
-    agent_obj = ReActAgent.from_tools(query_engine_tools, verbose=VERBOSE)
+    async with _indexes_lock:
+        query_engine_tools = [
+            QueryEngineTool(
+                query_engine=get_index_by_name(index.index_id).as_query_engine(),
+                metadata=ToolMetadata(
+                    name=index.index_id,
+                    description=index.summary,
+                ),
+            )
+            for index in indexes
+        ]
+    agent_obj = ReActAgent.from_tools(query_engine_tools, verbose=VERBOSE)  # type: ignore[attr-defined]
     try:
         response = await agent_obj.achat(query)
     except Exception as e:
@@ -144,7 +150,7 @@ async def agent(query: str = Form()):
     for sn in format_source_nodes_list(response.source_nodes):
         query_logger.info(f"source: {sn}")
     query_logger.info(f"res: {response}")
-    return {"response": response.response}
+    return QueryResponse(response=response.response)
 
 
 @graph_app.websocket("/query")
@@ -185,7 +191,9 @@ async def graph_history(request: Request):
 
 @graph_app.post("/query_router")
 async def query_router(query: str = Form()):
-    query_engine_tools = generate_query_engine_tools(indexes)
+    async with _indexes_lock:
+        _indexes_snapshot = list(indexes)
+    query_engine_tools = generate_query_engine_tools(_indexes_snapshot)
     query_engine = RouterQueryEngine(
         selector=PydanticMultiSelector.from_defaults(),
         query_engine_tools=query_engine_tools,

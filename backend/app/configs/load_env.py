@@ -1,5 +1,4 @@
 import os
-import openai
 from dotenv import load_dotenv
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,19 +14,16 @@ openai_api_key = ''
 openai_api_base = ''
 openai_model = ''
 VERBOSE = False
+chroma_db_path = ''
 
 
 def reload_env_variables():
     load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
     global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
-        openai_api_key, openai_api_base, openai_model, VERBOSE
+        openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE, chroma_db_path
 
-    openai.api_key = os.environ.get("OPENAI_API_KEY")
-    openai_api_key = openai.api_key
-
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_base = os.environ.get('OPENAI_API_BASE') or 'https://api.openai.com/v1'
-    openai.api_base = openai_api_base
-
     openai_model = os.environ.get('OPENAI_MODEL', 'sensenova-6.7-flash-lite')
     VERBOSE = os.environ.get('VERBOSE', 'False').lower() in ('true', '1', 't')
 
@@ -37,6 +33,7 @@ def reload_env_variables():
     FEEDBACK_PATH = os.environ.get('FEEDBACK_PATH', '../../feedback/')
     LOG_PATH = os.environ.get('LOG_PATH', '../../log/')
     FILE_PATH = os.environ.get('FILE_PATH', '../../data/export/')
+    chroma_db_path = os.environ.get('CHROMA_DB_PATH', '../../data/chroma_db/')
 
     index_save_directory = os.path.join(PROJECT_ROOT, index_save_directory)
     SAVE_PATH = os.path.join(PROJECT_ROOT, SAVE_PATH)
@@ -44,7 +41,16 @@ def reload_env_variables():
     FEEDBACK_PATH = os.path.join(PROJECT_ROOT, FEEDBACK_PATH)
     LOG_PATH = os.path.join(PROJECT_ROOT, LOG_PATH)
     FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
+    chroma_db_path = os.path.join(PROJECT_ROOT, chroma_db_path)
     access_stats_path = os.path.join(PROJECT_ROOT, '../access_stats.json')
+    global COOKIE_SECURE, COOKIE_MAX_AGE
+    COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
+    COOKIE_MAX_AGE = int(os.environ.get('COOKIE_MAX_AGE', '86400'))
 
+
+MAX_FILE_SIZE = 10 * 1024 * 1024
+ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.md', '.csv', '.xlsx'}
+COOKIE_SECURE = False
+COOKIE_MAX_AGE = 86400
 
 reload_env_variables()

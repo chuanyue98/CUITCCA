@@ -4,36 +4,39 @@ version = "0.2.0"
 description = "校园AI助手 - CUIT Campus AI Assistant"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.110.2",
-    "uvicorn>=0.29.0",
-    "python-dotenv>=1.0.1",
-    "python-multipart>=0.0.9",
-    "pydantic>=2.7.0",
-    "aiofiles>=23.2.1",
-    "openai>=1.23.1",
-    "llama-index-core>=0.10.30",
-    "llama-index-embeddings-huggingface>=0.1.0",
-    "llama-index-llms-openai>=0.1.15",
-    "llama-index-readers-file>=0.1.19",
-    "langchain>=0.1.16",
-    "langchain-community>=0.0.33",
-    "langchain-text-splitters>=0.0.1",
-    "requests>=2.31.0",
-    "pandas>=2.2.2",
-    "python-docx>=1.1.0",
-    "pdfplumber>=0.7.0",
-    "tiktoken>=0.6.0",
-    "orjson>=3.10.1",
-    "PyYAML>=6.0.1",
-    "networkx>=3.3",
-    "xlrd>=1.2.0",
-    "XlsxWriter>=3.2.0",
-    "tqdm>=4.66.2",
+    "fastapi>=0.139.0",
+    "uvicorn>=0.50.2",
+    "python-dotenv>=1.1.0",
+    "python-multipart>=0.0.32",
+    "pydantic[email]>=2.9.0",
+    "aiofiles>=24.1.0",
+    "openai>=2.45.0",
+    "llama-index-core>=0.14.23",
+    "llama-index-embeddings-huggingface>=0.5.0",
     "llama-index-llms-openai-like>=0.4.0",
+    "llama-index-vector-stores-chroma>=0.3.0",
+    "chromadb>=0.6.0",
+    "requests>=2.34.2",
+    "pandas>=2.2.3",
+    "python-docx>=1.1.0",
+    "pdfplumber>=0.11.10",
+    "tiktoken>=0.13.0",
+    "orjson>=3.11.9",
+    "PyYAML>=6.0.3",
+    "networkx>=3.6.1",
+    "xlrd>=2.0.2",
+    "XlsxWriter>=3.2.9",
+    "tqdm>=4.68.3",
 ]
 
 [dependency-groups]
-dev = []
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
 
 [project.urls]
 Homepage = "https://github.com/ChuanYuei/CUITCCA"

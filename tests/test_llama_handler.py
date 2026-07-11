@@ -1,10 +1,11 @@
-import os
+import asyncio
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
-import handlers.llama_handler as lh
+import handlers.index_crud as lh
+import handlers.index_crud as index_crud
 
 
 class FakeIndex:
@@ -13,34 +14,37 @@ class FakeIndex:
         self.inserted_docs = []
         self.storage_context = MagicMock()
         self.docstore = MagicMock()
+        self.summary = ''
 
-    def insert(self, doc):
-        self.inserted_docs.append(doc)
+    def insert_nodes(self, nodes):
+        self.inserted_docs.extend(nodes)
+
+    def set_index_id(self, name):
+        self.index_id = name
 
 
 class LoadAllIndexesTest(unittest.TestCase):
     def setUp(self):
         lh.indexes.clear()
-        self._orig_get_folders_list = lh.get_folders_list
-        self._orig_storage_context = lh.StorageContext
-        self._orig_load_index = lh.load_index_from_storage
+        self._orig_list_index_names = index_crud.list_index_names
+        self._orig_get_or_create_collection = index_crud.get_or_create_collection
+        self._orig_build_index_from_collection = index_crud.build_index_from_collection
 
-        lh.get_folders_list = MagicMock(return_value=['a', 'b'])
-        lh.StorageContext = MagicMock()
-        lh.StorageContext.from_defaults = MagicMock(return_value='fake-storage-context')
-        lh.load_index_from_storage = MagicMock(side_effect=lambda ctx: FakeIndex())
+        index_crud.list_index_names = MagicMock(return_value=['a', 'b'])
+        index_crud.get_or_create_collection = MagicMock(return_value=MagicMock())
+        index_crud.build_index_from_collection = MagicMock(side_effect=lambda c: FakeIndex())
 
     def tearDown(self):
         lh.indexes.clear()
-        lh.get_folders_list = self._orig_get_folders_list
-        lh.StorageContext = self._orig_storage_context
-        lh.load_index_from_storage = self._orig_load_index
+        index_crud.list_index_names = self._orig_list_index_names
+        index_crud.get_or_create_collection = self._orig_get_or_create_collection
+        index_crud.build_index_from_collection = self._orig_build_index_from_collection
 
     def test_does_not_duplicate_on_repeated_calls(self):
-        lh.loadAllIndexes()
+        asyncio.run(lh.loadAllIndexes())
         self.assertEqual(len(lh.indexes), 2)
 
-        lh.loadAllIndexes()
+        asyncio.run(lh.loadAllIndexes())
         self.assertEqual(len(lh.indexes), 2, 'calling loadAllIndexes twice should not duplicate entries')
 
 
@@ -59,22 +63,24 @@ class EmbeddingQATest(unittest.TestCase):
 
 class SaveIndexTest(unittest.TestCase):
     def setUp(self):
-        self._orig_dir = lh.index_save_directory
-        lh.index_save_directory = 'data/indexes'  # no trailing slash
+        self._orig_get_or_create_collection = index_crud.get_or_create_collection
+        self._fake_collection = MagicMock()
+        index_crud.get_or_create_collection = MagicMock(return_value=self._fake_collection)
 
     def tearDown(self):
-        lh.index_save_directory = self._orig_dir
+        index_crud.get_or_create_collection = self._orig_get_or_create_collection
 
-    def test_uses_proper_path_join(self):
+    def test_saves_summary_to_collection_metadata(self):
         index = FakeIndex(index_id='myindex')
+        index.summary = 'test summary'
         lh.saveIndex(index)
-        index.storage_context.persist.assert_called_once_with(
-            os.path.join('data/indexes', 'myindex')
+        self._fake_collection.modify.assert_called_once_with(
+            metadata={"summary": 'test summary'}
         )
 
 
 class UpdateNodeByIdTest(unittest.TestCase):
-    def test_persists_after_update(self):
+    def test_updates_node_content(self):
         node = MagicMock()
         index = FakeIndex(index_id='myindex')
         index.docstore.docs = {'n1': node}
@@ -83,7 +89,6 @@ class UpdateNodeByIdTest(unittest.TestCase):
 
         node.set_content.assert_called_once_with('new text')
         index.docstore.add_documents.assert_called_once_with([node])
-        index.storage_context.persist.assert_called_once()
 
 
 if __name__ == '__main__':

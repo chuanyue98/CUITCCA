@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 from unittest.mock import MagicMock, patch
 from io import BytesIO
@@ -25,7 +26,7 @@ class DocumentParsersTest(unittest.TestCase):
 
         fake_file = UploadFile(filename="test.docx", file=BytesIO(b"fake docx content"))
 
-        content = read_file_contents(fake_file)
+        content = asyncio.run(read_file_contents(fake_file))
         self.assertEqual(content, "Hello World. This is a docx test.")
         mock_document_class.assert_called_once_with("fake.docx")
 
@@ -41,17 +42,17 @@ class DocumentParsersTest(unittest.TestCase):
 
         fake_file = UploadFile(filename="test.pdf", file=BytesIO(b"fake pdf content"))
 
-        content = read_file_contents(fake_file)
+        content = asyncio.run(read_file_contents(fake_file))
         self.assertEqual(content, "Hello PDF page 1.Hello PDF page 2.")
 
     def test_txt_parser_utf8(self):
         fake_file = UploadFile(filename="test.txt", file=BytesIO("你好 UTF-8".encode("utf-8")))
-        content = read_file_contents(fake_file)
+        content = asyncio.run(read_file_contents(fake_file))
         self.assertEqual(content, "你好 UTF-8")
 
     def test_txt_parser_gbk(self):
         fake_file = UploadFile(filename="test.txt", file=BytesIO("你好 GBK".encode("gbk")))
-        content = read_file_contents(fake_file)
+        content = asyncio.run(read_file_contents(fake_file))
         self.assertEqual(content, "你好 GBK")
 
 if __name__ == '__main__':
