@@ -2,9 +2,11 @@ import asyncio
 from contextlib import asynccontextmanager
 import json
 import os
+import time
 import uuid
 from collections import defaultdict
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
@@ -55,30 +57,64 @@ app.include_router(manage_app, prefix='/manage', tags=['manage'])
 
 access_stats_lock = asyncio.Lock()
 
+# 速率限制：每 IP 每 60 秒最多 30 次请求（LLM 查询端点）
+RATE_LIMIT_WINDOW = 60
+RATE_LIMIT_MAX_REQUESTS = 30
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+_rate_limit_lock = asyncio.Lock()
+
+
+async def check_rate_limit(client_ip: str) -> None:
+    """检查客户端 IP 是否超过速率限制"""
+    now = time.time()
+    async with _rate_limit_lock:
+        timestamps = _rate_limit_store[client_ip]
+        # 清理过期记录
+        while timestamps and timestamps[0] < now - RATE_LIMIT_WINDOW:
+            timestamps.pop(0)
+        if len(timestamps) >= RATE_LIMIT_MAX_REQUESTS:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"请求过于频繁，请 {RATE_LIMIT_WINDOW} 秒后重试",
+            )
+        timestamps.append(now)
+
 
 @app.middleware("http")
 async def session_and_stats_middleware(request, call_next):
+    # 静态文件请求不统计、不设 Cookie
+    is_static = request.url.path.startswith("/web")
     client_ip = request.headers.get("X-Real-IP") or (request.client.host if request.client else "unknown")
-    safe_ip = client_ip.replace(":", "_").replace(".", "_")
-    cookie_name = f"session_id_{safe_ip}"
-    session_id = request.cookies.get(cookie_name)
+
+    # 使用统一的 session_id cookie，不再暴露客户端 IP
+    session_id = request.cookies.get("session_id")
     has_session = bool(session_id)
     if not has_session:
         session_id = str(uuid.uuid4())
-        request.state.session_id = session_id
-    else:
-        request.state.session_id = session_id
+    request.state.session_id = session_id
 
-    async with access_stats_lock:
-        access_stats["total_visits"] += 1
-        access_stats["user_visits"][client_ip] += 1
-        access_stats["endpoint_visits"][request.url.path] += 1
-        access_stats["ip_count"] = len(access_stats["user_visits"])
+    # 速率限制检查（仅对 LLM 查询端点）
+    if not is_static and request.url.path in ("/graph/query", "/graph/query_stream", "/graph/chat_stream", "/graph/agent"):
+        try:
+            await check_rate_limit(client_ip)
+        except HTTPException:
+            return JSONResponse(
+                content={"detail": "请求过于频繁，请稍后重试"},
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+    # 统计（排除静态文件）
+    if not is_static:
+        async with access_stats_lock:
+            access_stats["total_visits"] += 1
+            access_stats["user_visits"][client_ip] += 1
+            access_stats["endpoint_visits"][request.url.path] += 1
+            access_stats["ip_count"] = len(access_stats["user_visits"])
 
     response = await call_next(request)
-    if not has_session:
+    if not has_session and not is_static:
         response.set_cookie(
-            key=cookie_name,
+            key="session_id",
             value=session_id,
             path="/",
             httponly=True,

@@ -5,9 +5,6 @@ from starlette import status
 from handlers.index_crud import get_index_by_name
 
 
-_last_loaded = None
-
-
 def get_index(index_name: str = Path()) -> BaseIndex:
     index = get_index_by_name(index_name)
     if index is None:

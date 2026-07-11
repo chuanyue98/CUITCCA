@@ -43,16 +43,25 @@ _env_path = os.path.join(os.path.dirname(PROJECT_ROOT), '.env')
 
 
 @manage_app.post('/env', response_model=EnvUpdateResponse, dependencies=[Depends(require_configured_api_key)])
-def set_env(openai_api_key=Form(), openai_base_url=Form(default='https://api.openai.com/v1')):
+def set_env(request: Request, openai_api_key=Form(), openai_base_url=Form(default='https://api.openai.com/v1')):
     if not openai_api_key:
         raise HTTPException(status_code=400, detail="OPENAI_API_KEY is required")
+
+    # 审计日志：记录 LLM 后端变更
+    client_ip = request.client.host if request.client else "unknown"
+    from utils.logger import error_logger
+    error_logger.warning(
+        f"AUDIT: LLM backend changed by {client_ip} | "
+        f"base_url={openai_base_url} | key=***{openai_api_key[-4:] if len(openai_api_key) >= 4 else '****'}"
+    )
 
     env_values = dotenv_values(_env_path)
     env_values['OPENAI_API_KEY'] = openai_api_key
     env_values['OPENAI_API_BASE'] = openai_base_url
 
     for k, v in env_values.items():
-        set_key(_env_path, k, v)
+        if v is not None:
+            set_key(_env_path, k, v)
     reload_env_variables()
     Settings.llm = build_llm()
     return EnvUpdateResponse(message="环境变量已更新")

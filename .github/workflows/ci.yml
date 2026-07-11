@@ -38,3 +38,30 @@ jobs:
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run pip-audit
+        run: uv run pip-audit --desc
+        continue-on-error: true
+
+      - name: Run bandit
+        run: uv run bandit -r backend/app/ -f json -o bandit-report.json || true
+
+      - name: Upload bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json

@@ -1,3 +1,6 @@
+import os
+import secrets
+
 from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect
 from llama_index.core.agent import ReActAgent
 from llama_index.core.chat_engine.types import BaseChatEngine
@@ -22,9 +25,7 @@ def _client_id(request: Request) -> str:
     if hasattr(request.state, "session_id"):
         return request.state.session_id
     client_ip = request.headers.get("X-Real-IP") or (request.client.host if request.client else "unknown")
-    safe_ip = client_ip.replace(":", "_").replace(".", "_")
-    cookie_name = f"session_id_{safe_ip}"
-    return request.cookies.get(cookie_name) or client_ip
+    return request.cookies.get("session_id") or client_ip
 
 
 def _prune_sessions(d: dict, max_size: int = 100):
@@ -155,6 +156,12 @@ async def agent(query: str = Form()):
 
 @graph_app.websocket("/query")
 async def websocket_query(websocket: WebSocket):
+    # WebSocket 认证：通过 query parameter 传递 token
+    token = websocket.query_params.get("token", "")
+    api_key = os.environ.get('CUITCCA_API_KEY', '')
+    if api_key and not secrets.compare_digest(token, api_key):
+        await websocket.close(code=1008, reason="Unauthorized")
+        return
     await websocket.accept()
     try:
         query_engine = compose_graph_query_engine()
