@@ -29,7 +29,9 @@ def build_llm() -> OpenAILike:
 
 
 def init_settings():
-    if Settings._embed_model is None or not isinstance(Settings._embed_model, HuggingFaceEmbedding):
+    _sentinel = object()
+    embed_model = getattr(Settings, '_embed_model', _sentinel)
+    if embed_model is _sentinel or not isinstance(embed_model, HuggingFaceEmbedding):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         Settings.embed_model = HuggingFaceEmbedding(
             model_name="BAAI/bge-m3",
@@ -37,7 +39,8 @@ def init_settings():
             normalize=True,
             trust_remote_code=True,
         )
-    if Settings._llm is None or not isinstance(Settings._llm, OpenAILike):
+    llm = getattr(Settings, '_llm', _sentinel)
+    if llm is _sentinel or not isinstance(llm, OpenAILike):
         Settings.llm = build_llm()
     if Settings.text_splitter is None:
         Settings.text_splitter = SentenceSplitter.from_defaults(chunk_size=512)

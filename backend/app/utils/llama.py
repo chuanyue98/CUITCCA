@@ -1,6 +1,6 @@
 import asyncio
 import re
-from typing import List, Any
+from typing import List
 
 from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.core.indices.base import BaseIndex
@@ -8,7 +8,6 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.tools import QueryEngineTool
 
 from configs.config import Prompts
-from utils.logger import customer_logger
 
 
 _DEFAULT_QA_INSTRUCTION = (
@@ -65,7 +64,7 @@ def formatted_pairs(qa_data_list):
     return qa_pairs
 
 
-async def generate_qa_batched(contents: str, prompt: str = None):
+async def generate_qa_batched(contents: str, prompt: str | None = None):
     """
     生成QA对
     :param contents:
@@ -74,7 +73,7 @@ async def generate_qa_batched(contents: str, prompt: str = None):
     contents = contents.replace("\n", "")
     contents = contents.strip()
     textSplitter = SentenceSplitter(chunk_size=1024)
-    contents = textSplitter.split_text(contents)
+    chunks: list[str] = textSplitter.split_text(contents)
     if prompt is None:
         prompt = "我会发送一段长文本"
     prompt = f"""   你是出题人。
@@ -89,7 +88,7 @@ async def generate_qa_batched(contents: str, prompt: str = None):
     async def sem_complete(content):
         async with semaphore:
             return await Settings.llm.acomplete(prompt + content)
-    tasks = [sem_complete(content) for content in contents]
+    tasks = [sem_complete(content) for content in chunks]
     responses = await asyncio.gather(*tasks)
     qa_pairs = [res.text for res in responses if res]
 

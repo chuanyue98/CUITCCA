@@ -11,7 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 from dependencies import access_stats
 from dependencies.manage import access_stats as _mgmt_access_stats
 from configs.llm_predictor import init_settings
-from handlers.llama_handler import loadAllIndexes
+from handlers.index_crud import loadAllIndexes
 from configs.load_env import chroma_db_path, SAVE_PATH, LOAD_PATH, access_stats_path, reload_env_variables, COOKIE_SECURE, COOKIE_MAX_AGE
 from router import response_app, index_app, graph_app, manage_app
 

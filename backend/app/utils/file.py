@@ -5,7 +5,6 @@ from datetime import datetime
 from io import BytesIO
 
 import aiofiles
-import pandas as pd
 from fastapi import UploadFile
 
 from configs.load_env import PROJECT_ROOT, FEEDBACK_PATH
@@ -45,7 +44,8 @@ async def save_feedback_to_file(feedback: Feedback, client_ip: str):
 
 def _read_file_sync(file: UploadFile) -> str:
     """同步读取文件内容（用于 run_in_executor 包装）"""
-    ext = file.filename.split('.')[-1].lower() if '.' in file.filename else ''
+    filename = file.filename or ''
+    ext = filename.split('.')[-1].lower() if '.' in filename else ''
 
     if ext == 'docx':
         from docx import Document

@@ -1,7 +1,6 @@
 import os
-from collections import defaultdict
 from dotenv import dotenv_values, set_key
-from fastapi import Depends, HTTPException, status, APIRouter, Form
+from fastapi import Depends, HTTPException, APIRouter, Form
 from llama_index.core import Settings
 from starlette.requests import Request
 
@@ -35,7 +34,7 @@ async def create_feedback(feedback: Feedback, request: Request):
     """
     创建反馈
     """
-    client_ip = request.client.host
+    client_ip = request.client.host if request.client else "unknown"
     await save_feedback_to_file(feedback, client_ip)
     return FeedbackResponse(message="Feedback received")
 

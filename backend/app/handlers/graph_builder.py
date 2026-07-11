@@ -1,7 +1,6 @@
 import re
 import logging
 
-from llama_index.core import VectorStoreIndex
 from llama_index.core.chat_engine import CondenseQuestionChatEngine
 from llama_index.core.chat_engine.types import BaseChatEngine
 from llama_index.core.indices.query.base import BaseQueryEngine

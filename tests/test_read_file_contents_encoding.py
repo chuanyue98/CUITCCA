@@ -1,3 +1,4 @@
+import asyncio
 import io
 import unittest
 
@@ -14,7 +15,7 @@ class ReadFileContentsEncodingTest(unittest.TestCase):
         gbk_bytes = text.encode('gbk')
         upload = UploadFile(file=io.BytesIO(gbk_bytes), filename='note.txt')
 
-        result = file_utils.read_file_contents(upload)
+        result = asyncio.run(file_utils.read_file_contents(upload))
 
         self.assertIn("成都信息工程大学图书馆开放时间", result)
 
@@ -22,7 +23,7 @@ class ReadFileContentsEncodingTest(unittest.TestCase):
         text = "hello 世界"
         upload = UploadFile(file=io.BytesIO(text.encode('utf-8')), filename='note.txt')
 
-        result = file_utils.read_file_contents(upload)
+        result = asyncio.run(file_utils.read_file_contents(upload))
 
         self.assertEqual(result, text)
 

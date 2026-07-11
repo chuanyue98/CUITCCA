@@ -9,8 +9,8 @@ from starlette.responses import JSONResponse, StreamingResponse
 
 from configs.load_env import VERBOSE
 from exceptions.llama_exception import id_not_found_exceptions
-from handlers.llama_handler import compose_graph_chat_egine, get_history_msg, indexes, compose_graph_query_engine, \
-    format_source_nodes_list, get_index_by_name, _indexes_lock
+from handlers.graph_builder import compose_graph_chat_egine, get_history_msg, compose_graph_query_engine
+from handlers.index_crud import indexes, format_source_nodes_list, get_index_by_name, _indexes_lock
 from models.response import QueryResponse, QuerySourcesResponse
 from utils.llama import generate_query_engine_tools
 from utils.logger import customer_logger, query_logger, error_logger
@@ -140,7 +140,7 @@ async def agent(query: str = Form()):
             )
             for index in indexes
         ]
-    agent_obj = ReActAgent.from_tools(query_engine_tools, verbose=VERBOSE)
+    agent_obj = ReActAgent.from_tools(query_engine_tools, verbose=VERBOSE)  # type: ignore[attr-defined]
     try:
         response = await agent_obj.achat(query)
     except Exception as e:

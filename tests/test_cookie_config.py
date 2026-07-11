@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 import tests._pathsetup  # noqa: F401
 
-from configs.load_env import COOKIE_SECURE, COOKIE_MAX_AGE
 
 
 class CookieConfigTest(unittest.TestCase):

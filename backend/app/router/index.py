@@ -5,17 +5,16 @@ import uuid
 from typing import List
 
 import aiofiles
-from fastapi import APIRouter, Form, File, UploadFile, status, Depends, HTTPException
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core import Settings, Document
+from fastapi import APIRouter, Form, File, UploadFile, status, Depends
+from llama_index.core import Document
 from starlette.responses import JSONResponse
 
 from configs.config import Prompts
-from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
-from configs.llm_predictor import build_llm, init_settings
+from configs.load_env import SAVE_PATH, LOAD_PATH
+from configs.llm_predictor import build_llm
 from handlers import list_index_names, delete_collection
 from handlers.graph_builder import summary_index
-from handlers.llama_handler import (
+from handlers.index_crud import (
     _indexes_lock,
     indexes,
     createIndex,
@@ -193,7 +192,7 @@ async def delete_doc(doc_id: str = Form(), index=Depends(get_index)):
     documents = get_all_docs(index)
     doc_ids = list(set(doc["doc_id"] for doc in documents))
     if doc_id not in doc_ids:
-        return JSONResponse(content={"status": "detail", "message": f"doc_id: not found"},
+        return JSONResponse(content={"status": "detail", "message": "doc_id: not found"},
                             status_code=status.HTTP_400_BAD_REQUEST)
     try:
         deleteDocById(index, doc_id)
@@ -208,8 +207,8 @@ async def delete_node(node_id: str = Form(), index=Depends(get_index)):
     try:
         deleteNodeById(index, node_id)
         return {"status": "deleted"}
-    except Exception as e:
-        return JSONResponse(content={"status": "detail", "message": f"node_id: not found"},
+    except Exception:
+        return JSONResponse(content={"status": "detail", "message": "node_id: not found"},
                             status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -260,7 +259,6 @@ async def get_file(index=Depends(get_index)):
 @index_app.post("/{index_name}/evaluator")
 async def evaluator(index=Depends(get_index), query: str = Form()):
     from llama_index.core.evaluation import ResponseEvaluator
-    from configs.llm_predictor import build_llm
 
     llm = build_llm()
     evaluator = ResponseEvaluator(llm=llm)

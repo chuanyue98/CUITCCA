@@ -13,7 +13,6 @@ from handlers.vector_store import (
     delete_collection,
     get_or_create_collection,
 )
-from utils.file import get_folders_list
 from utils.logger import customer_logger
 
 indexes: list[VectorStoreIndex] = []
@@ -55,7 +54,6 @@ async def insert_into_index(index: VectorStoreIndex, doc_file_path: str):
 
 
 def embeddingQA(index: VectorStoreIndex, qa_pairs: list, id: str | None = None):
-    from handlers.graph_builder import summary_index
     if id is None:
         id = str(uuid.uuid4())
 
@@ -109,7 +107,7 @@ def _save_summary(index: VectorStoreIndex):
 
 
 def get_index_by_name(index_name: str) -> VectorStoreIndex | None:
-    index: VectorStoreIndex = None
+    index: VectorStoreIndex | None = None
     for i in indexes:
         if i.index_id == index_name:
             index = i
@@ -171,5 +169,7 @@ def delete_index(index_name: str):
 
 def get_docs_from_index(index: VectorStoreIndex, doc_id: str):
     docs_list = index.docstore.get_ref_doc_info(doc_id)
+    if docs_list is None:
+        return []
     docs = index.docstore.get_nodes(docs_list.node_ids)
     return docs

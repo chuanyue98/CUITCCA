@@ -1,12 +1,10 @@
 import asyncio
-import os
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
 
-import handlers.llama_handler as lh
-import configs.load_env as env_config
+import handlers.index_crud as lh
 import handlers.index_crud as index_crud
 
 
