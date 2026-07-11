@@ -20,7 +20,8 @@
 }
 </style>
 <script>
-    const api = "://" + location.host + "/graph/query";
+    const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+    const api = protocol + "//" + location.host + "/graph/query";
     let status = document.getElementById("status");
     let message = document.getElementById("message");
     let inp = document.getElementById("inp");
@@ -42,7 +43,7 @@
             }
         };
 
-        const url = "http"+api
+        const url = location.protocol + "//" + location.host + "/graph/query"
         const query = inputField.value;
         xhr.open("POST", url, true);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -64,7 +65,7 @@
         }, 100);
     }
 
-    let ws = new WebSocket("ws"+api);
+    let ws = new WebSocket(api);
     ws.addEventListener("open", (even) => {
         status.innerHTML = "已连接";
     });

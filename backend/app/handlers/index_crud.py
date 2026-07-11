@@ -63,13 +63,15 @@ async def insert_into_index(index, doc_file_path):
     :param input_files 文档列表
     :return:
     """
+    from handlers.graph_builder import summary_index
 
-    nodes = get_nodes_from_file(doc_file_path)
-    index.insert_nodes(nodes)
+    async with _indexes_lock:
+        nodes = get_nodes_from_file(doc_file_path)
+        index.insert_nodes(nodes)
 
-    # 生成summary maxRecursion
-    index.summary = await summary_index(index)
-    saveIndex(index)
+        # 生成summary maxRecursion
+        index.summary = await summary_index(index)
+        saveIndex(index)
 
 
 def embeddingQA(index: BaseIndex, qa_pairs, id=None):

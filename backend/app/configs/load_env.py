@@ -20,7 +20,7 @@ VERBOSE = False
 def reload_env_variables():
     load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
     global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
-        openai_api_key, openai_api_base, openai_model, VERBOSE
+        openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE
 
     openai.api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_key = openai.api_key
@@ -45,12 +45,15 @@ def reload_env_variables():
     LOG_PATH = os.path.join(PROJECT_ROOT, LOG_PATH)
     FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
     access_stats_path = os.path.join(PROJECT_ROOT, '../access_stats.json')
+    global COOKIE_SECURE, COOKIE_MAX_AGE
+    COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
+    COOKIE_MAX_AGE = int(os.environ.get('COOKIE_MAX_AGE', '86400'))
 
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.md', '.csv', '.xlsx'}
-COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
-COOKIE_MAX_AGE = int(os.environ.get('COOKIE_MAX_AGE', '86400'))
+COOKIE_SECURE = False
+COOKIE_MAX_AGE = 86400
 
 # Initialize variables on import
 reload_env_variables()

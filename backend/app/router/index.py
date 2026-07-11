@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import re
@@ -14,8 +15,10 @@ from starlette.responses import JSONResponse
 
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
+from configs.config import Prompts
 from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, PROJECT_ROOT, LOG_PATH
 from configs.llm_predictor import build_llm, init_settings
+from handlers.graph_builder import summary_index
 from handlers.llama_handler import (
     _indexes_lock,
     indexes,
@@ -30,6 +33,7 @@ from handlers.llama_handler import (
     saveIndex,
     citf,
 )
+from utils.logger import customer_logger
 from dependencies import get_index
 from models.response import IndexListResponse, QueryResponse, UploadResponse
 from utils.file import read_file_contents, safe_filename, get_folders_list
@@ -78,8 +82,9 @@ async def index_info(index=Depends(get_index)):
 
 @index_app.post("/delete")
 async def delete_index(index_name: str = Form()):
-    if index_name in get_folders_list(index_save_directory):
-        index_path = os.path.join(index_save_directory, index_name)
+    sanitized_name = _sanitize_index_name(index_name)
+    if sanitized_name in get_folders_list(index_save_directory):
+        index_path = os.path.join(index_save_directory, sanitized_name)
         shutil.rmtree(index_path)
         await loadAllIndexes()
         return {"status": "deleted"}
@@ -189,7 +194,7 @@ async def upload_qa(index=Depends(get_index), prompt: str = Form(None), file: Up
 
 
 @index_app.post("/{index_name}/deleteDoc")
-async def delete_doc(doc_id, index=Depends(get_index)):
+async def delete_doc(doc_id: str = Form(), index=Depends(get_index)):
     documents = get_all_docs(index)
     doc_ids = list(set(doc["doc_id"] for doc in documents))
     if doc_id not in doc_ids:
@@ -204,7 +209,7 @@ async def delete_doc(doc_id, index=Depends(get_index)):
 
 
 @index_app.post("/{index_name}/deleteNode")
-async def delete_node(node_id, index=Depends(get_index)):
+async def delete_node(node_id: str = Form(), index=Depends(get_index)):
     try:
         deleteNodeById(index, node_id)
         return {"status": "deleted"}
@@ -261,6 +266,6 @@ async def get_file(index=Depends(get_index)):
 async def evaluator(index=Depends(get_index), query: str = Form()):
     evaluator = ResponseEvaluator()
     query_engine = index.as_query_engine()
-    response = query_engine.query(query)
-    eval_result = evaluator.evaluate(response)
+    response = await query_engine.aquery(query)
+    eval_result = await evaluator.aevaluate(response)
     return {"result": str(eval_result)}

@@ -353,7 +353,7 @@
     //formData.append("another_param", "value");
 
     // 发送POST请求的参数
-    xmlhttp.send("query="+queryParam);
+    xmlhttp.send("query="+encodeURIComponent(queryParam));
 }
 
 

@@ -1,7 +1,7 @@
+import asyncio
 from contextlib import asynccontextmanager
 import json
 import os
-import threading
 import uuid
 from collections import defaultdict
 from fastapi import FastAPI
@@ -54,7 +54,7 @@ app.include_router(response_app, prefix='/response', tags=['response'])
 app.include_router(manage_app, prefix='/manage', tags=['manage'])
 app.include_router(test_app, prefix='/test', tags=['test'])
 
-access_stats_lock = threading.Lock()
+access_stats_lock = asyncio.Lock()
 
 
 @app.middleware("http")
@@ -70,7 +70,7 @@ async def session_and_stats_middleware(request, call_next):
     else:
         request.state.session_id = session_id
 
-    with access_stats_lock:
+    async with access_stats_lock:
         access_stats["total_visits"] += 1
         access_stats["user_visits"][client_ip] += 1
         access_stats["endpoint_visits"][request.url.path] += 1

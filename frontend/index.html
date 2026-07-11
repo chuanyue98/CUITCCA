@@ -391,7 +391,7 @@
 
             if (input.value.trim() !== "") {
             sender.innerHTML = "";
-            content.innerHTML = input.value;
+            content.textContent = input.value;
             message.classList.add("message");
             sender.classList.add("sender_man");
             content.classList.add("content_man");
@@ -438,26 +438,10 @@
             v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
-    console.log( id_new );    // 12c96135-d4b6-488f-ba1d-449b27851e0b
 	}
 
 	//接口
-	var responsecontent;
-	var index_name;
-	var type_1_g=""; //Read Root
-    var type_14_g="/index/list"//get index list
-	var type_3_g="/index";//Create index
-	var type_4_p="/index/"+index_name+"/query";//query index
-	var type_5_p="/index/"+index_name+"/update";//insert doc
-	var type_6_p="/index/"+index_name+"/uploadFile";//upload file
-	var type_7_g="/index/"+index_name+"/info";//index info
-	var type_8_p="/index/"+index_name+"/delete";//delete doc
-	var type_9_p="/index/"+index_name+"/summary";//set summary
-	var type_10_p="/index/"+index_name+"/insertdocs";//insert docs
-	var type_11_p="/index/"+index_name+"/insertdoc";//insert doc
-	var type_12_p="/index/"+index_name+"/save";//save
 	var type_13_p="/graph/query";//main query
-    var type_2_p="/index/create"; //Create index  
 	//xml发送请求
 	function SendXMLHttpRequest_Get(type) {
 
