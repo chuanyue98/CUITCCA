@@ -1,14 +1,13 @@
-from collections import defaultdict
 import unittest
+from collections import defaultdict
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import HTTPException, status
 from fastapi.testclient import TestClient
+from main import _rate_limit_store, app, check_rate_limit
 
 import tests._pathsetup  # noqa: F401
-
-from main import _rate_limit_store, app, check_rate_limit
 
 _INCLUDED_ROUTER_PREFIXES = {
     '/index', '/graph', '/response', '/manage'
@@ -57,7 +56,7 @@ class TestRoutes(unittest.TestCase):
 
     def test_cors_preflight_returns_allow_origin(self):
         with TestClient(app) as client:
-            response = client.options(
+            client.options(
                 "/", headers={"Origin": "http://localhost"}
             )
         # CORS middleware should handle preflight; if lifespan doesn't run,

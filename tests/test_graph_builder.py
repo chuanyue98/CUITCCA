@@ -2,8 +2,6 @@ import asyncio
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import tests._pathsetup  # noqa: F401
-
 import handlers.graph_builder
 from handlers.graph_builder import (
     MultiIndexQueryEngine,
@@ -12,6 +10,8 @@ from handlers.graph_builder import (
     invalidate_query_engine_cache,
     summary_index,
 )
+
+import tests._pathsetup  # noqa: F401
 
 
 class FakeIndex:

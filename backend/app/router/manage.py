@@ -59,7 +59,7 @@ async def set_env(
         f"base_url={openai_base_url} | key=***{openai_api_key[-4:] if len(openai_api_key) >= 4 else '****'}"
     )
 
-    # 阻塞操作放到线程池中执行
+    # 阻塞的磁盘 I/O 放到线程池中执行，配置重载和 Settings 修改留在主线程
     def _do_env_update():
         env_values = dotenv_values(_env_path)
         env_values['OPENAI_API_KEY'] = openai_api_key
@@ -67,8 +67,8 @@ async def set_env(
         for k, v in env_values.items():
             if v is not None:
                 set_key(_env_path, k, v)
-        reload_env_variables()
-        Settings.llm = build_llm()
 
     await asyncio.to_thread(_do_env_update)
+    reload_env_variables()
+    Settings.llm = build_llm()
     return EnvUpdateResponse(message="环境变量已更新")

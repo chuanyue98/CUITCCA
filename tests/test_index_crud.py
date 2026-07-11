@@ -2,9 +2,9 @@ import asyncio
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import tests._pathsetup  # noqa: F401
-
 import handlers.index_crud as index_crud
+
+import tests._pathsetup  # noqa: F401
 
 
 class FakeIndex:

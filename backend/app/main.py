@@ -93,7 +93,7 @@ async def check_rate_limit(client_ip: str) -> None:
         timestamps.append(now)
         # 清理过期 IP 条目防止内存泄漏
         if len(_rate_limit_store) > RATE_LIMIT_STORE_MAX:
-            expired = [k for k, v in _rate_limit_store.items() if not v or v[0] < now - RATE_LIMIT_WINDOW]
+            expired = [k for k, v in _rate_limit_store.items() if not v or v[-1] < now - RATE_LIMIT_WINDOW]
             for k in expired:
                 _rate_limit_store.pop(k, None)
 

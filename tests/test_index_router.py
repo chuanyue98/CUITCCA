@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 from main import app
@@ -57,7 +57,6 @@ class TestIndexRouter(unittest.TestCase):
         idx2 = MagicMock()
         idx2.index_id = "beta"
         from router.index import indexes
-        from handlers.index_crud import _indexes_lock
         indexes.clear()
         indexes.extend([idx1, idx2])
 

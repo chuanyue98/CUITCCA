@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+from dependencies.index_dep import get_index
 from fastapi.testclient import TestClient
 from main import app
-from dependencies.index_dep import get_index
 
 import tests._pathsetup  # noqa: F401
 

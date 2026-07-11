@@ -10,13 +10,15 @@ class VectorStoreTest(unittest.TestCase):
         self._client_instance_patcher = patch('handlers.vector_store._client_instance', None)
         self._client_instance_patcher.start()
         self.mock_chroma_client = MagicMock()
-        self.mock_chromadb_patch = patch('handlers.vector_store.chromadb.PersistentClient', return_value=self.mock_chroma_client)
+        self.mock_chromadb_patch = patch(
+            'handlers.vector_store.chromadb.PersistentClient',
+            return_value=self.mock_chroma_client,
+        )
         self.mock_chromadb = self.mock_chromadb_patch.start()
 
     def tearDown(self):
         self.mock_chromadb_patch.stop()
         self._client_instance_patcher.stop()
-        from handlers.vector_store import _client_instance
         import handlers.vector_store as vs
         vs._client_instance = None
 

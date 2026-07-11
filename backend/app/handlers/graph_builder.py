@@ -1,11 +1,10 @@
 import asyncio
 import logging
 import re
-from typing import Any
 
 from configs.config import Prompts
 from configs.load_env import VERBOSE
-from handlers.index_crud import _indexes_lock, indexes
+from handlers.index_crud import indexes
 from llama_index.core.base.response.schema import RESPONSE_TYPE
 from llama_index.core.callbacks import CallbackManager
 from llama_index.core.chat_engine import CondenseQuestionChatEngine
@@ -33,7 +32,7 @@ class MultiIndexQueryEngine(BaseQueryEngine):
             for index in self._indexes_snapshot
         ]
 
-    async def _aquery(self, query: str) -> RESPONSE_TYPE:
+    async def _aquery(self, query: str) -> RESPONSE_TYPE:  # type: ignore[override]
         for engine in self._get_query_engines():
             try:
                 response = await engine.aquery(query)
@@ -44,12 +43,13 @@ class MultiIndexQueryEngine(BaseQueryEngine):
         from llama_index.core.response import Response
         return Response("Empty Response")
 
-    def _query(self, query: str) -> RESPONSE_TYPE:
+    def _query(self, query: str) -> RESPONSE_TYPE:  # type: ignore[override]
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 import nest_asyncio
                 nest_asyncio.apply()
+                return loop.run_until_complete(self._aquery(query))
         except RuntimeError:
             pass
         return asyncio.run(self._aquery(query))

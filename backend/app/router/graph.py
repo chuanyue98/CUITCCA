@@ -8,9 +8,8 @@ from handlers.graph_builder import (
     compose_graph_chat_egine,
     compose_graph_query_engine,
     get_history_msg,
-    invalidate_query_engine_cache,
 )
-from handlers.index_crud import format_source_nodes_list
+from handlers.index_crud import format_source_nodes_list, indexes
 from models.response import QueryResponse, QuerySourcesResponse
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
