@@ -369,7 +369,7 @@ body, html {
 .talk_outline {
     display: flex;
     flex-grow: 1;
-    overflow: visible;
+    overflow-y: auto;
     width: 100%;
     flex: 1;
     min-height: 0;
@@ -378,32 +378,33 @@ body, html {
 .talk_outline::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
 .talk_outlinein {
     display: flex;
-    position: relative;
     flex-direction: column;
     flex-grow: 1;
     width: 100%;
-    padding: 0;
+    min-height: 0;
 }
 .talk_content {
     width: 100%;
-    height: 100%;
-    overflow-y: scroll;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 10px;
 }
 .talk_content::-webkit-scrollbar { width: 5px; height: 100%; }
 .talk_content::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
 .foot_fix {
     display: flex;
-    position: absolute;
-    bottom: 0;
+    flex-shrink: 0;
     width: 100%;
     height: 60px;
     padding-top: 10px;
     padding-bottom: 10px;
+    background: linear-gradient(135deg, #f4f6fc 0%, #eef2fa 100%);
 }
 .chat_container {
     display: flex;
     flex-wrap: nowrap;
     justify-content: center;
+    align-items: center;
     width: 100%;
     height: 100%;
 }
@@ -472,7 +473,7 @@ textarea {
     flex-grow: 1;
     width: 100%;
     height: 30px;
-    font-size: 20px;
+    font-size: 14px;
     font-family: 'Inter', sans-serif;
     overflow-y: scroll;
     resize: none;
@@ -489,12 +490,10 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
     padding: 10px;
 }
 .message .sender_man, .message .sender_bot {
-    width: 100px;
-    height: 10px;
-    flex-grow: 1;
-    flex-wrap: nowrap;
-    min-width: 80px;
-    padding: 10px;
+    width: 0;
+    height: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 .message .content_man_img, .message .content_bot_img {
     min-width: 30px;
@@ -528,7 +527,7 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
 .message .box_side { width: 0px; height: 10px; }
 .chat_bottom { width: 100%; height: 80px; }
 
-#chatbox { display: inline; }
+#chatbox { display: flex; flex-direction: column; gap: 10px; padding: 10px 0; }
 .cursor {
     display: inline-block;
     width: 10px;
@@ -588,6 +587,7 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
     cursor: pointer;
     font-weight: 500;
     transition: opacity 0.2s;
+    white-space: nowrap;
 }
 .btn-primary {
     background: linear-gradient(135deg, var(--primary), var(--primary-light));
@@ -943,6 +943,7 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
     display: flex;
     align-items: center;
     gap: 5px;
+    white-space: nowrap;
 }
 
 .summary_section {
