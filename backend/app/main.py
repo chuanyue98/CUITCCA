@@ -12,7 +12,7 @@ from dependencies import access_stats
 from dependencies.manage import access_stats as _mgmt_access_stats
 from configs.llm_predictor import init_settings
 from handlers.llama_handler import loadAllIndexes
-from configs.load_env import index_save_directory, SAVE_PATH, LOAD_PATH, access_stats_path, reload_env_variables, COOKIE_SECURE, COOKIE_MAX_AGE
+from configs.load_env import chroma_db_path, SAVE_PATH, LOAD_PATH, access_stats_path, reload_env_variables, COOKIE_SECURE, COOKIE_MAX_AGE
 from router import response_app, index_app, graph_app, manage_app, test_app
 
 
@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     reload_env_variables()
     init_settings()
     await loadAllIndexes()
-    for directory in [index_save_directory, SAVE_PATH, LOAD_PATH]:
+    for directory in [SAVE_PATH, LOAD_PATH, chroma_db_path]:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
