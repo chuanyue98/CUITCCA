@@ -6,237 +6,6 @@
     <link rel="icon" href="./icon.png" type="image/x-icon">
     <link rel="stylesheet" href="./style.css">
     <title>成信大校园助手</title>
-    <style>
-        .talk_outline{
-            display: flex;
-            flex-grow: 1;
-            overflow: visible;
-            width: 100%;
-            height: 600px;
-        }
-        .talk_outline::-webkit-scrollbar{
-            width: 5px;
-            height: 100%;
-        }
-        .talk_outline::-webkit-scrollbar-thumb{
-            background-color: rgb(186, 186, 186);
-        }
-        .talk_outlinein{
-            display: flex;
-            position: relative;
-            flex-direction: column;
-            flex-grow: 1;
-            width: 100%;
-            padding: 0;
-        }
-        
-        .talk_content{
-            width: 100%;
-            height: 100%;
-            overflow-y: scroll;
-        }
-        .talk_content::-webkit-scrollbar{
-            width: 5px;
-            height: 100%;
-        }
-        .talk_content::-webkit-scrollbar-thumb{
-            background-color: rgb(186, 186, 186);
-        }
-
-        .foot_fix{
-            display: flex;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 60px;
-            padding-top: 10px;
-            padding-bottom: 10px;
-
-        }
-        .chat_container{
-            display: flex;
-            flex-wrap: nowrap;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-        }
-        .clear{
-            min-width: 50px;
-            height: 50px;
-            border: 0;
-            margin-left: 10px;
-            margin-right: 10px;
-            padding-top: 8px;
-            border-radius: 30px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            background-color: white;
-        }
-        .clear:hover{
-            background-color: rgb(229, 229, 228);
-        }
-        .chat_talk_container{
-            display: flex;
-            width: 800px;
-            height: 50px;
-            border: 2px solid rgb(209, 209, 209);
-            border-radius: 30px;
-            box-shadow: none;
-            margin-right: 10px;
-        }
-        .chat_talk_submit{
-            margin: 3px 10px 6px 0;
-            min-width: 45px;
-            padding-bottom: 3px;
-            height: 45px;
-            background-color: rgb(25, 84, 142);
-            font-size: 30px;
-            border: none;
-            border-radius: 30px;
-            color: white;
-			text-align: center;
-			-webkit-transition-duration: 0.4s;
-        }
-        .chat_talk_submit:hover{
-            background-color: rgb(154, 197, 226);
-            box-shadow: 0 3px 4px 0 rgb(0,0,0,.24),
-			0 4px 6px 0 rgb(0,0,0,.19);
-        }
-
-        .chat_textarea{
-            display: flex;
-            flex-wrap: nowrap;
-            flex-grow: 1;
-            min-width: 100px;
-            padding: 8px;
-        }
-        
-        .textarea{
-			display: flex;
-			flex-grow: 1;
-			flex-wrap: nowrap;
-			height: 30px;
-			padding: 0px 10px 6px 10px;
-
-			border-radius: 30px;
-		}
-		textarea{
-            display: flex;
-            flex-grow: 1;
-			width: 100%;
-			height: 30px;
-			font-size: 20px;
-			font-family: STSong;
-			overflow-y: scroll;
-			resize: none;
-			border-radius: 20px;
-			border: 0;
-		}
-		textarea:focus{
-			outline: none;
-		}
-        textarea::-webkit-scrollbar{
-            width: 5px;
-            height: 100%;
-        }
-        textarea::-webkit-scrollbar-thumb{
-            background-color: rgb(186, 186, 186);
-        }
-        
-        .message {
-            width: auto;
-
-            display: flex;
-            padding: 10px;
-        }
-        .message .sender_man {
-            width: 100px;
-            height: 10px;
-            flex-grow: 1;
-            flex-wrap: nowrap;
-            min-width: 80px;
-            padding: 10px;
-
-        }
-        .message .content_man_img,.content_bot_img{
-            min-width: 30px;
-            height: 30px;
-            border-radius: 30px;
-            box-shadow: 0 2px 20px rgba(157, 157, 157, 0.5);
-        }
-        .message .content_man_img{
-            background-repeat: no-repeat;
-            background-size: 40px;
-            background-position: -5px 0px;
-            background-image: url("./user.gif");
-        }
-        .message .content_bot_img{
-            background-repeat: no-repeat;
-            background-size: 30px;
-            background-position: 1px 5px;
-            background-image: url("./logo.png");
-        }
-        .message .sender_bot{
-            width: 100px;
-            height: 10px;
-            flex-grow: 1;
-            flex-wrap: nowrap;
-            min-width: 80px;
-        }
-        .message .content_man,.content_bot {
-            
-            min-width: 20px;
-            max-width: 600px;
-            padding: 10px;
-            overflow-x: hidden;
-            word-wrap: break-word;
-            border-radius: 10px;
-            box-shadow: 0 2px 20px rgba(157, 157, 157, 0.5);
-        }
-        .message .content_man{
-            margin-right: 10px;
-            background-color: beige;
-        }
-        .message .content_bot{
-            margin-left: 10px;
-            background-color: rgb(242, 242, 242);
-        }
-        .message .box_side{
-            width: 0px;
-            height: 10px;
-
-        }
-
-        .chat_bottom{
-            width: 100%;
-            height: 80px;
-        }
-
-        /*  流式输出  */
-        #chatbox {
-        display: inline; /* 内联元素，让文本逐字显示 */
-        }
-    
-        .cursor {
-        display: inline-block; /* 内联块元素，用作光标 */
-        width: 10px;
-        height: 20px;
-        background-color: black;
-        vertical-align: text-bottom; /* 将光标与文本底部对齐 */
-        animation: blink 1s infinite; /* 光标闪烁动画 */
-        }
-    
-        @keyframes blink {
-        50% {
-            opacity: 0; /* 50%的时间设置光标不可见，实现闪烁效果 */
-        }
-
-        }
-
-        .replycontent{
-            display: inline;
-        }
-    </style>
 </head>
 <body>
     <div class="outline">
@@ -277,7 +46,7 @@
                             </a>
                         </div>
                     </div>
-                    
+
                     <a href="./index.html">
                         <div class="menu_item_row active">
                             <div class="img">
@@ -289,7 +58,7 @@
                             <div class="menu_font_row">智能聊天</div>
                         </div>
                     </a>
-                    
+
                     <a href="./feed_back.html">
                         <div class="menu_item_row">
                             <div class="img">
@@ -319,16 +88,14 @@
             </div>
             <div class="talk_outline">
                 <div class="talk_outlinein">
-                    <div class="talk_content" id="chatbox">
-                       
-                    </div>
+                    <div class="talk_content" id="chatbox"></div>
                     <div class="chat_bottom"></div>
                     <footer class="foot_fix">
                         <div class="chat_container">
-                            <button class="clear" onclick="clearAllMessage()">
+                            <button class="clear" onclick="clearAllMessage()" title="清空对话">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-slack" viewBox="0 0 16 16">
                                     <path d="M3.362 10.11c0 .926-.756 1.681-1.681 1.681S0 11.036 0 10.111C0 9.186.756 8.43 1.68 8.43h1.682v1.68zm .846 0c0-.924 .756-1.68 1.681-1.68s1.681 .756 1.681 1.68v4.21c0 .924 -.756 1.68-1.68 1.68a1.685 1.685 0 0 1-1.682-1.68v-4.21zM5.89 3.362c-.926 0-1.682-.756-1.682-1.681S4.964 0 5.89 0s1.68 .756 1.68 1.68v1.682H5.89zm0 .846c.924 0 1.68 .756 1.68 1.681S6.814 7.57 5.89 7.57H1.68C.757 7.57 0 6.814 0 5.89c0-.926 .756-1.682 1.68-1.682h4.21zm6.749 1.682c0-.926 .755-1.682 1.68-1.682c .925 0 1.681 .756 1.681 1.681s-.756 1.681-1.68 1.681h-1.681V5.89zm-.848 0c0 .924 -.755 1.68-1.68 1.68A1.685 1.685 0 0 1 8.43 5.89V1.68C8.43 .757 9.186 0 10.11 0c.926 0 1.681 .756 1.681 1.68v4.21zm-1.681 6.748c.926 0 1.682 .756 1.682 1.681S11.036 16 10.11 16s-1.681-.756-1.681-1.68v-1.682h1.68zm0 -.847c-.924 0-1.68-.755-1.68-1.68 0-.925 .756-1.681 1.68-1.681h4.21c.924 0 1.68 .756 1.68 1.68 0 .926-.756 1.681-1.68 1.681h-4.21z"/>
-                                  </svg>
+                                </svg>
                             </button>
                             <div class="chat_talk_container" id="changeborder_div">
                                 <div class="chat_textarea">
@@ -344,58 +111,100 @@
             </div>
         </div>
     </div>
-    
+
     <script>
-        const input = document.getElementById('input');
-        input.addEventListener('keydown', function(event){
-            if(event.key === 'Enter') {
-                event.preventDefault();
-                document.getElementById("submit").click();
-            }
-        });
-    </script>
-    <script>
+        // ===== 侧边栏折叠 =====
         const button = document.getElementById("button");
-        const div = document.getElementById("side_left");
+        const sideLeft = document.getElementById("side_left");
 
         function adjustSidebar() {
             if (window.innerWidth < 1024) {
                 button.style.display = "block";
-                div.style.display = "none";
+                sideLeft.style.display = "none";
             } else {
                 button.style.display = "none";
-                div.style.display = "block";
+                sideLeft.style.display = "block";
             }
         }
 
         window.addEventListener("resize", adjustSidebar);
         button.addEventListener("click", function() {
-            if (div.style.display === "none" || div.style.display === "") {
-                div.style.display = "block";
-            } else {
-                div.style.display = "none";
-            }
+            sideLeft.style.display = (sideLeft.style.display === "none" || sideLeft.style.display === "") ? "block" : "none";
         });
         adjustSidebar();
-    </script>
-    <script>
+
+        // ===== 输入框事件 =====
+        const inputEl = document.getElementById('input');
+        inputEl.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById("submit").click();
+            }
+        });
+
+        const changeborderDiv = document.getElementById('changeborder_div');
+        inputEl.addEventListener('focus', () => {
+            changeborderDiv.style.borderColor = 'rgb(151, 204, 242)';
+            changeborderDiv.style.boxShadow = "0 12px 16px 0 rgb(0,0,0,.24),0 17px 50px 0 rgb(0,0,0,.19)";
+        });
+        inputEl.addEventListener('blur', () => {
+            changeborderDiv.style.borderColor = 'rgb(209, 209, 209)';
+            changeborderDiv.style.boxShadow = '';
+        });
+
+        // ===== 工具函数 =====
+        function uuid() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0;
+                var v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function escapeHTML(str) {
+            if (!str || typeof str !== 'string') return '';
+            return str.replace(/[&<>'"]/g,
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        function resizeBox(box) {
+            var width = window.innerWidth > 1300 ? window.innerWidth - 1300 : 0;
+            box.style.width = width + "px";
+        }
+
+        window.addEventListener("resize", function() {
+            document.querySelectorAll(".box_side").forEach(function(box) {
+                resizeBox(box);
+            });
+        });
+
+        // ===== 聊天逻辑 =====
         function sendMessage() {
             var input = document.getElementById("input");
             var chatbox = document.getElementById("chatbox");
+            var question = input.value;
+
+            if (input.value.trim() === "") return;
+
+            // 显示用户消息
             var message = document.createElement("div");
             var sender = document.createElement("div");
             var content = document.createElement("div");
             var img = document.createElement("div");
             var box_side = document.createElement("div");
-            var question=document.getElementById("input").value;
 
-            if (input.value.trim() !== "") {
-            sender.innerHTML = "";
             content.textContent = input.value;
             message.classList.add("message");
             sender.classList.add("sender_man");
             content.classList.add("content_man");
-            img.classList.add("content_man_img");//
+            img.classList.add("content_man_img");
             box_side.classList.add("box_side");
             message.appendChild(sender);
             message.appendChild(content);
@@ -405,310 +214,107 @@
             resizeBox(box_side);
             input.value = "";
 
-            // 发送自动回复
+            // 创建回复占位
             var reply = document.createElement("div");
             var replySender = document.createElement("div");
             var replyContent = document.createElement("div");
             var replyImg = document.createElement("div");
             var replybox_side = document.createElement("div");
 
-            replyContent.innerHTML = "";
-            replySender.innerHTML = "";
             reply.classList.add("message");
             replySender.classList.add("sender_bot");
             replyContent.classList.add("content_bot");
             replyImg.classList.add("content_bot_img");
             replybox_side.classList.add("box_side");
 
-            var id_new=uuid();
-            //reply.setAttribute("id",id_new);
-            replyContent.setAttribute("id",id_new)
-            
-            //displayAnswer(reply,chatbox,replyContent,replySender);
-            //请求接口
-            console.log("得到了问题:"+question);
+            var replyId = uuid();
+            replyContent.setAttribute("id", replyId);
+
+            var replyContent_Answer = document.createElement("div");
+            var content_id = uuid();
+            replyContent_Answer.setAttribute("id", content_id);
+            replyContent_Answer.classList.add("replycontent");
+            replyContent.appendChild(replyContent_Answer);
+
+            var cursor = document.createElement("span");
+            cursor.classList.add("cursor");
+            cursor.setAttribute("id", "cursor");
+            replyContent.appendChild(cursor);
+
+            reply.appendChild(replybox_side);
+            reply.appendChild(replyImg);
+            reply.appendChild(replyContent);
+            reply.appendChild(replySender);
+            chatbox.appendChild(reply);
+            resizeBox(replybox_side);
+
+            document.getElementById(replyId).scrollIntoView({ behavior: "smooth", inline: "nearest" });
+
+            // 发送请求
             document.getElementById("submit").disabled = true;
-            SendXMLHttpRequest_Post(type_13_p,id_new,reply,chatbox,replyContent,replySender,question,replybox_side,replyImg);
-      }
-    }
+            sendQuery(question, content_id);
+        }
 
-    function uuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0,
-            v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-	}
+        async function sendQuery(query, content_id) {
+            try {
+                const response = await fetch('/graph/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'query=' + encodeURIComponent(query)
+                });
 
-	//接口
-	var type_13_p="/graph/query";//main query
-	//xml发送请求
-	function SendXMLHttpRequest_Get(type) {
-
-		var xmlhttp; 
-        var url = type;
-
-		// 创建XMLHttpRequest对象，用于向服务器发送请求
-		if (window.XMLHttpRequest) {
-			xmlhttp = new XMLHttpRequest(); // 用于支持 IE7+, Firefox, Chrome, Opera, Safari 浏览器
-		} else {
-			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); // 用于支持 IE6, IE5 浏览器
-		}
-
-		// 当请求状态改变时，执行回调函数
-		xmlhttp.onreadystatechange = function() {
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-				// 获取服务器返回的响应内容并更新页面上的显示结果
-				responsecontent = xmlhttp.responseText;
-				var Res = "成功获取HTTP响应"+responsecontent;
-				document.getElementById("test").innerText = Res;
-			}
-		};
-
-		// 打开一个GET请求，向指定URL发送请求
-		xmlhttp.open("GET", url, true);
-		xmlhttp.send();
-	}
-
-
-    function escapeHTML(str) {
-        if (!str || typeof str !== 'string') return '';
-        return str.replace(/[&<>'"]/g, 
-            tag => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                "'": '&#39;',
-                '"': '&quot;'
-            }[tag] || tag)
-        );
-    }
-
-	function SendXMLHttpRequest_Post(type, id, reply, chatbox, replyContent, replySender,input_value,replybox_side,replyImg) {
-    var xmlhttp;
-    var url = type;
-
-    // 创建XMLHttpRequest对象，用于向服务器发送请求
-    if (window.XMLHttpRequest) {
-        xmlhttp = new XMLHttpRequest(); // 用于支持 IE7+, Firefox, Chrome, Opera, Safari 浏览器
-    } else {
-        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); // 用于支持 IE6, IE5 浏览器
-    }
-    var content_id = displayAnswer(reply, chatbox, replyContent, replySender,id,replybox_side,replyImg);
-
-    // 当请求状态改变时，执行回调函数
-    xmlhttp.onreadystatechange = function () {
-            let currentIndex = 0; // 当前打字位置
-            let currentHTML = ""; // 当前已经生成的HTML文本
-        if (xmlhttp.readyState == 4) {
-            if (xmlhttp.status == 200) {
-                // 获取服务器返回的响应内容并更新页面上的显示结果
-                var responsecontent = xmlhttp.responseText;
-
-                console.log("获取到了结果");
-
-                try {
-                    var Answer = extractBestAnswer(responsecontent);
-                    Answer = escapeHTML(Answer);
-                    console.log("答案处理成功");
-
-                    typeText(content_id,Answer,currentIndex,currentHTML);
-                    document.getElementById("submit").disabled = false;
-                    console.log("成功显示");
-                } catch (error) {
-                    console.error("解析响应数据失败：" + error);
-                    var Answer = "解析响应数据失败: "+xmlhttp.status;
-                    typeText(content_id,Answer,currentIndex,currentHTML);
-                    document.getElementById("submit").disabled = false;
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
                 }
-            } else {
-                console.error("请求失败：" + xmlhttp.status);
-                var Answer = "请求失败: "+xmlhttp.status;
-                console.log("执行typetext");
-                typeText(content_id,Answer,currentIndex,currentHTML);
+
+                const data = await response.json();
+                var answer = data.response ? data.response.trim() : "未找到有效的回答";
+                answer = escapeHTML(answer);
+                typeText(content_id, answer, 0, "");
+            } catch (error) {
+                console.error("请求失败:", error);
+                typeText(content_id, "请求失败: " + error.message, 0, "");
+            } finally {
                 document.getElementById("submit").disabled = false;
             }
         }
-    };
 
-    // 打开一个POST请求，向指定URL发送请求
-    xmlhttp.open("POST", url, true);
-
-    // 设置请求头为"Content-type: application/x-www-form-urlencoded"，因为是POST请求
-    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-
-    // 发送POST请求的参数
-    var queryParam = input_value;
-    //var queryParam = "zh";
-
-    // 使用FormData对象构建请求体，可以更方便地处理多个参数
-    //var formData = new FormData();
-    //formData.append("query", queryParam);
-    // 添加更多参数
-    //formData.append("another_param", "value");
-
-    // 发送POST请求的参数
-    xmlhttp.send("query="+encodeURIComponent(queryParam));
-}
-
-
-
-
-    //提取数据
-    function extractBestAnswer_failed(responseData) {
-        var data = JSON.parse(responseData);
-        var sourceNodes = data.source_nodes;
-        var maxScore = -Infinity;
-        var bestAnswer = "";
-
-        for (var i = 0; i < sourceNodes.length; i++) {
-            var score = sourceNodes[i].score;
-            if (score !== null && score > maxScore) {
-                maxScore = score;
-                bestAnswer = sourceNodes[i].node.text;
+        function clearAllMessage() {
+            var chatbox = document.getElementById('chatbox');
+            while (chatbox.firstChild) {
+                chatbox.removeChild(chatbox.firstChild);
             }
         }
 
-        return bestAnswer;
-    }
-
-    function extractBestAnswer(responsecontent) {
-        try {
-            const responseData = JSON.parse(responsecontent); // 尝试将JSON字符串解析成对象
-            if (responseData && responseData.response) {
-                return responseData.response.trim(); // 提取回答并去除两边的空白字符
-            } else {
-                console.log("无法找到回答数据或数据格式不正确");
-                return "未找到有效的回答";
-            }
-        } catch (error) {
-            console.log("解析响应数据失败：" + error.message);
-            return "解析响应数据失败";
-        }
-    }
-
-    function extractBestAnswer_backup(responsecontent) {
-        try {
-            const responseData = JSON.parse(responsecontent); // 尝试将JSON字符串解析成对象
-            if (responseData && responseData.sources && responseData.sources.length > 0) {
-                let bestAnswer = { score: -Infinity, answer: '' };
-                responseData.sources.forEach(source => {
-                    if (source.score && source.score > bestAnswer.score) {
-                        bestAnswer.score = source.score;
-                        bestAnswer.answer = source.content.trim();
-                    }
-                });
-
-                return bestAnswer.answer; // 返回得分最高的回答
-            } else {
-                console.log("无法找到回答数据或数据格式不正确");
-                return "未找到有效的回答";
-            }
-        } catch (error) {
-            console.log("解析响应数据失败：" + error.message);
-            return "解析响应数据失败";
-        }
-    }
-    function displayAnswer(reply,chatbox,replyContent,replySender,id,replybox_side,replyImg)
-    {
-
-        var replyContent_Answer = document.createElement("div");
-        var content_id = uuid();
-        replyContent_Answer.setAttribute("id",content_id);
-        replyContent_Answer.classList.add("replycontent");
-        replyContent.appendChild(replyContent_Answer);
-
-        var cursor = document.createElement("span");
-        cursor.classList.add("cursor");
-        cursor.setAttribute("id","cursor");
-        replyContent.appendChild(cursor);
-
-
-        reply.appendChild(replybox_side);
-        reply.appendChild(replyImg);
-
-        reply.appendChild(replyContent);
-        reply.appendChild(replySender);
-        chatbox.appendChild(reply);
-        resizeBox(replybox_side);
-        // 获取到需滑动到的目标dom
-        const element = document.getElementById(id);
-        // 使用scrolltoView滚动至目标dom
-        element.scrollIntoView({behavior: "smooth",  inline: "nearest"});
-
-        return content_id;
-    }
-    function clearAllMessage()
-	{
-		// 获取chatbox元素
-		var chatbox = document.getElementById('chatbox');
-		// 清除chatbox的所有子元素
-		while (chatbox.firstChild) {
-		chatbox.removeChild(chatbox.firstChild);
-		}
-	}
-	</script>
-    <script>
-        const textArea = document.getElementById('input');
-        const otherDiv = document.getElementById('changeborder_div');
-    
-        textArea.addEventListener('focus', () => {
-          otherDiv.style.borderColor = 'rgb(151, 204, 242)';
-          otherDiv.style.boxShadow = "0 12px 16px 0 rgb(0,0,0,.24),0 17px 50px 0 rgb(0,0,0,.19)";
-        });
-    
-        textArea.addEventListener('blur', () => {
-          otherDiv.style.borderColor = 'rgb(209, 209, 209)';
-          otherDiv.style.boxShadow = '';
-        });
-
-        
-      </script>
-      <script>
-        window.addEventListener("resize", function() {
-            var boxes = document.querySelectorAll(".box_side");
-            boxes.forEach(function(box) {
-                resizeBox(box);
-            });
-        });
-
-        function resizeBox(box) {
-            var width = window.innerWidth > 1300 ? window.innerWidth - 1300 : 0;
-            box.style.width = width + "px";
-        }
-      </script>
-      
-      <script>
-        // 获取需要操作的元素
+        // ===== 打字机效果 =====
         function typeText(name, givenText, currentIndex, currentHTML) {
             const outputElement = document.getElementById(name);
-            const Text = givenText;
+            if (!outputElement || givenText.length === 0) return;
 
-            if (Text.length == 0) return;
-            if (currentIndex < Text.length) {
-                const currentChar = Text.charAt(currentIndex);
-                const nextChar = Text.charAt(currentIndex+1);
+            if (currentIndex < givenText.length) {
+                const currentChar = givenText.charAt(currentIndex);
+                const nextChar = givenText.charAt(currentIndex + 1);
+
                 if (currentChar === "<") {
-                    const closingTagIndex = Text.indexOf(">", currentIndex);
-                    currentHTML += Text.slice(currentIndex, closingTagIndex + 1);
+                    const closingTagIndex = givenText.indexOf(">", currentIndex);
+                    currentHTML += givenText.slice(currentIndex, closingTagIndex + 1);
                     currentIndex = closingTagIndex + 1;
                 } else if (currentChar === "&") {
-                    const closingSemicolonIndex = Text.indexOf(";", currentIndex);
+                    const closingSemicolonIndex = givenText.indexOf(";", currentIndex);
                     if (closingSemicolonIndex !== -1 && closingSemicolonIndex - currentIndex < 10) {
-                        currentHTML += Text.slice(currentIndex, closingSemicolonIndex + 1);
+                        currentHTML += givenText.slice(currentIndex, closingSemicolonIndex + 1);
                         currentIndex = closingSemicolonIndex + 1;
                     } else {
                         currentHTML += currentChar;
                         currentIndex++;
                     }
-                } else if (currentChar === "\\"&& nextChar ==="n" && currentIndex >5 ) {
-                    currentHTML += "<br>"; // 添加换行
-                    currentIndex+=2;
-                }else if (currentChar === "\\"&& nextChar ==="n" && currentIndex <= 5) {
-                    //currentHTML += "<br>"; // 添加换行
-                    currentIndex+=2;
-                }else if (currentChar === "\"") {
-                    currentHTML += "&nbsp;&nbsp;&nbsp;&nbsp;"; // 添加4个空格
+                } else if (currentChar === "\\" && nextChar === "n" && currentIndex > 5) {
+                    currentHTML += "<br>";
+                    currentIndex += 2;
+                } else if (currentChar === "\\" && nextChar === "n" && currentIndex <= 5) {
+                    currentIndex += 2;
+                } else if (currentChar === "\"") {
+                    currentHTML += "&nbsp;&nbsp;&nbsp;&nbsp;";
                     currentIndex++;
                 } else {
                     currentHTML += currentChar;
@@ -716,20 +322,17 @@
                 }
 
                 outputElement.innerHTML = currentHTML;
-                const cursorElement = document.getElementById("cursor");
-
                 setTimeout(function() {
                     typeText(name, givenText, currentIndex, currentHTML);
                 }, 100);
             } else {
                 const cursorElement = document.getElementById("cursor");
-                cursorElement.classList.remove("cursor");
-                cursorElement.setAttribute("id", uuid());
+                if (cursorElement) {
+                    cursorElement.classList.remove("cursor");
+                    cursorElement.setAttribute("id", uuid());
+                }
             }
         }
-
-    
     </script>
-    
 </body>
 </html>
