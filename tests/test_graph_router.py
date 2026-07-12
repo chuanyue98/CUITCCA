@@ -31,7 +31,17 @@ class GraphRouterTest(unittest.TestCase):
         fake_index2.summary = 'campus dining hours'
         fake_index2.as_query_engine.return_value = MagicMock()
 
-        with patch.object(gb, 'indexes', [fake_index1, fake_index2]):
+        # Both LLMSingleSelector.from_defaults() and RouterQueryEngine.from_defaults()
+        # fall back to Settings.llm when no LLM is passed explicitly, which tries to
+        # build a real default OpenAI client and blows up wherever OPENAI_API_KEY
+        # isn't set (e.g. CI). Stub Settings.llm out — this test only cares that
+        # routing (RouterQueryEngine) is used, not how any LLM gets resolved.
+        # Settings.llm is a property backed by ._llm; patch.object can't patch
+        # the property itself (it isn't in the instance __dict__), so target
+        # the backing field directly.
+        from llama_index.core import Settings
+        with patch.object(gb, 'indexes', [fake_index1, fake_index2]), \
+                patch.object(Settings, '_llm', MagicMock()):
             gb.invalidate_query_engine_cache()
             engine = gb.compose_graph_query_engine()
 
