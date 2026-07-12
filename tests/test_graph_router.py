@@ -2,9 +2,9 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
-from main import app
 
 import tests._pathsetup  # noqa: F401
+from main import app
 
 
 class GraphRouterTest(unittest.TestCase):
@@ -258,13 +258,27 @@ class GraphRouterTest(unittest.TestCase):
         del rg.indexes
 
     # ── /graph/chat_stream ────────────────────────────────────────
+    #
+    # astream_chat() returns a StreamingAgentChatResponse whose *sync*
+    # response_gen only works for the sync chat() path (it reads from a
+    # queue fed by a background write-to-history Thread). The async
+    # astream_chat() path instead feeds an asyncio Task/queue, which the
+    # sync response_gen never observes (either raises "chat_stream is
+    # None!" or spins forever depending on is_writing_to_memory). The
+    # real async output only comes through async_response_gen(), so
+    # that's what these fakes (and the production code) must use.
+
+    @staticmethod
+    async def _async_gen(items):
+        for item in items:
+            yield item
 
     @patch('router.graph.compose_graph_chat_egine')
     def test_chat_stream_creates_engine_if_missing(self, mock_compose):
         fake_engine = MagicMock()
         async def mock_astream_chat(q):
             resp = MagicMock()
-            resp.response_gen = iter(["chat", "response"])
+            resp.async_response_gen = lambda: self._async_gen(["chat", "response"])
             return resp
         fake_engine.astream_chat = mock_astream_chat
         mock_compose.return_value = fake_engine
@@ -279,7 +293,7 @@ class GraphRouterTest(unittest.TestCase):
         fake_engine = MagicMock()
         async def mock_astream_chat(q):
             resp = MagicMock()
-            resp.response_gen = iter(["existing"])
+            resp.async_response_gen = lambda: self._async_gen(["existing"])
             return resp
         fake_engine.astream_chat = mock_astream_chat
         mock_compose.return_value = fake_engine
@@ -300,7 +314,7 @@ class GraphRouterTest(unittest.TestCase):
 
         async def mock_astream_chat(q):
             resp = MagicMock()
-            resp.response_gen = iter(["hello"])
+            resp.async_response_gen = lambda: self._async_gen(["hello"])
             resp.source_nodes = [source_node]
             return resp
         fake_engine.astream_chat = mock_astream_chat
