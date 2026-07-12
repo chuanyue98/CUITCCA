@@ -53,11 +53,14 @@ CUITCCA/
 ## 主要功能
 
 - **RAG 问答**: 基于文档索引的智能问答
+- **多轮流式对话**: 聊天页基于 `/graph/chat_stream` 实现真实 token 级流式输出（非模拟打字机），支持连续追问、上下文记忆
+- **Markdown 渲染 + 引用来源**: 回答内容使用 marked.js + DOMPurify 渲染并净化，命中知识库时在回复下方展示可展开的参考来源片段
+- **对话历史持久化**: 对话记录保存在浏览器 `localStorage`，刷新页面自动恢复；点击清空对话会同时重置服务端会话上下文
+- **暗色模式**: 跟随系统 `prefers-color-scheme` 自动切换，覆盖聊天、知识库管理、反馈、指南全部页面
 - **知识库管理**: 创建/删除索引，上传文档，增删节点
 - **文件上传**: 支持 PDF、DOCX、TXT、MD、CSV、XLSX
 - **QA 生成**: 从文档自动生成问答对
 - **图查询**: 多引擎知识图谱查询
-- **流式响应**: SSE 流式聊天
 
 ## API 概览
 
@@ -80,5 +83,5 @@ uv run pytest tests/ -v --cov=backend/app
 
 - **后端**: Python 3.12, FastAPI, LlamaIndex
 - **AI**: OpenAI API / 兼容接口, HuggingFace Embeddings
-- **前端**: HTML, CSS, JavaScript (无框架)
+- **前端**: HTML, CSS, JavaScript (无框架/无构建步骤), marked.js + DOMPurify (Markdown 渲染与净化，本地 vendored)
 - **测试**: pytest
