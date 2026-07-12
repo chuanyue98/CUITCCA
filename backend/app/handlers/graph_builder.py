@@ -61,7 +61,7 @@ class MultiIndexQueryEngine(BaseQueryEngine):
         return []
 
 
-_query_engine_cache: BaseQueryEngine | None = None
+_query_engine_caches: dict[bool, BaseQueryEngine] = {}
 
 
 def _build_query_engine(streaming: bool) -> BaseQueryEngine:
@@ -102,15 +102,16 @@ def compose_graph_chat_egine() -> BaseChatEngine:
 
 
 def compose_graph_query_engine(streaming: bool = False) -> BaseQueryEngine:
-    global _query_engine_cache
-    if _query_engine_cache is None:
-        _query_engine_cache = _build_query_engine(streaming)
-    return _query_engine_cache
+    # 按 streaming 值分别缓存：之前是单槽缓存，谁先调用就把该 streaming 值
+    # 永久固定下来，后续用另一个 streaming 值调用的调用方会静默拿到错误类型的
+    # engine（例如 /query_stream 会拿到不支持 response_gen 的非流式 Response）。
+    if streaming not in _query_engine_caches:
+        _query_engine_caches[streaming] = _build_query_engine(streaming)
+    return _query_engine_caches[streaming]
 
 
 def invalidate_query_engine_cache():
-    global _query_engine_cache
-    _query_engine_cache = None
+    _query_engine_caches.clear()
 
 
 async def summary_index(index):

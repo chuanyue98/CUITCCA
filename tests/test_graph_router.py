@@ -140,6 +140,10 @@ class GraphRouterTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, "chunk1chunk2")
+        # Regression: this endpoint used to call compose_graph_query_engine()
+        # with the default streaming=False, so in production (unmocked) it
+        # got back a plain Response with no .response_gen attribute at all.
+        mock_compose.assert_called_once_with(streaming=True)
 
     # ── /graph/query_sources ──────────────────────────────────────
 

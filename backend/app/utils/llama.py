@@ -103,7 +103,7 @@ def generate_query_engine_tools(
             refine_template=Prompts.REFINE_PROMPT.value,
             similarity_top_k=similarity_top_k,
         )
-        description = index.summary or f"知识库索引: {index.index_id}"
+        description = getattr(index, "summary", None) or f"知识库索引: {index.index_id}"
         tool = QueryEngineTool.from_defaults(query_engine=query_engine, description=description)
         query_engine_tools.append(tool)
 

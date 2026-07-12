@@ -89,7 +89,7 @@ async def chat_graph_stream(request: Request, query: str = Form(max_length=5000)
 
 @graph_app.post("/query_stream")
 async def query_graph_stream(request: Request, query: str = Form(max_length=5000)):
-    query_engine = compose_graph_query_engine()
+    query_engine = compose_graph_query_engine(streaming=True)
     query = query.strip()
     customer_logger.info(f"query_stream: {query}")
     response = await query_engine.aquery(query)
