@@ -25,3 +25,8 @@ test.py
 .pytest_cache/
 .ruff_cache/
 .coverage
+/tests/playwright/node_modules/
+/tests/playwright/test-results/
+/tests/playwright/screenshots/
+/tests/playwright/test-results.json
+/tests/playwright/playwright-report/
