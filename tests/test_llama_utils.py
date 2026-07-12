@@ -138,9 +138,10 @@ class GenerateQueryEngineToolsTest(unittest.TestCase):
                 llama_utils.generate_query_engine_tools([index])
 
         index.as_query_engine.assert_called_once_with(
-            streaming=True,
+            streaming=False,
             text_qa_template='qa prompt',
             refine_template='refine prompt',
+            similarity_top_k=5,
         )
 
 

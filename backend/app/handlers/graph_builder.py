@@ -10,6 +10,9 @@ from llama_index.core.callbacks import CallbackManager
 from llama_index.core.chat_engine import CondenseQuestionChatEngine
 from llama_index.core.chat_engine.types import BaseChatEngine
 from llama_index.core.indices.query.base import BaseQueryEngine
+from llama_index.core.query_engine import RouterQueryEngine
+from llama_index.core.selectors import LLMSingleSelector
+from utils.llama import generate_query_engine_tools
 
 
 class MultiIndexQueryEngine(BaseQueryEngine):
@@ -58,12 +61,36 @@ class MultiIndexQueryEngine(BaseQueryEngine):
         return []
 
 
-_query_engine_cache: MultiIndexQueryEngine | None = None
+_query_engine_cache: BaseQueryEngine | None = None
+
+
+def _build_query_engine(streaming: bool) -> BaseQueryEngine:
+    indexes_snapshot = list(indexes)
+    if not indexes_snapshot:
+        return MultiIndexQueryEngine(indexes_snapshot=[], streaming=streaming)
+    if len(indexes_snapshot) == 1:
+        # 单索引无需路由选择，直接查询避免额外的 LLM 选择调用
+        return indexes_snapshot[0].as_query_engine(
+            streaming=streaming,
+            text_qa_template=Prompts.QA_PROMPT.value,
+            refine_template=Prompts.REFINE_PROMPT.value,
+            similarity_top_k=5,
+        )
+    tools = generate_query_engine_tools(indexes_snapshot, streaming=streaming, similarity_top_k=5)
+    return RouterQueryEngine.from_defaults(
+        query_engine_tools=tools,
+        selector=LLMSingleSelector.from_defaults(),
+        # select_multi=False：每次查询只选一个最相关的索引，而不是跨索引汇总。
+        # select_multi=True 会为每次查询多花一次 LLM 摘要调用，使延迟翻倍，
+        # 这对于按院系/主题分区的校园问答场景通常不划算——一个问题很少同时
+        # 横跨多个知识库。如果未来发现跨主题查询很常见，可以重新评估这个取舍。
+        select_multi=False,
+        verbose=VERBOSE,
+    )
 
 
 def compose_graph_chat_egine() -> BaseChatEngine:
-    indexes_snapshot = list(indexes)
-    query_engine = MultiIndexQueryEngine(indexes_snapshot=indexes_snapshot, streaming=True)
+    query_engine = _build_query_engine(streaming=True)
 
     chat_engine = CondenseQuestionChatEngine.from_defaults(
         query_engine=query_engine,
@@ -77,7 +104,7 @@ def compose_graph_chat_egine() -> BaseChatEngine:
 def compose_graph_query_engine(streaming: bool = False) -> BaseQueryEngine:
     global _query_engine_cache
     if _query_engine_cache is None:
-        _query_engine_cache = MultiIndexQueryEngine(indexes_snapshot=list(indexes), streaming=streaming)
+        _query_engine_cache = _build_query_engine(streaming)
     return _query_engine_cache
 
 

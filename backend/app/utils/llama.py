@@ -92,13 +92,18 @@ async def generate_qa_batched(contents: str, prompt: str | None = None):
     return qa_pairs
 
 
-def generate_query_engine_tools(indexes: list[BaseIndex]) -> list[QueryEngineTool]:
+def generate_query_engine_tools(
+    indexes: list[BaseIndex], streaming: bool = False, similarity_top_k: int = 5
+) -> list[QueryEngineTool]:
     query_engine_tools = []
     for index in indexes:
-        query_engine = index.as_query_engine(streaming=True,
-                                             text_qa_template=Prompts.QA_PROMPT.value,
-                                             refine_template=Prompts.REFINE_PROMPT.value)
-        description = index.summary
+        query_engine = index.as_query_engine(
+            streaming=streaming,
+            text_qa_template=Prompts.QA_PROMPT.value,
+            refine_template=Prompts.REFINE_PROMPT.value,
+            similarity_top_k=similarity_top_k,
+        )
+        description = index.summary or f"知识库索引: {index.index_id}"
         tool = QueryEngineTool.from_defaults(query_engine=query_engine, description=description)
         query_engine_tools.append(tool)
 

@@ -14,6 +14,40 @@ class GraphRouterTest(unittest.TestCase):
     def tearDown(self):
         app.dependency_overrides.clear()
 
+    # ── router-based multi-index composition ───────────────────────
+
+    def test_compose_query_engine_uses_router_with_indexes(self):
+        # Two indexes: single-index queries deliberately bypass the router
+        # (see _build_query_engine's `len(indexes_snapshot) == 1` shortcut),
+        # so router selection only kicks in once there's something to choose between.
+        import handlers.graph_builder as gb
+        fake_index1 = MagicMock()
+        fake_index1.index_id = 'idx1'
+        fake_index1.summary = 'campus dorm rules'
+        fake_index1.as_query_engine.return_value = MagicMock()
+
+        fake_index2 = MagicMock()
+        fake_index2.index_id = 'idx2'
+        fake_index2.summary = 'campus dining hours'
+        fake_index2.as_query_engine.return_value = MagicMock()
+
+        with patch.object(gb, 'indexes', [fake_index1, fake_index2]):
+            gb.invalidate_query_engine_cache()
+            engine = gb.compose_graph_query_engine()
+
+        from llama_index.core.query_engine import RouterQueryEngine
+        self.assertIsInstance(engine, RouterQueryEngine)
+        gb.invalidate_query_engine_cache()
+
+    def test_compose_query_engine_falls_back_with_no_indexes(self):
+        import handlers.graph_builder as gb
+        with patch.object(gb, 'indexes', []):
+            gb.invalidate_query_engine_cache()
+            engine = gb.compose_graph_query_engine()
+
+        self.assertIsInstance(engine, gb.MultiIndexQueryEngine)
+        gb.invalidate_query_engine_cache()
+
     # ── /graph/create ──────────────────────────────────────────────
 
     @patch('router.graph.compose_graph_chat_egine')

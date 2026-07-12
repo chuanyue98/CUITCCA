@@ -18,6 +18,7 @@ class FakeIndex:
     def __init__(self, index_id="test-index"):
         self.index_id = index_id
         self.summary = ""
+        self.as_query_engine = MagicMock(return_value=MagicMock())
 
 
 class MultiIndexQueryEngineInitTest(unittest.TestCase):
