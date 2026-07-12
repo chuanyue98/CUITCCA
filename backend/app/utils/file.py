@@ -1,13 +1,12 @@
 import asyncio
 import os
 import tempfile
-from datetime import datetime
 from io import BytesIO
 
-import aiofiles
-from configs.load_env import FEEDBACK_PATH, PROJECT_ROOT
+from configs.load_env import PROJECT_ROOT, db_path
 from fastapi import UploadFile
 from models.user import Feedback
+from utils import db
 
 
 def safe_filename(filename: str) -> str:
@@ -29,16 +28,8 @@ def get_folders_list(root_dir: str) -> list:
     return folders_list
 
 
-async def save_feedback_to_file(feedback: Feedback, client_ip: str):
-    current_datetime = datetime.now()
-    filename = current_datetime.strftime("%Y-%m-%d_%H-%M-%S.txt")
-    path = os.path.join(FEEDBACK_PATH, filename)
-    os.makedirs(FEEDBACK_PATH, exist_ok=True)
-    async with aiofiles.open(path, "a", encoding="utf-8") as file:
-        await file.write(f"Name (IP): {client_ip}\n")
-        await file.write(f"Email: {feedback.email if feedback.email else 'NONE'}\n")
-        await file.write(f"Message: {feedback.message}\n")
-        await file.write("\n")
+async def save_feedback(client_ip: str, feedback: Feedback):
+    await asyncio.to_thread(db.save_feedback, db_path, client_ip, feedback.email, feedback.message)
 
 
 def _read_file_sync(file: UploadFile) -> str:

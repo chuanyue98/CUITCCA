@@ -17,6 +17,7 @@ openai_api_base = ''
 openai_model = ''
 VERBOSE = False
 chroma_db_path = ''
+db_path = ''
 COOKIE_SECURE = False
 COOKIE_MAX_AGE = 86400
 
@@ -24,7 +25,8 @@ COOKIE_MAX_AGE = 86400
 def reload_env_variables():
     load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
     global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
-        openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE, chroma_db_path
+        openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE, chroma_db_path, \
+        db_path
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_base = os.environ.get('OPENAI_API_BASE') or 'https://api.openai.com/v1'
@@ -38,6 +40,7 @@ def reload_env_variables():
     LOG_PATH = os.environ.get('LOG_PATH', '../../log/')
     FILE_PATH = os.environ.get('FILE_PATH', '../../data/export/')
     chroma_db_path = os.environ.get('CHROMA_DB_PATH', '../../data/chroma_db/')
+    db_path = os.environ.get('DB_PATH', '../../data/app.db')
 
     index_save_directory = os.path.join(PROJECT_ROOT, index_save_directory)
     SAVE_PATH = os.path.join(PROJECT_ROOT, SAVE_PATH)
@@ -46,6 +49,7 @@ def reload_env_variables():
     LOG_PATH = os.path.join(PROJECT_ROOT, LOG_PATH)
     FILE_PATH = os.path.join(PROJECT_ROOT, FILE_PATH)
     chroma_db_path = os.path.join(PROJECT_ROOT, chroma_db_path)
+    db_path = os.path.join(PROJECT_ROOT, db_path)
     access_stats_path = os.path.join(PROJECT_ROOT, '../access_stats.json')
 
     COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
