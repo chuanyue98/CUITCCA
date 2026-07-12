@@ -1,4 +1,4 @@
-import os
+import os  # noqa: I001 (tests._pathsetup must precede router.manage below)
 import unittest
 from unittest.mock import patch
 

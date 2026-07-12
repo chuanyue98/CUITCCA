@@ -1,4 +1,4 @@
-import unittest
+import unittest  # noqa: I001 (tests._pathsetup must precede main below)
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient

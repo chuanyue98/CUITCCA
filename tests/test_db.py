@@ -1,4 +1,4 @@
-import os
+import os  # noqa: I001 (tests._pathsetup must precede utils below)
 import tempfile
 import unittest
 

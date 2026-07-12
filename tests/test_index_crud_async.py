@@ -1,4 +1,4 @@
-import asyncio
+import asyncio  # noqa: I001 (tests._pathsetup must precede handlers below)
 from unittest.mock import MagicMock, patch
 
 import pytest

@@ -1,4 +1,4 @@
-import asyncio
+import asyncio  # noqa: I001 (tests._pathsetup must precede models.user below)
 import unittest
 from unittest.mock import patch
 
