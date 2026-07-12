@@ -4,6 +4,7 @@
 !/backend/app/
 !/backend/.env.example
 /frontend/*
+!/frontend/vendor/
 /indexes/*
 .venv/
 # uv.lock removed from gitignore to support CI --frozen
@@ -24,3 +25,8 @@ test.py
 .pytest_cache/
 .ruff_cache/
 .coverage
+/tests/playwright/node_modules/
+/tests/playwright/test-results/
+/tests/playwright/screenshots/
+/tests/playwright/test-results.json
+/tests/playwright/playwright-report/

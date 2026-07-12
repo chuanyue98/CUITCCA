@@ -42,3 +42,14 @@ class FeedbackResponse(BaseModel):
 
 class EnvUpdateResponse(BaseModel):
     message: str
+
+
+class FeedbackEntry(BaseModel):
+    created_at: str
+    client_ip: str
+    email: str | None = None
+    message: str
+
+
+class FeedbackListResponse(BaseModel):
+    feedback: list[FeedbackEntry]

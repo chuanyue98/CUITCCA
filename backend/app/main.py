@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 import time
 import uuid
@@ -12,8 +11,8 @@ from configs.load_env import (
     COOKIE_SECURE,
     LOAD_PATH,
     SAVE_PATH,
-    access_stats_path,
     chroma_db_path,
+    db_path,
     reload_env_variables,
 )
 from dependencies import access_stats
@@ -24,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from handlers.index_crud import loadAllIndexes
 from router import graph_app, index_app, manage_app, response_app
 from starlette.middleware.cors import CORSMiddleware
+from utils import db as stats_db
 
 
 def _get_client_ip(request) -> str:
@@ -39,27 +39,41 @@ async def lifespan(app: FastAPI):
     for directory in [SAVE_PATH, LOAD_PATH, chroma_db_path]:
         if not os.path.exists(directory):
             os.makedirs(directory)
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    await asyncio.to_thread(stats_db.init_db, db_path)
 
-    try:
-        with open(access_stats_path) as file:
-            access_stats_dict = json.load(file)
-            _mgmt_access_stats["total_visits"] = access_stats_dict["total_visits"]
-            _mgmt_access_stats["user_visits"] = defaultdict(int, access_stats_dict["user_visits"])
-            _mgmt_access_stats["endpoint_visits"] = defaultdict(int, access_stats_dict["endpoint_visits"])
-    except FileNotFoundError:
-        pass
+    loaded = await asyncio.to_thread(stats_db.load_stats, db_path)
+    _mgmt_access_stats["total_visits"] = loaded["total_visits"]
+    _mgmt_access_stats["user_visits"] = defaultdict(int, loaded["user_visits"])
+    _mgmt_access_stats["endpoint_visits"] = defaultdict(int, loaded["endpoint_visits"])
     _mgmt_access_stats["ip_count"] = len(_mgmt_access_stats["user_visits"])
+
+    async def _periodic_flush():
+        while True:
+            await asyncio.sleep(60)
+            async with access_stats_lock:
+                snapshot = {
+                    "total_visits": _mgmt_access_stats["total_visits"],
+                    "user_visits": dict(_mgmt_access_stats["user_visits"]),
+                    "endpoint_visits": dict(_mgmt_access_stats["endpoint_visits"]),
+                }
+            await asyncio.to_thread(stats_db.flush_stats, db_path, snapshot)
+
+    flush_task = asyncio.create_task(_periodic_flush())
 
     yield
 
-    access_stats_dict = {
-        "total_visits": _mgmt_access_stats["total_visits"],
-        "user_visits": dict(_mgmt_access_stats["user_visits"]),
-        "endpoint_visits": dict(_mgmt_access_stats["endpoint_visits"]),
-    }
-    with open(access_stats_path, "w") as file:
-        json.dump(access_stats_dict, file)
+    flush_task.cancel()
+    async with access_stats_lock:
+        final_snapshot = {
+            "total_visits": _mgmt_access_stats["total_visits"],
+            "user_visits": dict(_mgmt_access_stats["user_visits"]),
+            "endpoint_visits": dict(_mgmt_access_stats["endpoint_visits"]),
+        }
+    await asyncio.to_thread(stats_db.flush_stats, db_path, final_snapshot)
 
+
+access_stats_lock = asyncio.Lock()
 
 app = FastAPI(lifespan=lifespan)
 
@@ -67,8 +81,6 @@ app.include_router(index_app, prefix='/index', tags=['index'])
 app.include_router(graph_app, prefix='/graph', tags=['graph'])
 app.include_router(response_app, prefix='/response', tags=['response'])
 app.include_router(manage_app, prefix='/manage', tags=['manage'])
-
-access_stats_lock = asyncio.Lock()
 
 # 速率限制：每 IP 每 60 秒最多 30 次请求（LLM 查询端点）
 RATE_LIMIT_WINDOW = 60

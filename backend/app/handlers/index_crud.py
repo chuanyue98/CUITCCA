@@ -56,11 +56,11 @@ async def insert_into_index(index: VectorStoreIndex, doc_file_path: str, skip_su
     from handlers.graph_builder import summary_index
     from utils.llama import get_nodes_from_file
 
-    nodes = get_nodes_from_file(doc_file_path)
+    nodes = await asyncio.to_thread(get_nodes_from_file, doc_file_path)
 
     lock = await _get_index_lock(index.index_id)
     async with lock:
-        index.insert_nodes(nodes)
+        await asyncio.to_thread(index.insert_nodes, nodes)
         if not skip_summary:
             index.summary = await summary_index(index)
             _save_summary(index)
@@ -82,7 +82,7 @@ async def embeddingQA(index: VectorStoreIndex, qa_pairs: list, id: str | None = 
 
     lock = await _get_index_lock(index.index_id)
     async with lock:
-        index.insert_nodes(docs)
+        await asyncio.to_thread(index.insert_nodes, docs)
         _save_summary(index)
 
 

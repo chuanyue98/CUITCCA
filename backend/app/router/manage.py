@@ -7,10 +7,10 @@ from dependencies.manage import access_stats
 from dotenv import dotenv_values, set_key
 from fastapi import APIRouter, Depends, Form, HTTPException
 from llama_index.core import Settings
-from models.response import EnvUpdateResponse, FeedbackResponse, StatsResponse
+from models.response import EnvUpdateResponse, FeedbackListResponse, FeedbackResponse, StatsResponse
 from models.user import Feedback
 from starlette.requests import Request
-from utils.file import save_feedback_to_file
+from utils.file import save_feedback
 from utils.logger import audit_logger
 from utils.security import require_configured_api_key
 
@@ -34,8 +34,17 @@ async def get_stats():
 async def create_feedback(feedback: Feedback, request: Request):
     """创建反馈"""
     client_ip = request.client.host if request.client else "unknown"
-    await save_feedback_to_file(feedback, client_ip)
+    await save_feedback(client_ip, feedback)
     return FeedbackResponse(message="Feedback received")
+
+
+@manage_app.get("/feedback", response_model=FeedbackListResponse, dependencies=[Depends(require_configured_api_key)])
+async def get_feedback(limit: int = 100):
+    """列出最近的用户反馈"""
+    from configs.load_env import db_path
+    from utils import db
+    entries = await asyncio.to_thread(db.list_feedback, db_path, limit)
+    return FeedbackListResponse(feedback=entries)
 
 
 _env_path = os.path.join(os.path.dirname(PROJECT_ROOT), '.env')

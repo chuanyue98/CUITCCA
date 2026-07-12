@@ -19,6 +19,30 @@
   --text-primary: #333;
   --text-secondary: #666;
   --text-tertiary: #999;
+  --bg-gradient-start: #f4f6fc;
+  --bg-gradient-end: #eef2fa;
+  --surface: #ffffff;
+  --surface-alt: rgb(242, 242, 242);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: rgb(94, 156, 211);
+    --primary-light: rgb(120, 176, 224);
+    --primary-bg: rgba(94, 156, 211, 0.15);
+    --text-primary: #e4e6eb;
+    --text-secondary: #b0b3b8;
+    --text-tertiary: #8a8d91;
+    --bg-gradient-start: #16181c;
+    --bg-gradient-end: #0e0f11;
+    --surface: #1f2125;
+    --surface-alt: #2a2d32;
+  }
+  body, html { background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); }
+  #side_left, .headline, .panel_right, .node_card, .glass_card, .guide_card { background-color: var(--surface) !important; }
+  .foot_fix { background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); }
+  .chat_talk_container, .clear, .chat_talk_stop { background-color: var(--surface) !important; color: var(--text-primary) !important; }
+  textarea, .node_editor, .summary_textarea, .form_group input, .form_group textarea, .index_select, .new_index_input, .node_search_input { background-color: var(--surface); color: var(--text-primary); }
 }
 
 * {
@@ -34,7 +58,7 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: linear-gradient(135deg, #f4f6fc 0%, #eef2fa 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
 }
 
 .outline {
@@ -398,7 +422,7 @@ body, html {
     height: 60px;
     padding-top: 10px;
     padding-bottom: 10px;
-    background: linear-gradient(135deg, #f4f6fc 0%, #eef2fa 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
 }
 .chat_container {
     display: flex;
@@ -485,20 +509,21 @@ textarea::-webkit-scrollbar { width: 5px; height: 100%; }
 textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
 
 .message {
-    width: auto;
+    width: 100%;
     display: flex;
-    padding: 10px;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 6px 10px;
 }
-.message .sender_man, .message .sender_bot {
-    width: 0;
-    height: 0;
-    flex-shrink: 0;
-    flex-grow: 0;
-}
+.message.user { justify-content: flex-end; }
+.message.bot { justify-content: flex-start; }
+
 .message .content_man_img, .message .content_bot_img {
     min-width: 30px;
+    width: 30px;
     height: 30px;
     border-radius: 30px;
+    flex-shrink: 0;
     box-shadow: 0 2px 20px rgba(157, 157, 157, 0.5);
 }
 .message .content_man_img {
@@ -515,29 +540,60 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
 }
 .message .content_man, .message .content_bot {
     min-width: 20px;
-    max-width: 600px;
-    padding: 10px;
-    overflow-x: hidden;
+    max-width: min(680px, 80%);
+    padding: 10px 14px;
+    overflow-x: auto;
     word-wrap: break-word;
-    border-radius: 10px;
-    box-shadow: 0 2px 20px rgba(157, 157, 157, 0.5);
+    border-radius: 14px;
+    box-shadow: 0 2px 20px rgba(157, 157, 157, 0.15);
+    line-height: 1.6;
 }
-.message .content_man { margin-right: 10px; background-color: var(--primary-bg); }
-.message .content_bot { margin-left: 10px; background-color: rgb(242, 242, 242); }
-.message .box_side { width: 0px; height: 10px; }
-.chat_bottom { width: 100%; height: 80px; }
+.message .content_man { background-color: var(--primary-bg); color: var(--text-primary); }
+.message .content_bot { background-color: var(--surface-alt); color: var(--text-primary); }
+.message .content_bot p, .message .content_man p { margin-bottom: 6px; }
+.message .content_bot p:last-child, .message .content_man p:last-child { margin-bottom: 0; }
+.message .content_bot ul, .message .content_bot ol { margin: 4px 0 4px 20px; }
+.message .content_bot code {
+    background: rgba(0,0,0,0.06);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+.message .content_bot pre {
+    background: rgba(0,0,0,0.06);
+    padding: 10px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 6px 0;
+}
 
-#chatbox { display: flex; flex-direction: column; gap: 10px; padding: 10px 0; }
-.cursor {
-    display: inline-block;
-    width: 10px;
-    height: 20px;
-    background-color: black;
-    vertical-align: text-bottom;
-    animation: blink 1s infinite;
+.chat_bottom { width: 100%; height: 40px; }
+.talk_content { max-width: 900px; margin: 0 auto; width: 100%; }
+
+#chatbox { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; }
+
+/* 引用来源面板 */
+.citations { margin-top: 8px; }
+.citations_toggle {
+    background: none;
+    border: 1px solid rgba(25, 84, 142, 0.25);
+    color: var(--primary);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    cursor: pointer;
 }
-@keyframes blink { 50% { opacity: 0; } }
-.replycontent { display: inline; }
+.citations_toggle:hover { background: var(--primary-bg); }
+.citations_list { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+.citation_item {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(0,0,0,0.03);
+    border-left: 2px solid var(--primary);
+    padding: 6px 10px;
+    border-radius: 4px;
+    line-height: 1.5;
+}
 
 /* ===== 反馈页面样式 (feed_back.html) ===== */
 .feedback_email {
@@ -1136,6 +1192,20 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
 
 
 /* ===== 聊天页面增强样式 (index.html) ===== */
+.chat_talk_stop {
+    margin: 3px 6px 6px 0;
+    min-width: 40px;
+    height: 40px;
+    background-color: #fff;
+    border: 2px solid rgb(209, 209, 209);
+    font-size: 16px;
+    border-radius: 30px;
+    color: var(--danger);
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.chat_talk_stop:hover { opacity: 0.85; }
+
 .thinking-indicator {
     display: inline-flex;
     align-items: center;
@@ -1143,7 +1213,6 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
     color: var(--text-secondary);
     font-style: italic;
 }
-
 .thinking-spinner {
     display: inline-block;
     width: 14px;
@@ -1154,12 +1223,4 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
     animation: spin 0.8s linear infinite;
     flex-shrink: 0;
 }
-
-.is-hidden {
-    display: none !important;
-}
-
-/* 打字机播放时可点击跳过 */
-.content_bot.typing {
-    cursor: pointer;
-}
+.is-hidden { display: none !important; }

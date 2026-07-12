@@ -80,13 +80,16 @@ async def chat_graph_stream(request: Request, query: str = Form(max_length=5000)
     query = query.strip()
     customer_logger.info(f"chat_stream: {query}")
     res = await chat_engine.astream_chat(query)
-    customer_logger.info(f"res: {res}")
-    return StreamingResponse(res.response_gen, media_type="text/plain")
+    _last_query_response.set(client_id, getattr(res, "source_nodes", None) or [])
+    # astream_chat() feeds achat_stream/aqueue, not the sync chat_stream/queue that
+    # the sync response_gen property reads from — only async_response_gen() actually
+    # yields tokens for responses produced via the async streaming path.
+    return StreamingResponse(res.async_response_gen(), media_type="text/plain")
 
 
 @graph_app.post("/query_stream")
 async def query_graph_stream(request: Request, query: str = Form(max_length=5000)):
-    query_engine = compose_graph_query_engine()
+    query_engine = compose_graph_query_engine(streaming=True)
     query = query.strip()
     customer_logger.info(f"query_stream: {query}")
     response = await query_engine.aquery(query)

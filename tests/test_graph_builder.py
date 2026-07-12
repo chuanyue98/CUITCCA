@@ -18,6 +18,7 @@ class FakeIndex:
     def __init__(self, index_id="test-index"):
         self.index_id = index_id
         self.summary = ""
+        self.as_query_engine = MagicMock(return_value=MagicMock())
 
 
 class MultiIndexQueryEngineInitTest(unittest.TestCase):
@@ -125,16 +126,33 @@ class ComposeGraphQueryEngineTest(unittest.TestCase):
 
         self.assertIs(engine1, engine2)
 
+    @patch("handlers.graph_builder.indexes", new_callable=list)
+    def test_caches_streaming_and_non_streaming_separately(self, mock_indexes):
+        # Regression: the cache used to be a single slot keyed by nothing, so
+        # whichever streaming value called compose_graph_query_engine() first
+        # got stuck there forever, silently handing every later caller (of the
+        # *other* streaming value) the wrong kind of engine.
+        fake_index = FakeIndex()
+        fake_index.as_query_engine = MagicMock(side_effect=lambda **kwargs: MagicMock())
+        mock_indexes.extend([fake_index])
+
+        non_streaming = compose_graph_query_engine(streaming=False)
+        streaming = compose_graph_query_engine(streaming=True)
+
+        self.assertIsNot(non_streaming, streaming)
+        self.assertIs(compose_graph_query_engine(streaming=False), non_streaming)
+        self.assertIs(compose_graph_query_engine(streaming=True), streaming)
+
 
 class InvalidateQueryEngineCacheTest(unittest.TestCase):
     def test_clears_cache(self):
         fake_indexes = [FakeIndex()]
         engine = MultiIndexQueryEngine(indexes_snapshot=fake_indexes)
-        handlers.graph_builder._query_engine_cache = engine
+        handlers.graph_builder._query_engine_caches[False] = engine
 
         invalidate_query_engine_cache()
 
-        self.assertIsNone(handlers.graph_builder._query_engine_cache)
+        self.assertEqual(handlers.graph_builder._query_engine_caches, {})
 
 
 class SummaryIndexTest(unittest.TestCase):

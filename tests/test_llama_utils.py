@@ -127,6 +127,26 @@ class GenerateQueryEngineToolsTest(unittest.TestCase):
         result = llama_utils.generate_query_engine_tools([])
         self.assertEqual(result, [])
 
+    def test_falls_back_to_index_id_when_summary_attribute_missing(self):
+        # A freshly created index (create_empty_index) never gets a .summary
+        # attribute set until loadAllIndexes()/set_summary() runs, so a plain
+        # object without that attribute reproduces the real gap -- MagicMock
+        # would auto-vivify .summary and hide the bug.
+        class BareIndex:
+            def __init__(self):
+                self.index_id = 'bare-index'
+
+            def as_query_engine(self, **kwargs):
+                return MagicMock()
+
+        index = BareIndex()
+
+        with patch('utils.llama.QueryEngineTool') as mock_tool_cls:
+            llama_utils.generate_query_engine_tools([index])
+
+        _, kwargs = mock_tool_cls.from_defaults.call_args
+        self.assertEqual(kwargs['description'], '知识库索引: bare-index')
+
     def test_passes_correct_arguments_to_query_engine(self):
         index = MagicMock()
         index.summary = 'Test summary'
@@ -138,9 +158,10 @@ class GenerateQueryEngineToolsTest(unittest.TestCase):
                 llama_utils.generate_query_engine_tools([index])
 
         index.as_query_engine.assert_called_once_with(
-            streaming=True,
+            streaming=False,
             text_qa_template='qa prompt',
             refine_template='refine prompt',
+            similarity_top_k=5,
         )
 
 

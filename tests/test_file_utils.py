@@ -1,10 +1,11 @@
-import asyncio
+import asyncio  # noqa: I001 (tests._pathsetup must precede models.user below)
 import unittest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import utils.file as f
 
 import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
+from models.user import Feedback
 
 
 class SafeFilenameTest(unittest.TestCase):
@@ -65,43 +66,13 @@ class GetFoldersListTest(unittest.TestCase):
         self.assertEqual(result, [])
 
 
-class SaveFeedbackToFileTest(unittest.TestCase):
-    @patch('utils.file.os.makedirs')
-    @patch('utils.file.aiofiles.open')
-    @patch('utils.file.datetime')
-    @patch('utils.file.FEEDBACK_PATH', '/fake/feedback')
-    def test_writes_feedback_with_all_fields(self, mock_datetime, mock_aio_open, mock_makedirs):
-        mock_datetime.now.return_value.strftime.return_value = '2024-01-15_10-30-00.txt'
-        mock_file = AsyncMock()
-        mock_aio_open.return_value.__aenter__.return_value = mock_file
-
-        feedback = MagicMock()
-        feedback.email = 'test@example.com'
-        feedback.message = 'Great tool!'
-
-        asyncio.run(f.save_feedback_to_file(feedback, '192.168.1.1'))
-
-        mock_makedirs.assert_called_once_with('/fake/feedback', exist_ok=True)
-        mock_file.write.assert_any_call("Name (IP): 192.168.1.1\n")
-        mock_file.write.assert_any_call("Email: test@example.com\n")
-        mock_file.write.assert_any_call("Message: Great tool!\n")
-
-    @patch('utils.file.os.makedirs')
-    @patch('utils.file.aiofiles.open')
-    @patch('utils.file.datetime')
-    @patch('utils.file.FEEDBACK_PATH', '/fake/feedback')
-    def test_writes_feedback_without_email(self, mock_datetime, mock_aio_open, mock_makedirs):
-        mock_datetime.now.return_value.strftime.return_value = '2024-01-15_10-30-00.txt'
-        mock_file = AsyncMock()
-        mock_aio_open.return_value.__aenter__.return_value = mock_file
-
-        feedback = MagicMock()
-        feedback.email = None
-        feedback.message = 'No email provided'
-
-        asyncio.run(f.save_feedback_to_file(feedback, '10.0.0.1'))
-
-        mock_file.write.assert_any_call("Email: NONE\n")
+class SaveFeedbackTest(unittest.TestCase):
+    def test_save_feedback_persists_to_sqlite(self):
+        with patch('utils.file.db.save_feedback') as mock_save, \
+             patch('utils.file.db_path', '/fake/app.db'):
+            feedback = Feedback(email='a@b.com', message='hello')
+            asyncio.run(f.save_feedback('192.168.1.1', feedback))
+        mock_save.assert_called_once_with('/fake/app.db', '192.168.1.1', 'a@b.com', 'hello')
 
 
 if __name__ == '__main__':

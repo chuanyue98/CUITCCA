@@ -1,10 +1,10 @@
-import unittest
+import unittest  # noqa: I001 (tests._pathsetup must precede main below)
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
-from main import app
 
 import tests._pathsetup  # noqa: F401
+from main import app
 
 
 class GraphRouterTest(unittest.TestCase):
@@ -13,6 +13,50 @@ class GraphRouterTest(unittest.TestCase):
 
     def tearDown(self):
         app.dependency_overrides.clear()
+
+    # ── router-based multi-index composition ───────────────────────
+
+    def test_compose_query_engine_uses_router_with_indexes(self):
+        # Two indexes: single-index queries deliberately bypass the router
+        # (see _build_query_engine's `len(indexes_snapshot) == 1` shortcut),
+        # so router selection only kicks in once there's something to choose between.
+        import handlers.graph_builder as gb
+        fake_index1 = MagicMock()
+        fake_index1.index_id = 'idx1'
+        fake_index1.summary = 'campus dorm rules'
+        fake_index1.as_query_engine.return_value = MagicMock()
+
+        fake_index2 = MagicMock()
+        fake_index2.index_id = 'idx2'
+        fake_index2.summary = 'campus dining hours'
+        fake_index2.as_query_engine.return_value = MagicMock()
+
+        # Both LLMSingleSelector.from_defaults() and RouterQueryEngine.from_defaults()
+        # fall back to Settings.llm when no LLM is passed explicitly, which tries to
+        # build a real default OpenAI client and blows up wherever OPENAI_API_KEY
+        # isn't set (e.g. CI). Stub Settings.llm out — this test only cares that
+        # routing (RouterQueryEngine) is used, not how any LLM gets resolved.
+        # Settings.llm is a property backed by ._llm; patch.object can't patch
+        # the property itself (it isn't in the instance __dict__), so target
+        # the backing field directly.
+        from llama_index.core import Settings
+        with patch.object(gb, 'indexes', [fake_index1, fake_index2]), \
+                patch.object(Settings, '_llm', MagicMock()):
+            gb.invalidate_query_engine_cache()
+            engine = gb.compose_graph_query_engine()
+
+        from llama_index.core.query_engine import RouterQueryEngine
+        self.assertIsInstance(engine, RouterQueryEngine)
+        gb.invalidate_query_engine_cache()
+
+    def test_compose_query_engine_falls_back_with_no_indexes(self):
+        import handlers.graph_builder as gb
+        with patch.object(gb, 'indexes', []):
+            gb.invalidate_query_engine_cache()
+            engine = gb.compose_graph_query_engine()
+
+        self.assertIsInstance(engine, gb.MultiIndexQueryEngine)
+        gb.invalidate_query_engine_cache()
 
     # ── /graph/create ──────────────────────────────────────────────
 
@@ -106,6 +150,10 @@ class GraphRouterTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, "chunk1chunk2")
+        # Regression: this endpoint used to call compose_graph_query_engine()
+        # with the default streaming=False, so in production (unmocked) it
+        # got back a plain Response with no .response_gen attribute at all.
+        mock_compose.assert_called_once_with(streaming=True)
 
     # ── /graph/query_sources ──────────────────────────────────────
 
@@ -224,13 +272,27 @@ class GraphRouterTest(unittest.TestCase):
         del rg.indexes
 
     # ── /graph/chat_stream ────────────────────────────────────────
+    #
+    # astream_chat() returns a StreamingAgentChatResponse whose *sync*
+    # response_gen only works for the sync chat() path (it reads from a
+    # queue fed by a background write-to-history Thread). The async
+    # astream_chat() path instead feeds an asyncio Task/queue, which the
+    # sync response_gen never observes (either raises "chat_stream is
+    # None!" or spins forever depending on is_writing_to_memory). The
+    # real async output only comes through async_response_gen(), so
+    # that's what these fakes (and the production code) must use.
+
+    @staticmethod
+    async def _async_gen(items):
+        for item in items:
+            yield item
 
     @patch('router.graph.compose_graph_chat_egine')
     def test_chat_stream_creates_engine_if_missing(self, mock_compose):
         fake_engine = MagicMock()
         async def mock_astream_chat(q):
             resp = MagicMock()
-            resp.response_gen = iter(["chat", "response"])
+            resp.async_response_gen = lambda: self._async_gen(["chat", "response"])
             return resp
         fake_engine.astream_chat = mock_astream_chat
         mock_compose.return_value = fake_engine
@@ -245,7 +307,7 @@ class GraphRouterTest(unittest.TestCase):
         fake_engine = MagicMock()
         async def mock_astream_chat(q):
             resp = MagicMock()
-            resp.response_gen = iter(["existing"])
+            resp.async_response_gen = lambda: self._async_gen(["existing"])
             return resp
         fake_engine.astream_chat = mock_astream_chat
         mock_compose.return_value = fake_engine
@@ -255,6 +317,30 @@ class GraphRouterTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, "existing")
+
+    @patch('router.graph.compose_graph_chat_egine')
+    def test_chat_stream_populates_query_sources(self, mock_compose):
+        fake_engine = MagicMock()
+        source_node = MagicMock()
+        source_node.node.id_ = "n1"
+        source_node.node.text = "cited text"
+        source_node.score = 0.8
+
+        async def mock_astream_chat(q):
+            resp = MagicMock()
+            resp.async_response_gen = lambda: self._async_gen(["hello"])
+            resp.source_nodes = [source_node]
+            return resp
+        fake_engine.astream_chat = mock_astream_chat
+        mock_compose.return_value = fake_engine
+
+        self.client.post("/graph/chat_stream", data={"query": "hi"})
+        response = self.client.post("/graph/query_sources")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["source_nodes"]), 1)
+        self.assertEqual(data["source_nodes"][0]["id"], "n1")
 
 
 if __name__ == '__main__':
