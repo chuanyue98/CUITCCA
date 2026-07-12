@@ -46,6 +46,17 @@ class DbTest(unittest.TestCase):
         self.assertIsNone(entries[0]['email'])
         self.assertEqual(entries[1]['client_ip'], '192.168.1.1')
 
+    def test_record_visit_creates_and_increments(self):
+        db.record_visit(self.db_path, '10.0.0.1', '/graph/query')
+        loaded = db.load_stats(self.db_path)
+        self.assertEqual(loaded['user_visits']['10.0.0.1'], 1)
+        self.assertEqual(loaded['endpoint_visits']['/graph/query'], 1)
+
+        db.record_visit(self.db_path, '10.0.0.1', '/graph/query')
+        loaded = db.load_stats(self.db_path)
+        self.assertEqual(loaded['user_visits']['10.0.0.1'], 2)
+        self.assertEqual(loaded['endpoint_visits']['/graph/query'], 2)
+
 
 if __name__ == '__main__':
     unittest.main()

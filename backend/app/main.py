@@ -11,7 +11,6 @@ from configs.load_env import (
     COOKIE_SECURE,
     LOAD_PATH,
     SAVE_PATH,
-    access_stats_path,
     chroma_db_path,
     db_path,
     reload_env_variables,

@@ -58,6 +58,21 @@ def flush_stats(db_path: str, stats: dict) -> None:
         conn.commit()
 
 
+def record_visit(db_path: str, client_ip: str, endpoint: str) -> None:
+    with closing(_connect(db_path)) as conn:
+        conn.execute(
+            "INSERT INTO ip_visits (ip, count) VALUES (?, 1) "
+            "ON CONFLICT(ip) DO UPDATE SET count = count + 1",
+            (client_ip,),
+        )
+        conn.execute(
+            "INSERT INTO endpoint_visits (endpoint, count) VALUES (?, 1) "
+            "ON CONFLICT(endpoint) DO UPDATE SET count = count + 1",
+            (endpoint,),
+        )
+        conn.commit()
+
+
 def load_stats(db_path: str) -> dict:
     with closing(_connect(db_path)) as conn:
         total_row = conn.execute(

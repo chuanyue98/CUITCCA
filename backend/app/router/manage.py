@@ -7,7 +7,7 @@ from dependencies.manage import access_stats
 from dotenv import dotenv_values, set_key
 from fastapi import APIRouter, Depends, Form, HTTPException
 from llama_index.core import Settings
-from models.response import EnvUpdateResponse, FeedbackEntry, FeedbackListResponse, FeedbackResponse, StatsResponse
+from models.response import EnvUpdateResponse, FeedbackListResponse, FeedbackResponse, StatsResponse
 from models.user import Feedback
 from starlette.requests import Request
 from utils.file import save_feedback
