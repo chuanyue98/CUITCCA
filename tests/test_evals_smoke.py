@@ -99,6 +99,29 @@ def test_ingest_corpus_module_imports_without_side_effects():
     assert ingest_corpus.DEFAULT_COLLECTION == "campus-corpus"
 
 
+def test_run_rerank_eval_module_imports_without_side_effects():
+    """import 不应触发模型下载/加载（sentence-transformers 只在函数体内 import）。"""
+    import evals.run_rerank_eval as run_rerank_eval
+
+    assert callable(run_rerank_eval.main)
+    assert callable(run_rerank_eval.run_ab_eval)
+    assert run_rerank_eval.DEFAULT_TOP_K == 5
+    assert run_rerank_eval.DEFAULT_RECALL_K == 20
+
+
+def test_common_rank_metric_helpers():
+    from evals._common import hit_rate_at, mrr_at
+
+    ranks = [1, 3, None, 2]
+    assert hit_rate_at(ranks, 1) == 0.25
+    assert hit_rate_at(ranks, 2) == 0.5
+    assert hit_rate_at(ranks, 5) == 0.75
+    assert mrr_at(ranks, 5) == (1.0 + 1 / 3 + 0.0 + 0.5) / 4
+    assert mrr_at(ranks, 2) == (1.0 + 0.0 + 0.0 + 0.5) / 4
+    assert hit_rate_at([], 5) == 0.0
+    assert mrr_at([], 5) == 0.0
+
+
 def test_common_module_strip_uuid_prefix():
     from evals._common import strip_uuid_prefix
 

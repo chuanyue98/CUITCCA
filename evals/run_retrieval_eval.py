@@ -30,7 +30,13 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from evals._common import EVALS_DIR, bootstrap_backend_path, load_jsonl, source_matches  # noqa: E402
+from evals._common import (  # noqa: E402
+    EVALS_DIR,
+    bootstrap_backend_path,
+    first_hit_rank,
+    format_retrieved,
+    load_jsonl,
+)
 
 DEFAULT_GOLDEN = EVALS_DIR / "golden.seed.jsonl"
 DEFAULT_RESULTS_DIR = EVALS_DIR / "results"
@@ -70,25 +76,8 @@ def _detect_collection(explicit: str | None) -> str | None:
 
 def _evaluate_one(item: dict, nodes_with_scores) -> dict:
     expected_sources = item.get("expected_sources") or []
-    rank = None
-    matched_source = None
-    retrieved = []
-    for i, nws in enumerate(nodes_with_scores, start=1):
-        metadata = nws.node.metadata or {}
-        file_name = metadata.get("file_name") or metadata.get("doc_id") or ""
-        retrieved.append(
-            {
-                "rank": i,
-                "file_name": file_name,
-                "score": float(nws.score) if nws.score is not None else None,
-            }
-        )
-        if rank is None:
-            for expected in expected_sources:
-                if source_matches(expected, metadata):
-                    rank = i
-                    matched_source = expected
-                    break
+    rank, matched_source = first_hit_rank(expected_sources, nodes_with_scores)
+    retrieved = format_retrieved(nodes_with_scores)
 
     hit = rank is not None
     reciprocal_rank = 1.0 / rank if rank is not None else 0.0

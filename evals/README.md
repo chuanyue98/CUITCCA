@@ -15,7 +15,8 @@ evals/
 ├── generate_golden.py         从现有索引批量生成 QA 候选
 ├── ingest_corpus.py           一次性导入：把仓库里的真实文档全量导入 campus-corpus collection
 ├── run_retrieval_eval.py      核心：跑检索评测，算 hit-rate / MRR
-└── results/                   run_retrieval_eval.py 的输出报告（JSON，按时间戳命名）
+├── run_rerank_eval.py         A/B 对比：向量检索基线 vs 召回20+cross-encoder重排取5
+└── results/                   评测脚本的输出报告（JSON，按时间戳命名）
 ```
 
 ## 现状（侦察结论，写这份 evals 时的事实）
@@ -91,7 +92,21 @@ uv run python evals/run_retrieval_eval.py --collection campus-corpus --top-k 5
 如果本地压根没有 Chroma 索引数据（比如全新 checkout、CI 环境），脚本会打
 印清晰提示并以 exit code 0 优雅退出——这是刻意设计的，见下面的 CI 说明。
 
-### 4.（可选）批量生成候选题
+### 4. Rerank A/B 评测（回答"值不值得上 reranker"）
+
+```bash
+uv sync --group rerank   # sentence-transformers（刻意不进主依赖，评测证明值得再提升）
+uv run python evals/run_rerank_eval.py --collection campus-corpus
+```
+
+A 组：向量检索 top_k=5（= 线上主路径 = run_retrieval_eval 的配置）。
+B 组：向量召回 `--recall-k`（默认 20）条，再用本地 cross-encoder
+`BAAI/bge-reranker-v2-m3`（约 2.2GB，首次运行自动下载，无需 API key）重排取
+top 5。两组都报 hit_rate@1/@2/@5、MRR@5 和每题检索延迟（均值/中位/最大），
+结果写 `evals/results/rerank_*.json`。@1/@2 是关键指标：线上 `/query` 接口
+只取 top_k=2，rerank 的价值主要看能不能把正确来源顶进前两位。
+
+### 5.（可选）批量生成候选题
 
 ```bash
 # 需要配置好 .env 里的 OPENAI_API_KEY / OPENAI_API_BASE / OPENAI_MODEL

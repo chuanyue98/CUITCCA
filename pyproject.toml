@@ -41,6 +41,11 @@ dependencies = [
 ]
 
 [dependency-groups]
+# rerank 组：evals/run_rerank_eval.py 的本地 cross-encoder 重排（bge-reranker-v2-m3）。
+# 刻意不进主依赖——先用评测数据证明 rerank 值得上线再提升（见 evals/README.md）。
+rerank = [
+    "sentence-transformers>=3.0",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",

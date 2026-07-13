@@ -94,3 +94,44 @@ def write_jsonl(path: Path, records: list[dict]) -> None:
 
 
 GOLDEN_REQUIRED_FIELDS = ("id", "question", "expected_answer", "expected_sources", "category")
+
+
+def first_hit_rank(expected_sources: list[str], nodes_with_scores) -> tuple[int | None, str | None]:
+    """返回检索结果里第一个命中 expected_sources 的排名（1-based）和命中的来源。
+
+    没命中返回 (None, None)。run_retrieval_eval.py 和 run_rerank_eval.py 共用。
+    """
+    for i, nws in enumerate(nodes_with_scores, start=1):
+        metadata = nws.node.metadata or {}
+        for expected in expected_sources:
+            if source_matches(expected, metadata):
+                return i, expected
+    return None, None
+
+
+def format_retrieved(nodes_with_scores) -> list[dict]:
+    """把检索结果整理成可写进 JSON 报告的精简结构。"""
+    return [
+        {
+            "rank": i,
+            "file_name": (nws.node.metadata or {}).get("file_name")
+            or (nws.node.metadata or {}).get("doc_id")
+            or "",
+            "score": float(nws.score) if nws.score is not None else None,
+        }
+        for i, nws in enumerate(nodes_with_scores, start=1)
+    ]
+
+
+def hit_rate_at(ranks: list[int | None], k: int) -> float:
+    """hit_rate@k：first-hit 排名 <= k 的比例。ranks 里 None 表示未命中。"""
+    if not ranks:
+        return 0.0
+    return sum(1 for r in ranks if r is not None and r <= k) / len(ranks)
+
+
+def mrr_at(ranks: list[int | None], k: int) -> float:
+    """MRR@k：first-hit 排名 <= k 时计 1/rank，否则计 0，再取平均。"""
+    if not ranks:
+        return 0.0
+    return sum(1.0 / r for r in ranks if r is not None and r <= k) / len(ranks)

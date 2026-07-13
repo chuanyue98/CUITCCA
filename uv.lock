@@ -815,6 +815,9 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
+rerank = [
+    { name = "sentence-transformers" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -860,6 +863,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=5.0" },
     { name = "ruff", specifier = ">=0.5" },
 ]
+rerank = [{ name = "sentence-transformers", specifier = ">=3.0" }]
 
 [[package]]
 name = "cyclonedx-python-lib"
