@@ -21,12 +21,28 @@ db_path = ''
 COOKIE_SECURE = False
 COOKIE_MAX_AGE = 86400
 
+# 检索 top_k 集中配置（Phase 2）。三处调用点历史上各自硬编码了不同的值，
+# 业务含义并不相同，这里只是把"数字定义在哪"集中到一处、可通过环境变量覆盖，
+# 默认值和改造前完全一致，不改变现有线上行为：
+# - DEFAULT_SIMILARITY_TOP_K：主查询路径（单索引直接查询 / RouterQueryEngine
+#   多索引路由，backend/app/handlers/graph_builder.py 的 _build_query_engine）
+#   用的默认值，也是新代码没有特殊理由时应该用的默认值。原值 5。
+# - QUERY_ENDPOINT_TOP_K：backend/app/router/index.py 的 /query 接口历史上就
+#   故意用更小的 top_k（更快但召回更少），这是有意的行为差异，不是遗漏，
+#   保留不变。原值 2。
+# - MULTI_INDEX_FALLBACK_TOP_K：MultiIndexQueryEngine（挨个查所有索引、取第
+#   一个非空响应，backend/app/router/graph.py 的 /agent 路径用）的默认值。
+#   原值 3。
+DEFAULT_SIMILARITY_TOP_K = 5
+QUERY_ENDPOINT_TOP_K = 2
+MULTI_INDEX_FALLBACK_TOP_K = 3
+
 
 def reload_env_variables():
     load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
     global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
         openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE, chroma_db_path, \
-        db_path
+        db_path, DEFAULT_SIMILARITY_TOP_K, QUERY_ENDPOINT_TOP_K, MULTI_INDEX_FALLBACK_TOP_K
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_base = os.environ.get('OPENAI_API_BASE') or 'https://api.openai.com/v1'
@@ -54,6 +70,10 @@ def reload_env_variables():
 
     COOKIE_SECURE = os.environ.get('COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
     COOKIE_MAX_AGE = int(os.environ.get('COOKIE_MAX_AGE', '86400'))
+
+    DEFAULT_SIMILARITY_TOP_K = int(os.environ.get('SIMILARITY_TOP_K', '5'))
+    QUERY_ENDPOINT_TOP_K = int(os.environ.get('QUERY_ENDPOINT_TOP_K', '2'))
+    MULTI_INDEX_FALLBACK_TOP_K = int(os.environ.get('MULTI_INDEX_FALLBACK_TOP_K', '3'))
 
     # 启动时校验必需的 env 变量
     if not openai_api_key:

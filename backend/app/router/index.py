@@ -5,7 +5,7 @@ import uuid
 import aiofiles
 from configs.config import Prompts
 from configs.llm_predictor import build_llm
-from configs.load_env import LOAD_PATH, SAVE_PATH
+from configs.load_env import LOAD_PATH, QUERY_ENDPOINT_TOP_K, SAVE_PATH
 from dependencies import get_index
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from handlers import delete_collection, list_index_names
@@ -97,7 +97,7 @@ async def query_index(index=Depends(get_index), query: str = Form(max_length=500
     engine = index.as_query_engine(
         text_qa_template=Prompts.QA_PROMPT.value.template,
         refine_template=Prompts.REFINE_PROMPT.value.template,
-        similarity_top_k=2,
+        similarity_top_k=QUERY_ENDPOINT_TOP_K,
     )
 
     response = await engine.aquery(query)

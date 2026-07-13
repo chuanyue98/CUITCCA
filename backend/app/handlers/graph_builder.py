@@ -3,7 +3,7 @@ import logging
 import re
 
 from configs.config import Prompts
-from configs.load_env import VERBOSE
+from configs.load_env import DEFAULT_SIMILARITY_TOP_K, MULTI_INDEX_FALLBACK_TOP_K, VERBOSE
 from handlers.index_crud import indexes
 from llama_index.core.base.response.schema import RESPONSE_TYPE
 from llama_index.core.callbacks import CallbackManager
@@ -29,7 +29,7 @@ class MultiIndexQueryEngine(BaseQueryEngine):
                 streaming=self._streaming,
                 text_qa_template=Prompts.QA_PROMPT.value,
                 refine_template=Prompts.REFINE_PROMPT.value,
-                similarity_top_k=3,
+                similarity_top_k=MULTI_INDEX_FALLBACK_TOP_K,
                 verbose=VERBOSE,
             )
             for index in self._indexes_snapshot
@@ -74,9 +74,11 @@ def _build_query_engine(streaming: bool) -> BaseQueryEngine:
             streaming=streaming,
             text_qa_template=Prompts.QA_PROMPT.value,
             refine_template=Prompts.REFINE_PROMPT.value,
-            similarity_top_k=5,
+            similarity_top_k=DEFAULT_SIMILARITY_TOP_K,
         )
-    tools = generate_query_engine_tools(indexes_snapshot, streaming=streaming, similarity_top_k=5)
+    tools = generate_query_engine_tools(
+        indexes_snapshot, streaming=streaming, similarity_top_k=DEFAULT_SIMILARITY_TOP_K
+    )
     return RouterQueryEngine.from_defaults(
         query_engine_tools=tools,
         selector=LLMSingleSelector.from_defaults(),

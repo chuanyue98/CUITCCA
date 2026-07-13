@@ -37,12 +37,20 @@ evals/
     就业"主题，**不是完整知识库**。首份基线（2026-07-13）在它上面只有
     hit_rate 25% / MRR 0.250——不是评测脚本的 bug，而是如实反映了索引覆盖
     不全。
-  - `campus-corpus`（809 chunk）：由 `evals/ingest_corpus.py` 把
-    `信息搜集汇总/` 和 `data/upload_files/` 下的全部可解析文档（按内容
-    hash 去重后 119 个文件）导入生成，metadata 的 `file_name` 是**原始文件
-    名**（没有线上上传路径加的 uuid 前缀）。这是评测用的正式语料，第二份
-    基线在它上面是 hit_rate 100% / MRR 0.877（top_k=5）。重跑
-    `ingest_corpus.py` 会先删掉重建该 collection，可安全重复执行。
+  - `campus-corpus`（775 chunk，110 个权威文件）：由 `evals/ingest_corpus.py`
+    把 `信息搜集汇总/` 和 `data/upload_files/` 下的全部可解析文档导入生成。
+    Phase 2 起复用 `backend/app/handlers/ingestion_pipeline.py` 的生产级摄取
+    逻辑：文档 id = 内容 sha256，metadata 的 `file_name` 是**原始文件名**
+    （没有线上上传路径加的 uuid 前缀），额外带 `last_updated`（文件 mtime）；
+    同名不同内容的冲突（比如两个版本的 `学校历史.txt`/`大学精神.txt`，
+    Phase 2 侦察发现有 7 组）按 mtime 取更新版本，运行时会打印"发现同名冲突"
+    明细，不静默丢弃信息。这是评测用的正式语料，重跑 `ingest_corpus.py` 会
+    先删掉重建该 collection，可安全重复执行。三份基线：test-index
+    hit_rate 25%/MRR 0.250 → campus-corpus（Phase 0，含未消解冲突）
+    hit_rate 100%/MRR 0.877 → campus-corpus（Phase 2，冲突已消解）
+    hit_rate 100%/MRR 0.827（top_k=5；MRR 小幅下降是因为语料更干净后，
+    q017/q019 这类泛化提问在更完整的院系/学习资源类文档里有了更多语义相近
+    的候选，不是检索退化，hit_rate 仍是 100%）。
 - `golden.seed.jsonl` 按"知识库应该覆盖的真实主题"编写。评测应以
   `campus-corpus` 为准：
   `uv run python evals/run_retrieval_eval.py --collection campus-corpus --top-k 5`。
