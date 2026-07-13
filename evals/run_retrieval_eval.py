@@ -35,7 +35,9 @@ from evals._common import (  # noqa: E402
     bootstrap_backend_path,
     first_hit_rank,
     format_retrieved,
+    hit_rate_at,
     load_jsonl,
+    mrr_at,
 )
 
 DEFAULT_GOLDEN = EVALS_DIR / "golden.seed.jsonl"
@@ -123,8 +125,9 @@ def run_eval(golden_path: Path, collection_name: str | None, top_k: int) -> dict
     golden = load_jsonl(golden_path)
     details = [_evaluate_one(item, retriever.retrieve(item["question"])) for item in golden]
 
-    overall_hit_rate = sum(d["hit"] for d in details) / len(details) if details else 0.0
-    overall_mrr = sum(d["reciprocal_rank"] for d in details) / len(details) if details else 0.0
+    ranks = [d["rank"] for d in details]
+    overall_hit_rate = hit_rate_at(ranks, top_k)
+    overall_mrr = mrr_at(ranks, top_k)
 
     by_category: dict[str, dict] = {}
     for d in details:

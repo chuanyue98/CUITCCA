@@ -78,6 +78,34 @@ class WorkflowQueryEndpointTest(unittest.TestCase):
         self.assertEqual(kwargs.get("streaming"), True)
 
     @patch("handlers.qa_workflow.QAWorkflow")
+    def test_workflow_query_stream_falls_back_to_error_message_on_exception(self, mock_workflow_cls):
+        """Fix #4 回归测试：stream_events() 迭代到一半抛异常时，不应该让原始
+        异常裸传给客户端（那样会导致 StreamingResponse 中途崩掉），而应该像
+        兄弟端点 workflow_query 一样吞掉异常、记日志、追加统一的兜底文案。"""
+        from handlers.qa_workflow import TokenEvent
+
+        class FakeHandler:
+            async def stream_events(self):
+                yield TokenEvent(token="部分")
+                raise RuntimeError("boom")
+
+            def __await__(self):
+                async def _result():
+                    raise RuntimeError("boom")
+                return _result().__await__()
+
+        mock_instance = MagicMock()
+        mock_instance.run = MagicMock(return_value=FakeHandler())
+        mock_workflow_cls.return_value = mock_instance
+
+        with patch("router.graph.error_logger") as mock_error_logger:
+            response = self.client.post("/graph/workflow_query_stream", data={"query": "会出错的问题"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("出错了，请稍后在试一下吧", response.text)
+        mock_error_logger.error.assert_called_once()
+
+    @patch("handlers.qa_workflow.QAWorkflow")
     def test_workflow_query_stream_ignores_non_token_events(self, mock_workflow_cls):
         """stream_events() 按官方文档会把 StopEvent 也吐出来；HTTP 响应体
         只应该包含 TokenEvent 的 token，不能把别的事件类型也塞进去。"""

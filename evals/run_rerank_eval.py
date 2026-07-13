@@ -84,10 +84,11 @@ def run_ab_eval(
 
     collection = get_or_create_collection(resolved_name)
     try:
-        if collection.count() == 0:
-            print(f"[run_rerank_eval] collection {resolved_name!r} 是空的，没有可评测的数据。")
-            return None
+        has_data = collection.count() > 0
     except Exception:
+        has_data = False
+    if not has_data:
+        print(f"[run_rerank_eval] collection {resolved_name!r} 是空的，没有可评测的数据。")
         return None
 
     init_settings()

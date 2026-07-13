@@ -130,6 +130,63 @@ def test_common_module_strip_uuid_prefix():
     assert strip_uuid_prefix("plain_name.txt") == "plain_name.txt"
 
 
+def test_run_retrieval_eval_overall_metrics_match_shared_helpers():
+    """Fix #8 回归测试：run_retrieval_eval.py 里 overall hit_rate/mrr 现在用
+    evals._common.hit_rate_at/mrr_at 计算，而不是手写的逐条累加公式。每条
+    detail 的 retrieved 已经被截断到 top_k（rank 非 None 时恒 <= top_k），
+    所以两种算法在数值上应该完全等价——这里直接对比两种算法而不依赖本地
+    Chroma 索引数据（CI/沙箱环境通常没有）。"""
+    from evals._common import hit_rate_at, mrr_at
+
+    ranks = [1, None, 3, 2]
+    top_k = 5
+
+    details = [{"hit": r is not None, "reciprocal_rank": (1.0 / r if r is not None else 0.0)} for r in ranks]
+    manual_hit_rate = sum(d["hit"] for d in details) / len(details) if details else 0.0
+    manual_mrr = sum(d["reciprocal_rank"] for d in details) / len(details) if details else 0.0
+
+    assert hit_rate_at(ranks, top_k) == manual_hit_rate
+    assert mrr_at(ranks, top_k) == manual_mrr
+
+
+def test_run_retrieval_eval_module_actually_wires_the_shared_helpers():
+    import inspect
+
+    import evals.run_retrieval_eval as run_retrieval_eval
+
+    source = inspect.getsource(run_retrieval_eval)
+    assert "hit_rate_at" in source
+    assert "mrr_at" in source
+
+
+def test_run_rerank_eval_prints_diagnostic_when_collection_count_raises(capsys):
+    """Fix #10 回归测试：collection.count() 抛异常时，run_ab_eval 应该走和
+    "空 collection" 一样的诊断输出路径（打印 "是空的" 提示后返回 None），
+    而不是静默返回 None、什么都不打印——那样和真正的空跑成功没法区分。"""
+    from pathlib import Path
+    from unittest.mock import MagicMock, patch
+
+    import evals.run_rerank_eval as run_rerank_eval
+
+    fake_collection = MagicMock()
+    fake_collection.count.side_effect = RuntimeError("boom")
+
+    with patch("evals.run_retrieval_eval._detect_collection", return_value="campus-corpus"), \
+            patch("handlers.vector_store.get_or_create_collection", return_value=fake_collection):
+        result = run_rerank_eval.run_ab_eval(
+            golden_path=Path("/nonexistent/does-not-matter.jsonl"),
+            collection_name=None,
+            top_k=5,
+            recall_k=20,
+            reranker_model="BAAI/bge-reranker-v2-m3",
+        )
+
+    assert result is None
+    captured = capsys.readouterr()
+    assert "是空的" in captured.out
+    assert "campus-corpus" in captured.out
+
+
 def test_common_module_source_matches():
     from evals._common import source_matches
 

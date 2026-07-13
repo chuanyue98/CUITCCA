@@ -242,10 +242,14 @@ async def workflow_query_stream(request: Request, query: str = Form(max_length=5
     client_id = _client_id(request)
 
     async def _token_gen():
-        async for ev in handler.stream_events():
-            if isinstance(ev, TokenEvent):
-                yield ev.token
-        result = await handler
-        _last_query_response.set(client_id, result.source_nodes)
+        try:
+            async for ev in handler.stream_events():
+                if isinstance(ev, TokenEvent):
+                    yield ev.token
+            result = await handler
+            _last_query_response.set(client_id, result.source_nodes)
+        except Exception as e:
+            error_logger.error(f"workflow_query_stream error: {e}")
+            yield "出错了，请稍后在试一下吧"
 
     return StreamingResponse(_token_gen(), media_type="text/plain")

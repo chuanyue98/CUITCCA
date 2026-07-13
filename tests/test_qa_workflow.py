@@ -104,6 +104,87 @@ def test_build_retriever_with_single_index_uses_its_retriever_with_shared_top_k(
     assert retriever is fake_retriever
 
 
+def test_build_retriever_with_explicit_top_k_overrides_default():
+    """Fix #6 回归测试：_build_retriever(top_k=...) 传参时应该用传入的值，
+    而不是永远读 load_env.DEFAULT_SIMILARITY_TOP_K（否则
+    evals/run_workflow_retrieval_eval.py 的 --top-k 就是个死参数）。"""
+    fake_index = MagicMock()
+    fake_index.index_id = "idx1"
+    fake_retriever = MagicMock()
+    fake_index.as_retriever.return_value = fake_retriever
+
+    with patch("handlers.qa_workflow.indexes", [fake_index]):
+        retriever = _build_retriever(top_k=3)
+
+    fake_index.as_retriever.assert_called_once_with(similarity_top_k=3)
+    assert retriever is fake_retriever
+
+
+def test_build_retriever_without_top_k_still_uses_default():
+    from configs.load_env import DEFAULT_SIMILARITY_TOP_K
+
+    fake_index = MagicMock()
+    fake_index.index_id = "idx1"
+    fake_index.as_retriever.return_value = MagicMock()
+
+    with patch("handlers.qa_workflow.indexes", [fake_index]):
+        _build_retriever()
+
+    fake_index.as_retriever.assert_called_once_with(similarity_top_k=DEFAULT_SIMILARITY_TOP_K)
+
+
+def test_build_retriever_multi_index_and_generate_query_engine_tools_agree_on_description():
+    """Fix #7 回归测试：qa_workflow._build_retriever() 的多索引分支和
+    utils.llama.generate_query_engine_tools() 过去各自内联同一行
+    `getattr(index, "summary", None) or f"知识库索引: {index.index_id}"`。
+    现在都调用共享的 utils.llama.index_description()，对同一批索引应该产出
+    完全相同的 description 字符串（覆盖有 summary 和没有 summary 两种情况）。
+    """
+    import utils.llama as llama_utils
+    from llama_index.core import Settings
+    from llama_index.core.tools import RetrieverTool
+
+    class BareIndex:
+        """没有 .summary 属性，走 fallback 分支——MagicMock 会自动生成
+        .summary 属性掩盖这条分支，所以用一个朴素对象。"""
+
+        def __init__(self, index_id: str):
+            self.index_id = index_id
+
+        def as_query_engine(self, **kwargs):
+            return MagicMock()
+
+        def as_retriever(self, **kwargs):
+            return MagicMock()
+
+    index_with_summary = MagicMock()
+    index_with_summary.index_id = "idx1"
+    index_with_summary.summary = "campus dorm rules"
+    index_with_summary.as_query_engine.return_value = MagicMock()
+    index_with_summary.as_retriever.return_value = MagicMock()
+
+    index_without_summary = BareIndex("idx2")
+    indexes_list = [index_with_summary, index_without_summary]
+
+    with patch("utils.llama.QueryEngineTool") as mock_tool_cls:
+        llama_utils.generate_query_engine_tools(indexes_list)
+    tool_descriptions = [call.kwargs["description"] for call in mock_tool_cls.from_defaults.call_args_list]
+
+    captured_retriever_descriptions: list[str] = []
+    real_from_defaults = RetrieverTool.from_defaults
+
+    def _capture(*args, **kwargs):
+        captured_retriever_descriptions.append(kwargs["description"])
+        return real_from_defaults(*args, **kwargs)
+
+    with patch("handlers.qa_workflow.indexes", indexes_list), \
+            patch.object(Settings, "_llm", MagicMock()), \
+            patch("handlers.qa_workflow.RetrieverTool.from_defaults", side_effect=_capture):
+        _build_retriever()
+
+    assert tool_descriptions == captured_retriever_descriptions == ["campus dorm rules", "知识库索引: idx2"]
+
+
 def test_build_retriever_with_multiple_indexes_uses_router_retriever():
     """多个索引应该走 RouterRetriever（RetrieverTool + 同一个 LLMSingleSelector），
     和 graph_builder._build_query_engine 的多索引分支用同一套选择器类，不是

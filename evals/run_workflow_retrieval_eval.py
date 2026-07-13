@@ -74,7 +74,7 @@ async def _run(golden_path: Path, collection_name: str | None, top_k: int) -> di
     # selector），和 run_retrieval_eval.py 用的 index.as_retriever(...) 是
     # 完全一样的调用。
     with patch.object(qa_workflow, "indexes", [index]):
-        retriever = qa_workflow._build_retriever()
+        retriever = qa_workflow._build_retriever(top_k=top_k)
         golden = load_jsonl(golden_path)
         details = []
         for item in golden:

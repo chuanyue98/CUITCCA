@@ -62,8 +62,13 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+# DEFAULT_SIMILARITY_TOP_K 故意不在这里用 `from configs.load_env import X` 直接
+# 绑定，理由见 handlers/graph_builder.py 顶部同样的说明——那样绑定会让
+# reload_env_variables() 之后这个值就再也感知不到环境变量变化了。改成
+# `import configs.load_env as load_env` + 使用处 `load_env.X` 属性访问，才能
+# 在每次真正调用时读到最新值。
+import configs.load_env as load_env
 from configs.config import Prompts
-from configs.load_env import DEFAULT_SIMILARITY_TOP_K
 from handlers.index_crud import indexes
 from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
@@ -81,6 +86,7 @@ from llama_index.core.workflow import (
     step,
 )
 from pydantic import Field
+from utils.llama import index_description
 
 logger = logging.getLogger(__name__)
 
@@ -135,21 +141,28 @@ class _EmptyRetriever(BaseRetriever):
         return []
 
 
-def _build_retriever() -> BaseRetriever:
+def _build_retriever(top_k: int | None = None) -> BaseRetriever:
     """复用 graph_builder._build_query_engine 的索引选择逻辑，只取 retriever。
 
     见模块 docstring"索引选择逻辑：复用，不重新发明"一节。
+
+    ``top_k`` 默认 None：沿用 ``load_env.DEFAULT_SIMILARITY_TOP_K``（生产环境
+    的 ``QAWorkflow`` 就是这么调用的，不传参）。评测脚本
+    ``evals/run_workflow_retrieval_eval.py`` 需要按 CLI 的 ``--top-k`` 覆盖，
+    所以这里留了这个可选参数——``QAWorkflow`` 本身不新增这个旋钮，`retrieve`
+    step 仍然零参数调用 ``_build_retriever()``。
     """
+    effective_top_k = top_k if top_k is not None else load_env.DEFAULT_SIMILARITY_TOP_K
     indexes_snapshot = list(indexes)
     if not indexes_snapshot:
         return _EmptyRetriever()
     if len(indexes_snapshot) == 1:
-        return indexes_snapshot[0].as_retriever(similarity_top_k=DEFAULT_SIMILARITY_TOP_K)
+        return indexes_snapshot[0].as_retriever(similarity_top_k=effective_top_k)
 
     retriever_tools = [
         RetrieverTool.from_defaults(
-            retriever=index.as_retriever(similarity_top_k=DEFAULT_SIMILARITY_TOP_K),
-            description=getattr(index, "summary", None) or f"知识库索引: {index.index_id}",
+            retriever=index.as_retriever(similarity_top_k=effective_top_k),
+            description=index_description(index),
         )
         for index in indexes_snapshot
     ]
