@@ -45,11 +45,11 @@ evals/
 - `golden.seed.jsonl` 按"知识库应该覆盖的真实主题"编写。评测应以
   `campus-corpus` 为准：
   `uv run python evals/run_retrieval_eval.py --collection campus-corpus --top-k 5`。
-- 解析 docx/xlsx 需要 `docx2txt` / `openpyxl`（pyproject 的 `evals` 依赖组，
-  `uv sync --group evals` 安装）。注意：线上 `insert_into_index` 走同一个
-  `SimpleDirectoryReader`，这两个包不装的话线上传 docx/xlsx 同样会解析失败，
-  而 `ALLOWED_EXTENSIONS` 却允许上传——这是侦察中发现的真实 bug，修复属于
-  Phase 1 范畴（把这两个包提为主依赖或收紧允许的扩展名）。
+- 解析 docx/xlsx 需要 `docx2txt` / `openpyxl`。Phase 0 时它们缺失，导致线上
+  `insert_into_index`（同一个 `SimpleDirectoryReader` 路径）上传 docx/xlsx
+  会直接解析失败，而 `ALLOWED_EXTENSIONS` 却允许上传——Phase 1 已修复：这两
+  个包提为主依赖（`uv sync` 即装），并有 `tests/test_docx_upload_regression.py`
+  回归测试保护。
 
 ## 怎么跑
 
@@ -65,7 +65,6 @@ uv run pytest tests/test_evals_smoke.py -v
 ### 2. 导入评测语料（首次评测前或语料更新后跑一次）
 
 ```bash
-uv sync --group evals   # docx/xlsx 解析依赖
 uv run python evals/ingest_corpus.py
 ```
 

@@ -15,6 +15,7 @@ from configs.load_env import (
     db_path,
     reload_env_variables,
 )
+from configs.observability import init_observability
 from dependencies import access_stats
 from dependencies.manage import access_stats as _mgmt_access_stats
 from fastapi import FastAPI, HTTPException, status
@@ -34,6 +35,7 @@ def _get_client_ip(request) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     reload_env_variables()
+    init_observability()
     init_settings()
     await loadAllIndexes()
     for directory in [SAVE_PATH, LOAD_PATH, chroma_db_path]:

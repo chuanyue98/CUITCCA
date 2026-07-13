@@ -29,16 +29,18 @@ dependencies = [
     "llama-index-readers-file>=0.6.0",
     "nltk==3.10.0",
     "transformers==5.3.0",
+    # SimpleDirectoryReader 解析 docx/xlsx 的实际依赖：ALLOWED_EXTENSIONS 允许上传
+    # 这两类文件，缺了这两个包线上 insert_into_index 会直接 ImportError（Phase 0 发现的 bug）
+    "docx2txt>=0.8",
+    "openpyxl>=3.1",
+    # LlamaIndex 可观测性（Phase 1）：OpenInference instrumentation + OTLP 导出，
+    # 环境变量门控，见 backend/app/configs/observability.py 与 docs/observability.md
+    "openinference-instrumentation-llama-index>=3.0",
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-http>=1.20",
 ]
 
 [dependency-groups]
-# evals 组：评测语料导入（evals/ingest_corpus.py）解析 docx/xlsx 所需。
-# 注意：线上 insert_into_index 同样走 SimpleDirectoryReader，这两个包不装的话
-# 线上传 docx/xlsx 也会解析失败（ALLOWED_EXTENSIONS 却允许上传）。
-evals = [
-    "docx2txt>=0.8",
-    "openpyxl>=3.1",
-]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
