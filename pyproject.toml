@@ -28,7 +28,7 @@ dependencies = [
     "tqdm>=4.68.3",
     "llama-index-readers-file>=0.6.0",
     "nltk==3.10.0",
-    "transformers==5.3.0",
+    "transformers==5.13.1",
     # SimpleDirectoryReader 解析 docx/xlsx 的实际依赖：ALLOWED_EXTENSIONS 允许上传
     # 这两类文件，缺了这两个包线上 insert_into_index 会直接 ImportError（Phase 0 发现的 bug）
     "docx2txt>=0.8",
