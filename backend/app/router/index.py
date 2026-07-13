@@ -3,6 +3,11 @@ import re
 import uuid
 
 import aiofiles
+
+# QUERY_ENDPOINT_TOP_K 故意不在这里用 from...import 直接绑定，理由见
+# handlers/graph_builder.py 顶部同样的说明——那样绑定会让
+# reload_env_variables() 之后这个值就再也感知不到环境变量变化了。
+import configs.load_env as load_env
 from configs.config import Prompts
 from configs.llm_predictor import build_llm
 from configs.load_env import LOAD_PATH, SAVE_PATH
@@ -97,7 +102,7 @@ async def query_index(index=Depends(get_index), query: str = Form(max_length=500
     engine = index.as_query_engine(
         text_qa_template=Prompts.QA_PROMPT.value.template,
         refine_template=Prompts.REFINE_PROMPT.value.template,
-        similarity_top_k=2,
+        similarity_top_k=load_env.QUERY_ENDPOINT_TOP_K,
     )
 
     response = await engine.aquery(query)

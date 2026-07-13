@@ -92,6 +92,17 @@ async def generate_qa_batched(contents: str, prompt: str | None = None):
     return qa_pairs
 
 
+def index_description(index: BaseIndex) -> str:
+    """索引的人类可读描述，供 selector（RouterQueryEngine/RouterRetriever）挑选
+    索引时展示。用 ``.summary``（如果已经设置过），否则退化成 index_id。
+
+    被 ``generate_query_engine_tools()``（下面）和
+    ``handlers/qa_workflow.py`` 的 ``_build_retriever()`` 多索引分支共用——
+    两边过去各自内联同一行表达式，抽出来避免两处失步。
+    """
+    return getattr(index, "summary", None) or f"知识库索引: {index.index_id}"
+
+
 def generate_query_engine_tools(
     indexes: list[BaseIndex], streaming: bool = False, similarity_top_k: int = 5
 ) -> list[QueryEngineTool]:
@@ -103,8 +114,7 @@ def generate_query_engine_tools(
             refine_template=Prompts.REFINE_PROMPT.value,
             similarity_top_k=similarity_top_k,
         )
-        description = getattr(index, "summary", None) or f"知识库索引: {index.index_id}"
-        tool = QueryEngineTool.from_defaults(query_engine=query_engine, description=description)
+        tool = QueryEngineTool.from_defaults(query_engine=query_engine, description=index_description(index))
         query_engine_tools.append(tool)
 
     return query_engine_tools

@@ -2,6 +2,14 @@ import asyncio
 import logging
 import re
 
+# top_k 常量故意不在这里用 `from configs.load_env import X` 直接绑定：
+# reload_env_variables() 重新赋值的是 configs.load_env 模块内的变量，`from...
+# import` 在导入时就把值拷贝进了当前模块的命名空间，之后源模块改了值这里也
+# 感知不到——等于"可通过环境变量覆盖"这个设计目标在热重载场景下是假的。
+# 改成 `import configs.load_env as load_env` + 使用处 `load_env.X` 属性访问，
+# 才能在每次真正调用时读到最新值。VERBOSE 不受这个问题影响（本次不改），
+# 继续保留原来的 from...import 写法。
+import configs.load_env as load_env
 from configs.config import Prompts
 from configs.load_env import VERBOSE
 from handlers.index_crud import indexes
@@ -29,7 +37,7 @@ class MultiIndexQueryEngine(BaseQueryEngine):
                 streaming=self._streaming,
                 text_qa_template=Prompts.QA_PROMPT.value,
                 refine_template=Prompts.REFINE_PROMPT.value,
-                similarity_top_k=3,
+                similarity_top_k=load_env.MULTI_INDEX_FALLBACK_TOP_K,
                 verbose=VERBOSE,
             )
             for index in self._indexes_snapshot
@@ -74,9 +82,11 @@ def _build_query_engine(streaming: bool) -> BaseQueryEngine:
             streaming=streaming,
             text_qa_template=Prompts.QA_PROMPT.value,
             refine_template=Prompts.REFINE_PROMPT.value,
-            similarity_top_k=5,
+            similarity_top_k=load_env.DEFAULT_SIMILARITY_TOP_K,
         )
-    tools = generate_query_engine_tools(indexes_snapshot, streaming=streaming, similarity_top_k=5)
+    tools = generate_query_engine_tools(
+        indexes_snapshot, streaming=streaming, similarity_top_k=load_env.DEFAULT_SIMILARITY_TOP_K
+    )
     return RouterQueryEngine.from_defaults(
         query_engine_tools=tools,
         selector=LLMSingleSelector.from_defaults(),

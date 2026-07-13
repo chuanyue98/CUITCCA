@@ -1,0 +1,20 @@
+{"id": "q001", "question": "成都信息工程大学的校训是什么？", "expected_answer": "成于大气 信达天下", "expected_sources": ["大学精神.txt"], "category": "simple_fact"}
+{"id": "q002", "question": "成都信息工程大学的前身是什么，创建于哪一年？", "expected_answer": "前身是1951年创建的中国人民解放军西南空军气象干部训练大队。", "expected_sources": ["学校历史.txt", "学校简介.txt"], "category": "simple_fact"}
+{"id": "q003", "question": "学校是哪一年更名为“成都信息工程大学”的？", "expected_answer": "2015年。", "expected_sources": ["学校历史.txt"], "category": "simple_fact"}
+{"id": "q004", "question": "高考成绩排名在各省文理科前200名报考成都信息工程大学的新生，可以获得多少一等新生奖学金？", "expected_answer": "新生入学后一次性奖励10000元/生。", "expected_sources": ["奖学措施.txt"], "category": "simple_fact"}
+{"id": "q005", "question": "国家奖学金和国家励志奖学金的奖励标准分别是多少，两者的资助对象有什么区别？", "expected_answer": "国家奖学金奖励标准为8000元/人年，面向二年级以上特别优秀的学生；国家励志奖学金奖励标准为5000元/人年，面向二年级以上品学兼优的家庭经济困难学生。", "expected_sources": ["奖学措施.txt", "助学措施.txt"], "category": "multi_hop"}
+{"id": "q006", "question": "学校勤工助学的工资标准是多少？", "expected_answer": "150—200元/人月。", "expected_sources": ["助学措施.txt"], "category": "simple_fact"}
+{"id": "q007", "question": "学校现有专任教师和博士的数量分别大约是多少？", "expected_answer": "专任教师1600余人，其中博士800余人。", "expected_sources": ["师资队伍.txt", "学校简介.txt"], "category": "simple_fact"}
+{"id": "q008", "question": "在成信大申请转专业，负责组织、指导和审核转专业工作的“领导小组”办公室设在哪个部门？", "expected_answer": "设在教务处。", "expected_sources": ["转专业政策.txt"], "category": "simple_fact"}
+{"id": "q009", "question": "学生可以通过哪两种方式申请转专业？", "expected_answer": "统一转专业（学校统一组织）和单独转专业（学生单独提出申请）。", "expected_sources": ["转专业政策.txt"], "category": "comprehension"}
+{"id": "q010", "question": "校园卡丢失了应该去哪里办理挂失？", "expected_answer": "到一卡通服务中心办理。", "expected_sources": ["挂失流程.txt"], "category": "simple_fact"}
+{"id": "q011", "question": "学校招生就业处主要负责哪些工作？", "expected_answer": "负责学校年度招生计划的编制、申报，招生宣传、咨询和录取工作，以及毕业生就业工作，包括收集、发布就业信息等。", "expected_sources": ["学校招生就业处概况.txt"], "category": "comprehension"}
+{"id": "q012", "question": "就业指导协会是什么类型的社团，主要开展哪些工作？", "expected_answer": "是一个创新实践型社团，帮助同学们解答就业方面的问题并提供指导，日常工作包括收集并宣传就业信息、协助招生就业处就业指导中心开展就业指导工作。", "expected_sources": ["就业指导协会.txt"], "category": "comprehension"}
+{"id": "q013", "question": "举报就业签约、统计造假问题的电话号码是多少？", "expected_answer": "028—85967605。", "expected_sources": ["就业签约、统计造假举报电话.txt"], "category": "simple_fact"}
+{"id": "q014", "question": "怎样关注并绑定“成信就业”微信公众号？", "expected_answer": "微信搜索并关注“成信就业”公众号，输入个人网存账号登录，即可完成微信绑定。", "expected_sources": ["成信就业公众号使用说明.pdf"], "category": "comprehension"}
+{"id": "q015", "question": "《四川省大学生就业创业扶持政策清单》是哪一年的版本，由谁发布？", "expected_answer": "2021年版，由四川省就业工作领导小组办公室于2021年11月发布。", "expected_sources": ["四川省大学生就业创业扶持清单.pdf"], "category": "simple_fact"}
+{"id": "q016", "question": "1978年学校升格为本科院校时校名是什么，办学定位口号是什么？", "expected_answer": "1978年学校升格为本科院校“成都气象学院”，时任中国气象局局长邹竞蒙提出了“理工结合、以工为主；气电结合，以电为主”的办学定位。", "expected_sources": ["学校历史.txt"], "category": "multi_hop"}
+{"id": "q017", "question": "从建校至今，学校经历过哪些主要的更名和隶属关系变化？", "expected_answer": "1951年创建为西南空军气象干部训练大队；1956年改制为成都气象学校；1978年升格为成都气象学院；2000年由中国气象局划转四川省并更名为成都信息工程学院；2001年四川统计学校并入；2015年更名为成都信息工程大学。", "expected_sources": ["学校历史.txt"], "category": "multi_hop"}
+{"id": "q018", "question": "成都信息工程大学的校风、教风、学风分别是什么？", "expected_answer": "校风：爱心 责任 行动；教风：爱生、敬业、求实、创新；学风：尊师、好学、励志、笃行。", "expected_sources": ["大学精神.txt"], "category": "comprehension"}
+{"id": "q019", "question": "学校现有多少个学院（部、中心）、多少个本科专业、在校生规模大约是多少？", "expected_answer": "现有19个学院（部、中心），61个本科专业（其中招生专业52个），2.5万余名全日制在校生。", "expected_sources": ["学校简介.txt"], "category": "simple_fact"}
+{"id": "q020", "question": "学校助学措施中，除了国家助学金和国家助学贷款，还有哪些帮助经济困难学生的方式？", "expected_answer": "还包括学费减免、勤工助学，以及广州助学基金、蓝剑助学基金、呈祥助学基金、春燕助学基金、成信助学基金、栋梁工程基金、“爱心一家人”等社会资助项目。", "expected_sources": ["助学措施.txt"], "category": "comprehension"}

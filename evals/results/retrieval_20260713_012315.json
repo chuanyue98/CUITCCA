@@ -1,0 +1,812 @@
+{
+  "collection": "test-index",
+  "top_k": 5,
+  "golden_path": "/home/cy/github/chuanyue98/CUITCCA/evals/golden.seed.jsonl",
+  "num_questions": 20,
+  "overall": {
+    "hit_rate": 0.25,
+    "mrr": 0.25
+  },
+  "by_category": {
+    "comprehension": {
+      "count": 6,
+      "hit_rate": 0.5,
+      "mrr": 0.5
+    },
+    "multi_hop": {
+      "count": 3,
+      "hit_rate": 0.0,
+      "mrr": 0.0
+    },
+    "simple_fact": {
+      "count": 11,
+      "hit_rate": 0.18181818181818182,
+      "mrr": 0.18181818181818182
+    }
+  },
+  "details": [
+    {
+      "id": "q001",
+      "question": "成都信息工程大学的校训是什么？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "大学精神.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.43055981995757947
+        },
+        {
+          "rank": 2,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.42054610498294914
+        },
+        {
+          "rank": 3,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.3811304792511189
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.37828098231013474
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3744506223168031
+        }
+      ]
+    },
+    {
+      "id": "q002",
+      "question": "成都信息工程大学的前身是什么，创建于哪一年？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校历史.txt",
+        "学校简介.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.44291403801974355
+        },
+        {
+          "rank": 2,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.4252156082975621
+        },
+        {
+          "rank": 3,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.38672673636069854
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.37182054715895224
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.36376502407495864
+        }
+      ]
+    },
+    {
+      "id": "q003",
+      "question": "学校是哪一年更名为“成都信息工程大学”的？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.42398972614235264
+        },
+        {
+          "rank": 2,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.4197096666247423
+        },
+        {
+          "rank": 3,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.3781990542822001
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.36775671249136815
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.36424117046501636
+        }
+      ]
+    },
+    {
+      "id": "q004",
+      "question": "高考成绩排名在各省文理科前200名报考成都信息工程大学的新生，可以获得多少一等新生奖学金？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.5358073939387785
+        },
+        {
+          "rank": 2,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4891028214479675
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.48143661635837626
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4788925583640883
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.477305452282241
+        }
+      ]
+    },
+    {
+      "id": "q005",
+      "question": "国家奖学金和国家励志奖学金的奖励标准分别是多少，两者的资助对象有什么区别？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "奖学措施.txt",
+        "助学措施.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.39428534963215406
+        },
+        {
+          "rank": 2,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.38499236008512416
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.378656603828992
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.37778977029713495
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3708008674060385
+        }
+      ]
+    },
+    {
+      "id": "q006",
+      "question": "学校勤工助学的工资标准是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4635050747086644
+        },
+        {
+          "rank": 2,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.42806785814957227
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4122128698066316
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4104343015965019
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.40867889947841307
+        }
+      ]
+    },
+    {
+      "id": "q007",
+      "question": "学校现有专任教师和博士的数量分别大约是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "师资队伍.txt",
+        "学校简介.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.32778610696138694
+        },
+        {
+          "rank": 2,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.3215405442033023
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3204280487697191
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3044086545084589
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.30371879769873666
+        }
+      ]
+    },
+    {
+      "id": "q008",
+      "question": "在成信大申请转专业，负责组织、指导和审核转专业工作的“领导小组”办公室设在哪个部门？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.4197219249600897
+        },
+        {
+          "rank": 2,
+          "file_name": "222aefd4-c2a4-4a1f-ad25-afc94c267c6b_学校招生就业处概况.txt",
+          "score": 0.41224758839840375
+        },
+        {
+          "rank": 3,
+          "file_name": "2e436f4b-7a5e-4c2f-ad80-a038f9083783_学校招生就业处概况.txt",
+          "score": 0.40766474827923294
+        },
+        {
+          "rank": 4,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.4010761771094851
+        },
+        {
+          "rank": 5,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.3965336360549188
+        }
+      ]
+    },
+    {
+      "id": "q009",
+      "question": "学生可以通过哪两种方式申请转专业？",
+      "category": "comprehension",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3932640652164644
+        },
+        {
+          "rank": 2,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.39195431731508346
+        },
+        {
+          "rank": 3,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.3895368434991843
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.387485409952148
+        },
+        {
+          "rank": 5,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.3871165819210588
+        }
+      ]
+    },
+    {
+      "id": "q010",
+      "question": "校园卡丢失了应该去哪里办理挂失？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "挂失流程.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.41892330548269224
+        },
+        {
+          "rank": 2,
+          "file_name": "222aefd4-c2a4-4a1f-ad25-afc94c267c6b_学校招生就业处概况.txt",
+          "score": 0.39560847531645826
+        },
+        {
+          "rank": 3,
+          "file_name": "2e436f4b-7a5e-4c2f-ad80-a038f9083783_学校招生就业处概况.txt",
+          "score": 0.3948475000901386
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.39021345170095495
+        },
+        {
+          "rank": 5,
+          "file_name": "b55ac502-26fd-4c27-bd6c-b06110763b72_就业签约、统计造假举报电话.txt",
+          "score": 0.38083620141253777
+        }
+      ]
+    },
+    {
+      "id": "q011",
+      "question": "学校招生就业处主要负责哪些工作？",
+      "category": "comprehension",
+      "expected_sources": [
+        "学校招生就业处概况.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "学校招生就业处概况.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "2e436f4b-7a5e-4c2f-ad80-a038f9083783_学校招生就业处概况.txt",
+          "score": 0.6275172015828993
+        },
+        {
+          "rank": 2,
+          "file_name": "222aefd4-c2a4-4a1f-ad25-afc94c267c6b_学校招生就业处概况.txt",
+          "score": 0.6254289059844422
+        },
+        {
+          "rank": 3,
+          "file_name": "813fe64e-972b-467c-a871-e53e1be52d82_就业指导协会.txt",
+          "score": 0.4618454017730452
+        },
+        {
+          "rank": 4,
+          "file_name": "aca51407-4da5-4e0c-b8ce-55414e86b968_就业指导协会.txt",
+          "score": 0.4586314683236892
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.429510801074419
+        }
+      ]
+    },
+    {
+      "id": "q012",
+      "question": "就业指导协会是什么类型的社团，主要开展哪些工作？",
+      "category": "comprehension",
+      "expected_sources": [
+        "就业指导协会.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "就业指导协会.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "813fe64e-972b-467c-a871-e53e1be52d82_就业指导协会.txt",
+          "score": 0.6038837956828854
+        },
+        {
+          "rank": 2,
+          "file_name": "aca51407-4da5-4e0c-b8ce-55414e86b968_就业指导协会.txt",
+          "score": 0.5999990282635246
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.39675743042688455
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3964576323868639
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3911204939513737
+        }
+      ]
+    },
+    {
+      "id": "q013",
+      "question": "举报就业签约、统计造假问题的电话号码是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "就业签约、统计造假举报电话.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "就业签约、统计造假举报电话.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "b55ac502-26fd-4c27-bd6c-b06110763b72_就业签约、统计造假举报电话.txt",
+          "score": 0.662241180594595
+        },
+        {
+          "rank": 2,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.42819846298286435
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.39040226362964664
+        },
+        {
+          "rank": 4,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.3890700659743976
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3875849430967689
+        }
+      ]
+    },
+    {
+      "id": "q014",
+      "question": "怎样关注并绑定“成信就业”微信公众号？",
+      "category": "comprehension",
+      "expected_sources": [
+        "成信就业公众号使用说明.pdf"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "成信就业公众号使用说明.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.5985706868596078
+        },
+        {
+          "rank": 2,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.5589230794338415
+        },
+        {
+          "rank": 3,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.538495993722961
+        },
+        {
+          "rank": 4,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.5119555890300015
+        },
+        {
+          "rank": 5,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.50951789747181
+        }
+      ]
+    },
+    {
+      "id": "q015",
+      "question": "《四川省大学生就业创业扶持政策清单》是哪一年的版本，由谁发布？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "四川省大学生就业创业扶持清单.pdf"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "四川省大学生就业创业扶持清单.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.6453656758418315
+        },
+        {
+          "rank": 2,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.610308315684422
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.5927321679443821
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.5898617927045083
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.5763935907985364
+        }
+      ]
+    },
+    {
+      "id": "q016",
+      "question": "1978年学校升格为本科院校时校名是什么，办学定位口号是什么？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "222aefd4-c2a4-4a1f-ad25-afc94c267c6b_学校招生就业处概况.txt",
+          "score": 0.30275182704850373
+        },
+        {
+          "rank": 2,
+          "file_name": "2e436f4b-7a5e-4c2f-ad80-a038f9083783_学校招生就业处概况.txt",
+          "score": 0.30130117797555045
+        },
+        {
+          "rank": 3,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.2977916584163607
+        },
+        {
+          "rank": 4,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.2824208089493868
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.2801849134554437
+        }
+      ]
+    },
+    {
+      "id": "q017",
+      "question": "从建校至今，学校经历过哪些主要的更名和隶属关系变化？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.2868731456144676
+        },
+        {
+          "rank": 2,
+          "file_name": "222aefd4-c2a4-4a1f-ad25-afc94c267c6b_学校招生就业处概况.txt",
+          "score": 0.2841653543811678
+        },
+        {
+          "rank": 3,
+          "file_name": "2e436f4b-7a5e-4c2f-ad80-a038f9083783_学校招生就业处概况.txt",
+          "score": 0.28361440173632113
+        },
+        {
+          "rank": 4,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.2701479041130797
+        },
+        {
+          "rank": 5,
+          "file_name": "03033ca9-8462-4dae-aa5e-bc8ea618bb4d_成信就业公众号使用说明.pdf",
+          "score": 0.2687714431595041
+        }
+      ]
+    },
+    {
+      "id": "q018",
+      "question": "成都信息工程大学的校风、教风、学风分别是什么？",
+      "category": "comprehension",
+      "expected_sources": [
+        "大学精神.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.43548592253050805
+        },
+        {
+          "rank": 2,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.4218197284871243
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3940727207798991
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.38545668082281415
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.37226689625121384
+        }
+      ]
+    },
+    {
+      "id": "q019",
+      "question": "学校现有多少个学院（部、中心）、多少个本科专业、在校生规模大约是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校简介.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "6d14fdce-5552-4249-9540-70c0b672c371_实时性网站及链接.csv",
+          "score": 0.3644531697010041
+        },
+        {
+          "rank": 2,
+          "file_name": "222aefd4-c2a4-4a1f-ad25-afc94c267c6b_学校招生就业处概况.txt",
+          "score": 0.3482665448297793
+        },
+        {
+          "rank": 3,
+          "file_name": "2e436f4b-7a5e-4c2f-ad80-a038f9083783_学校招生就业处概况.txt",
+          "score": 0.34807379506391384
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3408925857761243
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.3406888899175633
+        }
+      ]
+    },
+    {
+      "id": "q020",
+      "question": "学校助学措施中，除了国家助学金和国家助学贷款，还有哪些帮助经济困难学生的方式？",
+      "category": "comprehension",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4371932587512584
+        },
+        {
+          "rank": 2,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4285906188029715
+        },
+        {
+          "rank": 3,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4159529692832734
+        },
+        {
+          "rank": 4,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.40924259346464203
+        },
+        {
+          "rank": 5,
+          "file_name": "e8274447-6303-415e-b62c-9cb0f3c93c28_四川省大学生就业创业扶持清单.pdf",
+          "score": 0.40648803516886234
+        }
+      ]
+    }
+  ]
+}
