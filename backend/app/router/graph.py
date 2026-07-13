@@ -200,3 +200,52 @@ async def query_router(query: str = Form(max_length=5000)):
     response = await query_engine.aquery(query)
     customer_logger.info(f"res: {response}")
     return {"response": str(response)}
+
+
+# ---------------------------------------------------------------------------
+# Phase 3（验证性质）：llama_index.core.workflow 问答路径。
+#
+# 与上面 7 个既有端点完全并行、互不影响：/query、/query_stream、/chat_stream
+# 等继续走 handlers/graph_builder.py 的 query engine / chat engine 链路不变。
+# 这两个 /workflow_* 端点走 handlers/qa_workflow.py 的新 Workflow 实现，
+# 目的是验证"迁移到 Workflow 是否可行、检索质量是否不低于现有基线"，不是
+# 现有端点的替代品——是否正式切换是后续阶段的决策，这里只做并行验证。
+# ---------------------------------------------------------------------------
+
+
+@graph_app.post("/workflow_query", response_model=QueryResponse)
+async def workflow_query(request: Request, query: str = Form(max_length=5000)):
+    from handlers.qa_workflow import QAWorkflow
+
+    query = query.strip()
+    customer_logger.info(f"workflow_query: {query}")
+    workflow = QAWorkflow(timeout=60)
+    try:
+        result = await workflow.run(query=query, streaming=False)
+    except Exception as e:
+        error_logger.error(f"workflow_query error: {e}")
+        return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"},
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    client_id = _client_id(request)
+    _last_query_response.set(client_id, result.source_nodes)
+    return QueryResponse(response=result.response)
+
+
+@graph_app.post("/workflow_query_stream")
+async def workflow_query_stream(request: Request, query: str = Form(max_length=5000)):
+    from handlers.qa_workflow import QAWorkflow, TokenEvent
+
+    query = query.strip()
+    customer_logger.info(f"workflow_query_stream: {query}")
+    workflow = QAWorkflow(timeout=60)
+    handler = workflow.run(query=query, streaming=True)
+    client_id = _client_id(request)
+
+    async def _token_gen():
+        async for ev in handler.stream_events():
+            if isinstance(ev, TokenEvent):
+                yield ev.token
+        result = await handler
+        _last_query_response.set(client_id, result.source_nodes)
+
+    return StreamingResponse(_token_gen(), media_type="text/plain")
