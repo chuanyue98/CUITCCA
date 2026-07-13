@@ -163,7 +163,7 @@ _cors_env = os.environ.get("CORS_ORIGINS", "")
 if _cors_env:
     _cors_origins = [o.strip() for o in _cors_env.split(",") if o.strip()]
 else:
-    _cors_origins = ["http://localhost", "http://localhost:8000", "http://127.0.0.1", "http://127.0.0.1:8000"]
+    _cors_origins = ["http://localhost", "http://localhost:8522", "http://127.0.0.1", "http://127.0.0.1:8522"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -187,5 +187,5 @@ def read_root():
 if __name__ == "__main__":
     import uvicorn
     host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", "8000"))
+    port = int(os.environ.get("PORT", "8522"))
     uvicorn.run('main:app', host=host, port=port, reload=False)

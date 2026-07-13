@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const FEEDBACK_URL = 'http://localhost:8000/web/feed_back.html';
+const FEEDBACK_URL = 'http://localhost:8522/web/feed_back.html';
 
 test.describe('问题反馈页面 (feed_back.html)', () => {
   test('1. 页面加载 — HTTP 200 且无报错', async ({ page }) => {

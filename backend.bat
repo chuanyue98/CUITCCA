@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 > nul
 
-echo 检测8000端口是否被使用
-netstat -ano | findstr "LISTENING" | findstr ":8000" > nul
+echo 检测8522端口是否被使用
+netstat -ano | findstr "LISTENING" | findstr ":8522" > nul
 
 if %errorlevel% equ 0 (
   rem 如果端口被占用，则关闭占用端口的进程
-  echo 端口8000已被占用。终止占用端口的进程...
-  for /f "tokens=5" %%a in ('netstat -ano ^| findstr "LISTENING" ^| findstr ":8000"') do (
+  echo 端口8522已被占用。终止占用端口的进程...
+  for /f "tokens=5" %%a in ('netstat -ano ^| findstr "LISTENING" ^| findstr ":8522"') do (
     taskkill /f /pid %%a
   )
 )

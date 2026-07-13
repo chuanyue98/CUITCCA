@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('使用指南页面 UI/UX 深度检查', async ({ page }) => {
-  await page.goto('http://localhost:8000/web/use_function.html', { waitUntil: 'networkidle', timeout: 15000 });
+  await page.goto('http://localhost:8522/web/use_function.html', { waitUntil: 'networkidle', timeout: 15000 });
   await page.waitForTimeout(1500);
 
   console.log('\n=== 使用指南页面 UI/UX 深度检查 ===\n');

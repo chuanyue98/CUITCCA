@@ -4,7 +4,7 @@
 import { test, expect } from '@playwright/test';
 
 test('聊天页面 UI/UX 深度检查', async ({ page }) => {
-  await page.goto('http://localhost:8000/web/', { waitUntil: 'networkidle', timeout: 15000 });
+  await page.goto('http://localhost:8522/web/', { waitUntil: 'networkidle', timeout: 15000 });
   await page.waitForTimeout(1500);
 
   console.log('\n=== 聊天页面 UI/UX 深度检查 ===\n');

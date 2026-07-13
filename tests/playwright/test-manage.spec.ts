@@ -1,11 +1,11 @@
 // ===== Playwright 测试脚本: 知识库管理页面 (manage.html) =====
-// 测试地址: http://localhost:8000/web/manage.html
+// 测试地址: http://localhost:8522/web/manage.html
 
 import { test, expect } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://localhost:8522';
 const MANAGE_URL = `${BASE_URL}/web/manage.html`;
 
 // 确保截图目录存在
