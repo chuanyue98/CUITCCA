@@ -1,0 +1,52 @@
+name: Evals
+
+# Phase 0 评测骨架的 CI 入口。CI runner 上既没有 data/chroma_db 索引数据
+# （/data/ 在 .gitignore 里，不进仓库），也没有配置真实的 LLM key，所以这里
+# 只跑：
+#   1. 冒烟测试（golden.seed.jsonl 格式 + 评测脚本能否 import）
+#   2. 尝试跑一次 run_retrieval_eval.py —— 脚本自己检测到没有索引数据时会
+#      打印提示并 exit 0，不会让这个 job 失败。
+#
+# 真正有意义的检索基线评测，要在本地或有索引数据的服务器上手动跑
+# `uv run python evals/run_retrieval_eval.py`，详见 evals/README.md。
+on:
+  workflow_dispatch: {}
+  schedule:
+    # 每周一 02:00 UTC 跑一次，纯粹是个存在感检查（index 不存在时会优雅退出）。
+    - cron: "0 2 * * 1"
+
+concurrency:
+  group: evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evals-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint evals/
+        run: uv run ruff check evals/ tests/test_evals_smoke.py
+
+      - name: Run evals smoke tests
+        run: uv run pytest tests/test_evals_smoke.py -v
+
+      - name: Attempt retrieval eval (skips gracefully if no local index)
+        run: uv run python evals/run_retrieval_eval.py
+
+      - name: Upload retrieval eval report (if any was produced)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: retrieval-eval-results
+          path: evals/results/*.json
+          if-no-files-found: ignore

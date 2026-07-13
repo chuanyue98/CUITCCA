@@ -32,6 +32,13 @@ dependencies = [
 ]
 
 [dependency-groups]
+# evals 组：评测语料导入（evals/ingest_corpus.py）解析 docx/xlsx 所需。
+# 注意：线上 insert_into_index 同样走 SimpleDirectoryReader，这两个包不装的话
+# 线上传 docx/xlsx 也会解析失败（ALLOWED_EXTENSIONS 却允许上传）。
+evals = [
+    "docx2txt>=0.8",
+    "openpyxl>=3.1",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
@@ -48,6 +55,9 @@ Homepage = "https://github.com/ChuanYuei/CUITCCA"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --cov=backend/app --cov-report=term"
+markers = [
+    "eval: marks tests that run real retrieval/generation evaluations against a local Chroma index and/or a configured LLM (see evals/README.md); not run by default in CI, deselect explicitly with -m 'not eval' if ever mixed into the default suite.",
+]
 
 [tool.ruff]
 target-version = "py313"
