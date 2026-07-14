@@ -20,6 +20,11 @@ chroma_db_path = ''
 db_path = ''
 COOKIE_SECURE = False
 COOKIE_MAX_AGE = 86400
+RERANK_ENABLED = False
+RERANK_RECALL_K = 10
+RERANK_TOP_N = 5
+RERANK_SCORE_THRESHOLD = 0.75
+RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
 
 # 检索 top_k 集中配置（Phase 2）。三处调用点历史上各自硬编码了不同的值，
 # 业务含义并不相同，这里只是把"数字定义在哪"集中到一处、可通过环境变量覆盖，
@@ -37,12 +42,21 @@ DEFAULT_SIMILARITY_TOP_K = 5
 QUERY_ENDPOINT_TOP_K = 2
 MULTI_INDEX_FALLBACK_TOP_K = 3
 
+# Rerank 配置（Phase 3.2 条件触发 + 轻量候选）。
+# 默认关，不改变现有线上行为；打开后仅在向量检索 top1 分数低于阈值时才触发 rerank。
+RERANK_ENABLED = False
+RERANK_RECALL_K = 10
+RERANK_TOP_N = 5
+RERANK_SCORE_THRESHOLD = 0.75
+RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
+
 
 def reload_env_variables():
     load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
     global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
         openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE, chroma_db_path, \
-        db_path, DEFAULT_SIMILARITY_TOP_K, QUERY_ENDPOINT_TOP_K, MULTI_INDEX_FALLBACK_TOP_K
+        db_path, DEFAULT_SIMILARITY_TOP_K, QUERY_ENDPOINT_TOP_K, MULTI_INDEX_FALLBACK_TOP_K, \
+        RERANK_ENABLED, RERANK_RECALL_K, RERANK_TOP_N, RERANK_SCORE_THRESHOLD, RERANKER_MODEL
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_base = os.environ.get('OPENAI_API_BASE') or 'https://api.openai.com/v1'
@@ -74,6 +88,13 @@ def reload_env_variables():
     DEFAULT_SIMILARITY_TOP_K = int(os.environ.get('SIMILARITY_TOP_K', '5'))
     QUERY_ENDPOINT_TOP_K = int(os.environ.get('QUERY_ENDPOINT_TOP_K', '2'))
     MULTI_INDEX_FALLBACK_TOP_K = int(os.environ.get('MULTI_INDEX_FALLBACK_TOP_K', '3'))
+
+    global RERANK_ENABLED, RERANK_RECALL_K, RERANK_TOP_N, RERANK_SCORE_THRESHOLD, RERANKER_MODEL
+    RERANK_ENABLED = os.environ.get('RERANK_ENABLED', 'False').lower() in ('true', '1', 't')
+    RERANK_RECALL_K = int(os.environ.get('RERANK_RECALL_K', '10'))
+    RERANK_TOP_N = int(os.environ.get('RERANK_TOP_N', '5'))
+    RERANK_SCORE_THRESHOLD = float(os.environ.get('RERANK_SCORE_THRESHOLD', '0.75'))
+    RERANKER_MODEL = os.environ.get('RERANKER_MODEL', 'BAAI/bge-reranker-v2-m3')
 
     # 启动时校验必需的 env 变量
     if not openai_api_key:

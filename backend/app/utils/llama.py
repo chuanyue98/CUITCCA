@@ -104,7 +104,10 @@ def index_description(index: BaseIndex) -> str:
 
 
 def generate_query_engine_tools(
-    indexes: list[BaseIndex], streaming: bool = False, similarity_top_k: int = 5
+    indexes: list[BaseIndex],
+    streaming: bool = False,
+    similarity_top_k: int = 5,
+    node_postprocessors: list | None = None,
 ) -> list[QueryEngineTool]:
     query_engine_tools = []
     for index in indexes:
@@ -113,6 +116,7 @@ def generate_query_engine_tools(
             text_qa_template=Prompts.QA_PROMPT.value,
             refine_template=Prompts.REFINE_PROMPT.value,
             similarity_top_k=similarity_top_k,
+            node_postprocessors=node_postprocessors or [],
         )
         tool = QueryEngineTool.from_defaults(query_engine=query_engine, description=index_description(index))
         query_engine_tools.append(tool)
