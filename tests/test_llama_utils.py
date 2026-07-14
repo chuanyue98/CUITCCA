@@ -162,6 +162,7 @@ class GenerateQueryEngineToolsTest(unittest.TestCase):
             text_qa_template='qa prompt',
             refine_template='refine prompt',
             similarity_top_k=5,
+            node_postprocessors=[],
         )
 
 

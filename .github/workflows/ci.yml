@@ -63,7 +63,7 @@ jobs:
             --ignore-vuln CVE-2026-4372
 
       - name: Run bandit
-        run: uv run bandit -r backend/app/ -f json -o bandit-report.json -ll || true
+        run: uv run bandit -r backend/app/ -f json -o bandit-report.json -ll
 
       - name: Upload bandit report
         uses: actions/upload-artifact@v7

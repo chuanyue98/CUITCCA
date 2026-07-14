@@ -21,6 +21,7 @@ from llama_index.core.indices.query.base import BaseQueryEngine
 from llama_index.core.query_engine import RouterQueryEngine
 from llama_index.core.selectors import LLMSingleSelector
 from utils.llama import generate_query_engine_tools
+from utils.rerank import ConditionalRerankPostprocessor
 
 
 class MultiIndexQueryEngine(BaseQueryEngine):
@@ -32,12 +33,23 @@ class MultiIndexQueryEngine(BaseQueryEngine):
         super().__init__(callback_manager=CallbackManager())
 
     def _get_query_engines(self):
+        recall_k = (
+            load_env.RERANK_RECALL_K
+            if load_env.RERANK_ENABLED
+            else load_env.MULTI_INDEX_FALLBACK_TOP_K
+        )
+        postprocessors = (
+            [ConditionalRerankPostprocessor()]
+            if load_env.RERANK_ENABLED
+            else []
+        )
         return [
             index.as_query_engine(
                 streaming=self._streaming,
                 text_qa_template=Prompts.QA_PROMPT.value,
                 refine_template=Prompts.REFINE_PROMPT.value,
-                similarity_top_k=load_env.MULTI_INDEX_FALLBACK_TOP_K,
+                similarity_top_k=recall_k,
+                node_postprocessors=postprocessors,
                 verbose=VERBOSE,
             )
             for index in self._indexes_snapshot
@@ -49,7 +61,7 @@ class MultiIndexQueryEngine(BaseQueryEngine):
                 response = await engine.aquery(query)
                 if str(response) and str(response) != "Empty Response":
                     return response
-            except Exception:
+            except Exception:  # nosec B112 — intentional: skip failed indexes and try next
                 continue
         from llama_index.core.response import Response
         return Response("Empty Response")
@@ -76,16 +88,36 @@ def _build_query_engine(streaming: bool) -> BaseQueryEngine:
     indexes_snapshot = list(indexes)
     if not indexes_snapshot:
         return MultiIndexQueryEngine(indexes_snapshot=[], streaming=streaming)
+
+    postprocessors = (
+        [ConditionalRerankPostprocessor()]
+        if load_env.RERANK_ENABLED
+        else []
+    )
+
     if len(indexes_snapshot) == 1:
-        # 单索引无需路由选择，直接查询避免额外的 LLM 选择调用
+        recall_k = (
+            load_env.RERANK_RECALL_K
+            if load_env.RERANK_ENABLED
+            else load_env.DEFAULT_SIMILARITY_TOP_K
+        )
         return indexes_snapshot[0].as_query_engine(
             streaming=streaming,
             text_qa_template=Prompts.QA_PROMPT.value,
             refine_template=Prompts.REFINE_PROMPT.value,
-            similarity_top_k=load_env.DEFAULT_SIMILARITY_TOP_K,
+            similarity_top_k=recall_k,
+            node_postprocessors=postprocessors,
         )
+
     tools = generate_query_engine_tools(
-        indexes_snapshot, streaming=streaming, similarity_top_k=load_env.DEFAULT_SIMILARITY_TOP_K
+        indexes_snapshot,
+        streaming=streaming,
+        similarity_top_k=(
+            load_env.RERANK_RECALL_K
+            if load_env.RERANK_ENABLED
+            else load_env.DEFAULT_SIMILARITY_TOP_K
+        ),
+        node_postprocessors=postprocessors,
     )
     return RouterQueryEngine.from_defaults(
         query_engine_tools=tools,

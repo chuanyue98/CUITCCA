@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://localhost:8522';
 
 test.describe('CUITCCA 聊天页面 (index.html) 检查', () => {
   test('聊天页面综合检查', async ({ browser }) => {

@@ -178,7 +178,7 @@ async def websocket_query(websocket: WebSocket):
         error_logger.error(f"websocket error: {e}")
         try:
             await websocket.send_text("出错了，请稍后在试一下吧")
-        except Exception:
+        except Exception:  # nosec B110 — websocket already disconnected, nothing to do
             pass
 
 

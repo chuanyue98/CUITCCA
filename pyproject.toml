@@ -74,6 +74,10 @@ line-length = 120
 select = ["E", "F", "W", "I", "UP"]
 ignore = ["N802", "N803", "N806", "UP042"]
 
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+
 [tool.mypy]
 python_version = "3.13"
 ignore_missing_imports = true

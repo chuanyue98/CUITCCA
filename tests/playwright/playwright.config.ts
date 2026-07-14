@@ -7,7 +7,7 @@ export default defineConfig({
     headless: true,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    baseURL: 'http://localhost:8000',
+    baseURL: 'http://localhost:8522',
   },
   reporter: [['list'], ['json', { outputFile: 'test-results.json' }]],
   projects: [

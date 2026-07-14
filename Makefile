@@ -4,10 +4,10 @@ install: ## 安装依赖
 	python -m pip install -e ".[dev]" || python -m pip install -e . && pip install -r dev-requirements.txt
 
 dev: ## 启动开发服务器（热重载）
-	cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8522
 
 run: ## 启动生产服务器
-	cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+	cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8522
 
 test: ## 运行测试
 	python -m pytest tests/ -v

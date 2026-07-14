@@ -3,7 +3,7 @@
 
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://localhost:8522';
 const PAGES = [
   { name: 'index', url: '/web/', title: '聊天页面' },
   { name: 'manage', url: '/web/manage.html', title: '知识库管理页面' },
