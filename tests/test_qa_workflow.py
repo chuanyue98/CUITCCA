@@ -9,6 +9,10 @@
 3. 没检索到任何内容时的兜底文案。
 4. max_retrieval_iterations 钩子：>1 时只记录一条日志，仍然只跑 1 轮检索。
 5. chat_history 被正确带进发给 LLM 的消息列表。
+6. condense_question step：chat_history 为空时零 LLM 调用、直接透传原始
+   query；非空时压缩 LLM 被调用一次且 prompt 里带上了 chat_history/原始
+   question，压缩结果同时驱动 retrieve 和 synthesize 两个 step；压缩 LLM
+   报错时降级用原始 query，整个 workflow 不中断。
 
 全部用注入的 FakeRetriever / MockLLM（或能捕获调用参数的假 LLM），不碰真实
 索引、不联网、不需要 API key。
@@ -17,13 +21,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from handlers.qa_workflow import (
+    CondenseEvent,
     RetrieveEvent,
     TokenEvent,
     _build_retriever,
     _EmptyRetriever,
 )
 from llama_index.core.base.base_retriever import BaseRetriever
-from llama_index.core.base.llms.types import ChatMessage, MessageRole
+from llama_index.core.base.llms.types import ChatMessage, CompletionResponse, MessageRole
 from llama_index.core.llms import MockLLM
 from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode
 from pydantic import PrivateAttr
@@ -52,17 +57,33 @@ class FakeRetriever(BaseRetriever):
 
 
 class RecordingLLM(MockLLM):
-    """继承 MockLLM 拿到能跑的流式/非流式实现，额外记录收到的 messages。
+    """继承 MockLLM 拿到能跑的流式/非流式实现，额外记录收到的 messages/prompt。
 
     MockLLM 是 pydantic BaseModel，不能像普通对象那样随手挂实例属性，记录
-    列表要声明成 PrivateAttr。
+    列表要声明成 PrivateAttr。``acomplete`` 是 condense_question step 用来
+    压缩问题的调用；``set_condense_response``/``set_condense_error`` 让测试
+    控制压缩结果或模拟压缩失败，不设置时退回 MockLLM 默认行为（原样回显
+    prompt）。
     """
 
     _received_messages: list[list[ChatMessage]] = PrivateAttr(default_factory=list)
+    _received_prompts: list[str] = PrivateAttr(default_factory=list)
+    _condense_response: str | None = PrivateAttr(default=None)
+    _condense_error: Exception | None = PrivateAttr(default=None)
 
     @property
     def received_messages(self) -> list[list[ChatMessage]]:
         return self._received_messages
+
+    @property
+    def received_prompts(self) -> list[str]:
+        return self._received_prompts
+
+    def set_condense_response(self, text: str) -> None:
+        self._condense_response = text
+
+    def set_condense_error(self, exc: Exception) -> None:
+        self._condense_error = exc
 
     async def achat(self, messages, **kwargs):
         self._received_messages.append(list(messages))
@@ -71,6 +92,14 @@ class RecordingLLM(MockLLM):
     async def astream_chat(self, messages, **kwargs):
         self._received_messages.append(list(messages))
         return await super().astream_chat(messages, **kwargs)
+
+    async def acomplete(self, prompt, **kwargs):
+        self._received_prompts.append(prompt)
+        if self._condense_error is not None:
+            raise self._condense_error
+        if self._condense_response is not None:
+            return CompletionResponse(text=self._condense_response)
+        return await super().acomplete(prompt, **kwargs)
 
 
 # ── _build_retriever: 索引选择分支 ──────────────────────────────────
@@ -314,4 +343,93 @@ async def test_retrieve_event_carries_nodes_and_query():
 
     assert ev.nodes == nodes
     assert ev.query_str == "问题"
+    assert ev.streaming is True
+
+
+# ── condense_question step：多轮追问压缩 ────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_condense_question_skipped_when_chat_history_empty():
+    """chat_history 为空（含不传）时不应该触发任何压缩 LLM 调用，检索用的
+    还是原始 query——单轮问答主路径零额外开销。"""
+    from handlers.qa_workflow import QAWorkflow
+
+    nodes = [_make_node("一些内容")]
+    retriever = FakeRetriever(nodes)
+    llm = RecordingLLM()
+    workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+
+    result = await workflow.run(query="学校的校训是什么？", streaming=False)
+
+    assert retriever.calls == ["学校的校训是什么？"]
+    assert llm.received_prompts == [], "chat_history 为空时压缩用的 acomplete 不应该被调用"
+    assert result.response.strip() != ""
+
+
+@pytest.mark.asyncio
+async def test_condense_question_used_when_chat_history_present():
+    """chat_history 非空：压缩 LLM 被调用一次，prompt 里带上了 chat_history
+    和原始 question；retrieve 和 synthesize 两个 step 用的都是压缩后的问题，
+    不是原始 query。"""
+    from handlers.qa_workflow import QAWorkflow
+
+    nodes = [_make_node("一些内容")]
+    retriever = FakeRetriever(nodes)
+    llm = RecordingLLM()
+    llm.set_condense_response("压缩后的独立问题")
+    workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+
+    history = [ChatMessage(role=MessageRole.USER, content="之前问过的问题")]
+    result = await workflow.run(query="那 xx 呢？", chat_history=history, streaming=False)
+
+    # 压缩 LLM 恰好被调用一次，prompt 里能看到 chat_history 内容和原始问题
+    assert len(llm.received_prompts) == 1
+    condense_prompt = llm.received_prompts[0]
+    assert "之前问过的问题" in condense_prompt
+    assert "那 xx 呢？" in condense_prompt
+
+    # retrieve 阶段用的是压缩后的问题，不是原始 query
+    assert retriever.calls == ["压缩后的独立问题"]
+
+    # synthesize 阶段发给 LLM 的最终 prompt 里也是压缩后的问题
+    assert llm.received_messages, "synthesize 阶段应该调用过一次 achat"
+    final_prompt_content = llm.received_messages[-1][-1].content
+    assert "压缩后的独立问题" in final_prompt_content
+    assert "那 xx 呢？" not in final_prompt_content
+
+    assert result.response.strip() != ""
+
+
+@pytest.mark.asyncio
+async def test_condense_question_falls_back_to_raw_query_on_llm_error():
+    """压缩阶段 LLM 抛异常时不能让整个 workflow 挂掉：降级用原始 query 走
+    检索和生成，照样能拿到正常结果。"""
+    from handlers.qa_workflow import QAWorkflow
+
+    nodes = [_make_node("一些内容")]
+    retriever = FakeRetriever(nodes)
+    llm = RecordingLLM()
+    llm.set_condense_error(RuntimeError("condense boom"))
+    workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+
+    history = [ChatMessage(role=MessageRole.USER, content="之前问过的问题")]
+    result = await workflow.run(query="那 xx 呢？", chat_history=history, streaming=False)
+
+    # 压缩确实被尝试调用过（不是被跳过），只是失败了
+    assert len(llm.received_prompts) == 1
+    # 降级：检索和最终结果都用原始 query
+    assert retriever.calls == ["那 xx 呢？"]
+    assert result.response.strip() != ""
+    assert result.source_nodes == nodes
+
+
+@pytest.mark.asyncio
+async def test_condense_event_carries_query_and_context():
+    """直接测 CondenseEvent 本身携带的数据结构，不经过完整 workflow 跑一遍。"""
+    history = [ChatMessage(role=MessageRole.USER, content="之前的问题")]
+    ev = CondenseEvent(query_str="压缩后的问题", chat_history=history, streaming=True)
+
+    assert ev.query_str == "压缩后的问题"
+    assert ev.chat_history == history
     assert ev.streaming is True
