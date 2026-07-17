@@ -18,7 +18,7 @@ if str(BACKEND_APP_DIR) not in sys.path:
 
 from configs.llm_predictor import init_settings  # noqa: E402
 from configs.load_env import ALLOWED_EXTENSIONS  # noqa: E402
-from handlers.graph_builder import invalidate_query_engine_cache, summary_index  # noqa: E402
+from handlers.graph_builder import summary_index  # noqa: E402
 from handlers.index_crud import (  # noqa: E402
     createIndex,
     get_index_by_name,
@@ -96,7 +96,6 @@ async def main() -> int:
     except Exception as e:
         print(f"[ingest] 摘要生成失败: {e}")
 
-    invalidate_query_engine_cache()
     print(f"\n[ingest] 导入完成 -> 索引 {index_name!r}")
     print(f"  成功: {len(files) - len(errors)}")
     print(f"  失败: {len(errors)}")

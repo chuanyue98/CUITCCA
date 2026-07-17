@@ -52,18 +52,15 @@ class TopKConfigDefaultsTest(unittest.TestCase):
 
 
 class TopKConfigWiringTest(unittest.TestCase):
-    """确认三个调用点确实在读这三个常量，而不是又悄悄换回字面量。"""
+    """确认调用点确实在读这些常量，而不是又悄悄换回字面量。
 
-    def test_graph_builder_imports_the_shared_constants(self):
-        import inspect
-
-        import handlers.graph_builder as gb
-
-        source = inspect.getsource(gb)
-        self.assertIn('DEFAULT_SIMILARITY_TOP_K', source)
-        self.assertIn('MULTI_INDEX_FALLBACK_TOP_K', source)
-        self.assertNotIn('similarity_top_k=5', source)
-        self.assertNotIn('similarity_top_k=3', source)
+    graph_builder.py 原来的 _build_query_engine/MultiIndexQueryEngine（用到
+    DEFAULT_SIMILARITY_TOP_K/MULTI_INDEX_FALLBACK_TOP_K 的地方）已经在切换到
+    QAWorkflow 时删除，graph_builder.py 现在只剩 summary_index()，不再是
+    top_k 配置的接线点——对应的 wiring 检查已经并入下面
+    test_qa_workflow_imports_the_shared_constant（qa_workflow._build_retriever
+    是现在唯一的检索 top_k 接线点）。
+    """
 
     def test_query_endpoint_imports_the_shared_constant(self):
         import inspect
