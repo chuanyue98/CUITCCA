@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 from main import app
@@ -55,16 +55,15 @@ class MainWorkflowHttpTest(unittest.TestCase):
         self.assertEqual(response.json(), {"status": "ok"})
         mock_save.assert_called_once_with(self.fake_index)
 
-    @patch('router.graph.compose_graph_query_engine')
-    def test_query_workflow(self, mock_compose):
-        mock_engine = MagicMock()
-        async def mock_aquery(q):
-            resp = MagicMock()
-            resp.response = "answer text"
-            resp.source_nodes = []
-            return resp
-        mock_engine.aquery = mock_aquery
-        mock_compose.return_value = mock_engine
+    @patch('handlers.qa_workflow.QAWorkflow')
+    def test_query_workflow(self, mock_workflow_cls):
+        from handlers.qa_workflow import QAWorkflowResult
+
+        mock_instance = MagicMock()
+        mock_instance.run = AsyncMock(
+            return_value=QAWorkflowResult(response="answer text", source_nodes=[])
+        )
+        mock_workflow_cls.return_value = mock_instance
 
         response = self.client.post("/graph/query", data={"query": "what is this?"})
         self.assertEqual(response.status_code, 200)

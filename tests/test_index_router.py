@@ -216,10 +216,9 @@ class TestIndexRouter(unittest.TestCase):
     @patch('router.index.safe_filename')
     @patch('router.index.uuid.uuid4')
     @patch('router.index.aiofiles.open')
-    @patch('router.index.invalidate_query_engine_cache')
     def test_upload_file_success(
         self,
-        mock_invalidate, mock_aio, mock_uuid, mock_safe, mock_validate,
+        mock_aio, mock_uuid, mock_safe, mock_validate,
         mock_summary_index, mock_saveIndex, mock_deleteDocById,
         mock_deleteNodeById, mock_updateNodeById, mock_get_all_docs,
         mock_insert_into_index, mock_delete_collection, mock_loadAllIndexes,
@@ -263,12 +262,11 @@ class TestIndexRouter(unittest.TestCase):
     @patch('router.index.safe_filename')
     @patch('router.index.uuid.uuid4')
     @patch('router.index.aiofiles.open')
-    @patch('router.index.invalidate_query_engine_cache')
     @patch('handlers.graph_builder.summary_index')
     @patch('handlers.index_crud._save_summary')
     def test_upload_files_success(
         self,
-        mock_save_summary, mock_summary, mock_invalidate, mock_aio,
+        mock_save_summary, mock_summary, mock_aio,
         mock_uuid, mock_safe, mock_validate,
         mock_summary_index, mock_saveIndex, mock_deleteDocById,
         mock_deleteNodeById, mock_updateNodeById, mock_get_all_docs,
