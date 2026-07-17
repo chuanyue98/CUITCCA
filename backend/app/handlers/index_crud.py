@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import uuid
+from pathlib import Path
 
 from configs.load_env import FILE_PATH
 from handlers.vector_store import (
@@ -52,15 +53,29 @@ async def loadAllIndexes():
                 logging.error(f"Error loading index {name}: {e}")
 
 
+def _ingest_and_persist(index: VectorStoreIndex, doc_file_path: str) -> None:
+    """同步的摄取+落盘工作，供 asyncio.to_thread 卸载到线程池执行。
+
+    用 ingestion_pipeline 的 IngestionPipeline（UPSERTS 策略）替代直接
+    ``index.insert_nodes``：内容不变的重复上传会被跳过、内容变化的重传会
+    原地更新，而不是无限堆积重复 chunk。docstore 是每个索引持久化到磁盘的
+    "doc_id -> 内容 hash" 记录，不落盘的话这个去重记忆每次进程重启就丢了。
+    """
+    from handlers.ingestion_pipeline import build_pipeline, ingest_files
+    from handlers.vector_store import load_or_create_docstore, persist_docstore
+
+    docstore = load_or_create_docstore(index.index_id)
+    pipeline = build_pipeline(vector_store=index.vector_store, docstore=docstore)
+    ingest_files([Path(doc_file_path)], pipeline)
+    persist_docstore(index.index_id, docstore)
+
+
 async def insert_into_index(index: VectorStoreIndex, doc_file_path: str, skip_summary: bool = False):
     from handlers.graph_builder import summary_index
-    from utils.llama import get_nodes_from_file
-
-    nodes = await asyncio.to_thread(get_nodes_from_file, doc_file_path)
 
     lock = await _get_index_lock(index.index_id)
     async with lock:
-        await asyncio.to_thread(index.insert_nodes, nodes)
+        await asyncio.to_thread(_ingest_and_persist, index, doc_file_path)
         if not skip_summary:
             index.summary = await summary_index(index)
             _save_summary(index)

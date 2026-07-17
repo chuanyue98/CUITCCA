@@ -11,24 +11,22 @@ class FakeIndex:
     def __init__(self):
         self.index_id = 'idx-async-test'
         self.summary = ''
-        self.inserted = []
-
-    def insert_nodes(self, nodes):
-        self.inserted.extend(nodes)
+        self.vector_store = MagicMock()
 
 
 @pytest.mark.asyncio
-async def test_insert_into_index_offloads_parsing_and_embedding():
+async def test_insert_into_index_offloads_ingestion_to_thread():
     index = FakeIndex()
-    fake_nodes = [MagicMock()]
 
-    with patch('utils.llama.get_nodes_from_file', return_value=fake_nodes) as mock_get_nodes, \
-         patch('asyncio.to_thread', wraps=asyncio.to_thread) as mock_to_thread, \
-         patch.object(index_crud, 'summary_index', new=None, create=True):
-        # summary skipped so we only assert the parse+insert offload
+    with patch('handlers.vector_store.load_or_create_docstore', return_value=MagicMock()), \
+         patch('handlers.vector_store.persist_docstore'), \
+         patch('handlers.ingestion_pipeline.build_pipeline', return_value=MagicMock()), \
+         patch('handlers.ingestion_pipeline.ingest_files') as mock_ingest_files, \
+         patch('asyncio.to_thread', wraps=asyncio.to_thread) as mock_to_thread:
         await index_crud.insert_into_index(index, '/fake/path.txt', skip_summary=True)
 
-    mock_get_nodes.assert_called_once_with('/fake/path.txt')
-    assert index.inserted == fake_nodes
-    # both the parse call and the insert_nodes call must go through asyncio.to_thread
-    assert mock_to_thread.call_count >= 2
+    mock_ingest_files.assert_called_once()
+    # the actual parse+embed+write work must go through asyncio.to_thread,
+    # not run directly on the event loop thread.
+    mock_to_thread.assert_called_once()
+    assert mock_to_thread.call_args.args[0] is index_crud._ingest_and_persist
