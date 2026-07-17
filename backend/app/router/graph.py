@@ -71,7 +71,7 @@ async def chat_graph_stream(request: Request, query: str = Form(max_length=5000)
     from handlers.qa_workflow import QAWorkflow, TokenEvent
 
     client_id = _client_id(request)
-    history: list[ChatMessage] = _chat_histories.get(client_id) or []
+    history: list[ChatMessage] = list(_chat_histories.get(client_id) or [])
     query = query.strip()
     customer_logger.info(f"chat_stream: {query}")
     workflow = QAWorkflow(timeout=60)

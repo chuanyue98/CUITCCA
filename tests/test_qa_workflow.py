@@ -338,7 +338,7 @@ async def test_chat_history_is_forwarded_to_llm():
 @pytest.mark.asyncio
 async def test_retrieve_step_applies_conditional_rerank_postprocessor():
     """retrieve step 检索完之后应该经过
-    ConditionalRerankPostprocessor._postprocess_nodes，这是生产环境已上线的
+    ConditionalRerankPostprocessor.postprocess_nodes，这是生产环境已上线的
     条件触发式 rerank 钩子（见模块 docstring"rerank：挂钩，不重新实现"）。
     patch 目标是 qa_workflow 模块顶层 import 进来的引用，不是 utils.rerank
     源头——qa_workflow.py 用的是 `from utils.rerank import
@@ -350,7 +350,7 @@ async def test_retrieve_step_applies_conditional_rerank_postprocessor():
     retriever = FakeRetriever(raw_nodes)
 
     mock_postprocessor_instance = MagicMock()
-    mock_postprocessor_instance._postprocess_nodes.return_value = reranked_nodes
+    mock_postprocessor_instance.postprocess_nodes.return_value = reranked_nodes
     mock_postprocessor_cls = MagicMock(return_value=mock_postprocessor_instance)
 
     with patch("handlers.qa_workflow.ConditionalRerankPostprocessor", mock_postprocessor_cls):
@@ -358,8 +358,8 @@ async def test_retrieve_step_applies_conditional_rerank_postprocessor():
         result = await workflow.run(query="学校的校训是什么？", streaming=False)
 
     mock_postprocessor_cls.assert_called_once()
-    mock_postprocessor_instance._postprocess_nodes.assert_called_once()
-    call_args = mock_postprocessor_instance._postprocess_nodes.call_args
+    mock_postprocessor_instance.postprocess_nodes.assert_called_once()
+    call_args = mock_postprocessor_instance.postprocess_nodes.call_args
     assert call_args.args[0] == raw_nodes
     assert call_args.kwargs["query_bundle"].query_str == "学校的校训是什么？"
     assert result.source_nodes == reranked_nodes
