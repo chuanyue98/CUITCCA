@@ -16,7 +16,8 @@ evals/
 ├── ingest_corpus.py           一次性导入：把仓库里的真实文档全量导入 campus-corpus collection
 ├── run_retrieval_eval.py      核心：跑检索评测，算 hit-rate / MRR
 ├── run_rerank_eval.py         A/B 对比：向量检索基线 vs 召回20+cross-encoder重排取5
-└── results/                   评测脚本的输出报告（JSON，按时间戳命名）
+├── results/                   评测脚本的输出报告（JSON，按时间戳命名）
+└── ../backend/app/utils/rerank.py   生产环境条件触发式 Rerank（默认关闭）
 ```
 
 ## 现状（侦察结论，写这份 evals 时的事实）
@@ -174,6 +175,54 @@ hit-rate/MRR，逻辑不到 50 行，比强行适配 `RetrieverEvaluator` 更清
    `golden.seed.jsonl`。不要跳过审核直接拿模型生成的题目评分——生成模型
    经常会编造 golden 集里不存在的细节，或者把 chunk 切分导致的残缺上下文
    当成完整答案。
+
+## Rerank 生产环境集成（Phase 3.2）
+
+生产环境已加入**条件触发式 Rerank**，默认关闭，不改变现有行为。
+
+### 实现位置
+
+`backend/app/utils/rerank.py` — `ConditionalRerankPostprocessor`
+
+### 环境变量
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `RERANK_ENABLED` | `False` | 总开关 |
+| `RERANK_RECALL_K` | `10` | rerank 前的向量召回数 |
+| `RERANK_TOP_N` | `5` | rerank 后保留的结果数 |
+| `RERANK_SCORE_THRESHOLD` | `0.75` | top1 分数 ≥ 此值时跳过 rerank |
+| `RERANKER_MODEL` | `BAAI/bge-reranker-v2-m3` | cross-encoder 模型 |
+
+### 触发逻辑
+
+```
+向量召回
+  ↓
+top1 分数 >= 0.75  →  跳过 rerank（~15ms）
+top1 分数 < 0.75   →  触发 cross-encoder rerank（~340ms）
+```
+
+### 评测数据（`campus` 索引，recall_k=10）
+
+| 指标 | A 基线 | B rerank | 差值 |
+|------|--------|----------|------|
+| hit_rate@1 | 75% | **80%** | +5% |
+| hit_rate@5 | 90% | **95%** | +5% |
+| MRR@5 | 0.793 | **0.846** | +0.053 |
+| 平均延迟 | 14.6ms | 337.3ms | +322.7ms |
+
+**改善案例：** `q008`（转专业领导小组办公室设在哪个部门）从未命中 → 排名第 1。
+
+**未改善：** `q010`（校园卡挂失）在 `campus` collection 中缺少 `挂失流程.txt`，rerank 也无法修复数据缺失问题。
+
+### 结论
+
+- 条件触发机制有效：高置信度查询跳过 rerank，低置信度查询获得提升
+- 延迟代价较大（CPU 上 ~340ms），**当前建议保持关闭**
+- 如需启用，建议先评估 Hybrid Search 方案（延迟更低，可能收益更高）
+
+---
 
 ## CI 说明
 
