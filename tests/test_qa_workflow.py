@@ -179,6 +179,7 @@ def test_build_retriever_multi_index_and_generate_query_engine_tools_agree_on_de
 
         def __init__(self, index_id: str):
             self.index_id = index_id
+            self.vector_store = MagicMock()
 
         def as_query_engine(self, **kwargs):
             return MagicMock()

@@ -134,12 +134,16 @@ class BuildRetrieverForIndexTest(unittest.TestCase):
 
 
 class HybridRetrievalDisabledTest(unittest.TestCase):
-    """HYBRID_RETRIEVAL_ENABLED 默认关闭时必须完全短路——不触碰 Chroma 的
-    get_nodes(None)、不构建 BM25，直接退化成普通向量检索。"""
+    """HYBRID_RETRIEVAL_ENABLED 关闭时必须在 build_retriever_for_index 最外层
+    就完全短路——不触碰 Chroma 的 get_nodes(None)、不构建 BM25，直接退化成
+    普通向量检索。显式 patch 成 False（不依赖生产默认值当前是什么），否则
+    这个用例真正验证的是"非 Chroma vector_store 的兜底分支"而不是"开关关闭"，
+    两条分支凑巧走到同一行代码，不显式 patch 会掩盖这个区别。"""
 
     def test_disabled_flag_skips_hybrid_construction_entirely(self):
-        from unittest.mock import MagicMock
+        from unittest.mock import MagicMock, patch
 
+        import configs.load_env as load_env
         from handlers.hybrid_retriever import build_retriever_for_index
 
         fake_index = MagicMock()
@@ -147,7 +151,8 @@ class HybridRetrievalDisabledTest(unittest.TestCase):
         fake_vector_retriever = MagicMock()
         fake_index.as_retriever.return_value = fake_vector_retriever
 
-        result = build_retriever_for_index(fake_index, similarity_top_k=5)
+        with patch.object(load_env, "HYBRID_RETRIEVAL_ENABLED", False):
+            result = build_retriever_for_index(fake_index, similarity_top_k=5)
 
         fake_index.as_retriever.assert_called_once_with(similarity_top_k=5)
         self.assertIs(result, fake_vector_retriever)

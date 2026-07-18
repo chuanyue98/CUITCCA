@@ -25,7 +25,7 @@ RERANK_RECALL_K = 10
 RERANK_TOP_N = 5
 RERANK_SCORE_THRESHOLD = 0.75
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
-HYBRID_RETRIEVAL_ENABLED = False
+HYBRID_RETRIEVAL_ENABLED = True
 
 # 检索 top_k 集中配置（Phase 2）。三处调用点历史上各自硬编码了不同的值，
 # 业务含义并不相同，这里只是把"数字定义在哪"集中到一处、可通过环境变量覆盖，
@@ -99,9 +99,9 @@ def reload_env_variables():
     RERANKER_MODEL = os.environ.get('RERANKER_MODEL', 'BAAI/bge-reranker-v2-m3')
 
     # 混合检索（BM25+dense RRF 融合，见 handlers/hybrid_retriever.py）。
-    # 默认关，跟 RERANK_ENABLED 一样的纪律：先跑 evals/run_hybrid_eval.py 见
-    # 到数字，再决定要不要翻默认值，不是实现完就默认打开。
-    HYBRID_RETRIEVAL_ENABLED = os.environ.get('HYBRID_RETRIEVAL_ENABLED', 'False').lower() in ('true', '1', 't')
+    # evals/run_hybrid_eval.py 在 campus-corpus 上验证过收益（20 题：
+    # hit@1 75%->85%、MRR 0.852->0.896，延迟只多约 2ms），默认开启。
+    HYBRID_RETRIEVAL_ENABLED = os.environ.get('HYBRID_RETRIEVAL_ENABLED', 'True').lower() in ('true', '1', 't')
 
     # 启动时校验必需的 env 变量
     if not openai_api_key:

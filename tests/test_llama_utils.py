@@ -135,6 +135,7 @@ class GenerateQueryEngineToolsTest(unittest.TestCase):
         class BareIndex:
             def __init__(self):
                 self.index_id = 'bare-index'
+                self.vector_store = MagicMock()
 
             def as_query_engine(self, **kwargs):
                 return MagicMock()

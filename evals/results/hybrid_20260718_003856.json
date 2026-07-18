@@ -1,0 +1,342 @@
+{
+  "collection": "campus-corpus",
+  "golden_path": "/home/cy/github/chuanyue98/CUITCCA/evals/golden.seed.jsonl",
+  "num_questions": 20,
+  "config": {
+    "baseline": {
+      "similarity_top_k": 5
+    },
+    "hybrid": {
+      "similarity_top_k": 5
+    },
+    "hybrid_rerank": {
+      "recall_k": 20,
+      "top_n": 5,
+      "model": "BAAI/bge-reranker-v2-m3"
+    }
+  },
+  "baseline": {
+    "hit_rate": {
+      "@1": 0.75,
+      "@2": 0.9,
+      "@5": 1.0
+    },
+    "mrr@5": 0.8516666666666668,
+    "latency_ms": {
+      "avg": 13.216005999993286,
+      "max": 15.977176999967924,
+      "p50": 13.097621500151035
+    }
+  },
+  "hybrid": {
+    "hit_rate": {
+      "@1": 0.85,
+      "@2": 0.85,
+      "@5": 1.0
+    },
+    "mrr@5": 0.8958333333333334,
+    "latency_ms": {
+      "avg": 15.012758149987349,
+      "max": 18.05092299991884,
+      "p50": 14.700235999839606
+    }
+  },
+  "details": [
+    {
+      "id": "q001",
+      "question": "成都信息工程大学的校训是什么？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "大学精神.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 12.1,
+      "latency_ms_hybrid": 15.5,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 674.1
+    },
+    {
+      "id": "q002",
+      "question": "成都信息工程大学的前身是什么，创建于哪一年？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校历史.txt",
+        "学校简介.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 13.1,
+      "latency_ms_hybrid": 14.4,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 677.4
+    },
+    {
+      "id": "q003",
+      "question": "学校是哪一年更名为“成都信息工程大学”的？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "rank_baseline": 3,
+      "rank_hybrid": 3,
+      "latency_ms_baseline": 14.3,
+      "latency_ms_hybrid": 14.4,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 676.6
+    },
+    {
+      "id": "q004",
+      "question": "高考成绩排名在各省文理科前200名报考成都信息工程大学的新生，可以获得多少一等新生奖学金？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "rank_baseline": 2,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 14.0,
+      "latency_ms_hybrid": 14.5,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 675.9
+    },
+    {
+      "id": "q005",
+      "question": "国家奖学金和国家励志奖学金的奖励标准分别是多少，两者的资助对象有什么区别？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "奖学措施.txt",
+        "助学措施.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 14.5,
+      "latency_ms_hybrid": 14.8,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 678.6
+    },
+    {
+      "id": "q006",
+      "question": "学校勤工助学的工资标准是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 12.4,
+      "latency_ms_hybrid": 13.5,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 677.3
+    },
+    {
+      "id": "q007",
+      "question": "学校现有专任教师和博士的数量分别大约是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "师资队伍.txt",
+        "学校简介.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 13.7,
+      "latency_ms_hybrid": 16.8,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 679.7
+    },
+    {
+      "id": "q008",
+      "question": "在成信大申请转专业，负责组织、指导和审核转专业工作的“领导小组”办公室设在哪个部门？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "rank_baseline": 2,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 12.9,
+      "latency_ms_hybrid": 15.3,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 676.4
+    },
+    {
+      "id": "q009",
+      "question": "学生可以通过哪两种方式申请转专业？",
+      "category": "comprehension",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "rank_baseline": 2,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 11.9,
+      "latency_ms_hybrid": 13.6,
+      "rank_hybrid_rerank": 5,
+      "latency_ms_hybrid_rerank": 673.0
+    },
+    {
+      "id": "q010",
+      "question": "校园卡丢失了应该去哪里办理挂失？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "挂失流程.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 12.5,
+      "latency_ms_hybrid": 14.5,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 678.1
+    },
+    {
+      "id": "q011",
+      "question": "学校招生就业处主要负责哪些工作？",
+      "category": "comprehension",
+      "expected_sources": [
+        "学校招生就业处概况.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 11.7,
+      "latency_ms_hybrid": 13.9,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 679.5
+    },
+    {
+      "id": "q012",
+      "question": "就业指导协会是什么类型的社团，主要开展哪些工作？",
+      "category": "comprehension",
+      "expected_sources": [
+        "就业指导协会.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 13.6,
+      "latency_ms_hybrid": 15.4,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 680.7
+    },
+    {
+      "id": "q013",
+      "question": "举报就业签约、统计造假问题的电话号码是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "就业签约、统计造假举报电话.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 4,
+      "latency_ms_baseline": 13.6,
+      "latency_ms_hybrid": 14.9,
+      "rank_hybrid_rerank": null,
+      "latency_ms_hybrid_rerank": 644.4
+    },
+    {
+      "id": "q014",
+      "question": "怎样关注并绑定“成信就业”微信公众号？",
+      "category": "comprehension",
+      "expected_sources": [
+        "成信就业公众号使用说明.pdf"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 12.4,
+      "latency_ms_hybrid": 14.0,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 676.7
+    },
+    {
+      "id": "q015",
+      "question": "《四川省大学生就业创业扶持政策清单》是哪一年的版本，由谁发布？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "四川省大学生就业创业扶持清单.pdf"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 12.9,
+      "latency_ms_hybrid": 18.1,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 685.4
+    },
+    {
+      "id": "q016",
+      "question": "1978年学校升格为本科院校时校名是什么，办学定位口号是什么？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 13.4,
+      "latency_ms_hybrid": 15.2,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 683.5
+    },
+    {
+      "id": "q017",
+      "question": "从建校至今，学校经历过哪些主要的更名和隶属关系变化？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 13.1,
+      "latency_ms_hybrid": 14.5,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 684.8
+    },
+    {
+      "id": "q018",
+      "question": "成都信息工程大学的校风、教风、学风分别是什么？",
+      "category": "comprehension",
+      "expected_sources": [
+        "大学精神.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 13.2,
+      "latency_ms_hybrid": 14.9,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 685.8
+    },
+    {
+      "id": "q019",
+      "question": "学校现有多少个学院（部、中心）、多少个本科专业、在校生规模大约是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校简介.txt"
+      ],
+      "rank_baseline": 5,
+      "rank_hybrid": 3,
+      "latency_ms_baseline": 13.0,
+      "latency_ms_hybrid": 14.6,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 685.8
+    },
+    {
+      "id": "q020",
+      "question": "学校助学措施中，除了国家助学金和国家助学贷款，还有哪些帮助经济困难学生的方式？",
+      "category": "comprehension",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "rank_baseline": 1,
+      "rank_hybrid": 1,
+      "latency_ms_baseline": 16.0,
+      "latency_ms_hybrid": 17.4,
+      "rank_hybrid_rerank": 1,
+      "latency_ms_hybrid_rerank": 685.5
+    }
+  ],
+  "hybrid_rerank": {
+    "hit_rate": {
+      "@1": 0.9,
+      "@2": 0.9,
+      "@5": 0.95
+    },
+    "mrr@5": 0.9099999999999999,
+    "latency_ms": {
+      "avg": 677.9572200000189,
+      "max": 685.753737000141,
+      "p50": 678.3798440000055
+    }
+  }
+}

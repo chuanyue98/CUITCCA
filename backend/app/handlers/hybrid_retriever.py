@@ -99,20 +99,20 @@ _RECALL_FLOOR = 20
 
 
 def _build_hybrid_retriever(index: VectorStoreIndex, similarity_top_k: int) -> BaseRetriever:
-    recall_k = max(similarity_top_k * _RECALL_MULTIPLIER, _RECALL_FLOOR)
-    vector_retriever = index.as_retriever(similarity_top_k=recall_k)
-
+    # isinstance 检查放在最前面：非 Chroma 场景（目前生产只有 Chroma，这里
+    # 只是防御性兜底）直接退化成纯向量检索，不要在判断"能不能做混合"之前就
+    # 先花一次 as_retriever(recall_k) 的调用——那次调用在这个分支里注定被
+    # 丢弃，没有意义。
     vector_store = index.vector_store
     if not isinstance(vector_store, ChromaVectorStore):
-        # 非 Chroma 场景（目前生产只有 Chroma，这里只是防御性兜底）没有现成
-        # 的 get_nodes(None) 语义保证，直接退化成纯向量检索（用调用方要求的
-        # 最终 top_k，不是宽召回的 recall_k）。
         return index.as_retriever(similarity_top_k=similarity_top_k)
 
     nodes = vector_store.get_nodes(None)
     if not nodes:
         return index.as_retriever(similarity_top_k=similarity_top_k)
 
+    recall_k = max(similarity_top_k * _RECALL_MULTIPLIER, _RECALL_FLOOR)
+    vector_retriever = index.as_retriever(similarity_top_k=recall_k)
     bm25_retriever = JiebaBM25Retriever(nodes=nodes, similarity_top_k=recall_k)
 
     return QueryFusionRetriever(
