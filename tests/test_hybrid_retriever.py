@@ -47,6 +47,8 @@ class BuildRetrieverForIndexTest(unittest.TestCase):
         import chromadb
         import configs.load_env as load_env
         from handlers import hybrid_retriever
+        from llama_index.core import Settings
+        from llama_index.core.llms import MockLLM
 
         hybrid_retriever.invalidate_hybrid_retriever_cache()
         self._tmp_dir = tempfile.mkdtemp()
@@ -58,6 +60,22 @@ class BuildRetrieverForIndexTest(unittest.TestCase):
         self._enabled_patcher = patch.object(load_env, "HYBRID_RETRIEVAL_ENABLED", True)
         self._enabled_patcher.start()
         self.addCleanup(self._enabled_patcher.stop)
+
+        # QueryFusionRetriever.__init__ 即使 num_queries=1（本模块用不到查询
+        # 扩写、永远不会真的调用这个 llm）也会在构造时急切读一次 Settings.llm
+        # 兜底——不显式配置的话，它会尝试懒加载默认 OpenAI 模型，在没有
+        # OPENAI_API_KEY 的环境（比如 CI）里直接抛 ValueError。生产环境这里
+        # 不会出问题（configs.llm_predictor.init_settings() 在启动时就配置好了
+        # 真实 LLM），但测试要自己隔离，不能依赖本机 .env 里恰好有没有 key。
+        #
+        # 直接读写私有的 _llm 字段，而不是 patch.object(Settings, "llm", ...)：
+        # Settings.llm 是只有 getter+setter、没有 deleter 的 property，
+        # patch.object 在还原时会尝试 delattr 失败；而且 property 的 getter
+        # 本身就是"没配置就懒加载默认 OpenAI"的那段逻辑，用它来读"原始值"做
+        # 保存/恢复会在保存这一步就先触发一次同样的 ValueError。
+        self._original_llm = Settings._llm
+        Settings._llm = MockLLM()
+        self.addCleanup(setattr, Settings, "_llm", self._original_llm)
 
     def _build_index(self, collection_name: str):
         from llama_index.core import Document, VectorStoreIndex
