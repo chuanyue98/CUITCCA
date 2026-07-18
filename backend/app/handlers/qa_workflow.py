@@ -93,6 +93,7 @@ from dataclasses import dataclass
 # 在每次真正调用时读到最新值。
 import configs.load_env as load_env
 from configs.config import Prompts
+from handlers.hybrid_retriever import build_retriever_for_index
 from handlers.index_crud import indexes
 from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
@@ -185,22 +186,30 @@ def _build_retriever(top_k: int | None = None) -> BaseRetriever:
 
     见模块 docstring"索引选择逻辑：复用，不重新发明"一节。
 
-    ``top_k`` 默认 None：沿用 ``load_env.DEFAULT_SIMILARITY_TOP_K``（生产环境
-    的 ``QAWorkflow`` 就是这么调用的，不传参）。评测脚本
-    ``evals/run_workflow_retrieval_eval.py`` 需要按 CLI 的 ``--top-k`` 覆盖，
-    所以这里留了这个可选参数——``QAWorkflow`` 本身不新增这个旋钮，`retrieve`
-    step 仍然零参数调用 ``_build_retriever()``。
+    ``top_k`` 默认 None：不传时，``RERANK_ENABLED`` 打开则用
+    ``load_env.RERANK_RECALL_K``、否则用 ``load_env.DEFAULT_SIMILARITY_TOP_K``
+    ——这个分支不能省：下面 ``retrieve`` step 里 ``ConditionalRerankPostprocessor``
+    在 ``len(nodes) <= RERANK_TOP_N`` 时会直接跳过 rerank（候选数不够、没什么
+    好排的），如果这里永远只取 ``DEFAULT_SIMILARITY_TOP_K``（等于
+    ``RERANK_TOP_N``），rerank 就永远拿不到比 ``RERANK_TOP_N`` 更多的候选，
+    条件触发形同虚设，等于 ``RERANK_ENABLED`` 打开也白打开。评测脚本
+    ``evals/run_workflow_retrieval_eval.py`` 需要按 CLI 的 ``--top-k`` 显式覆盖
+    ——传参时优先用传入值，不套用这条 rerank 相关的默认值逻辑。``QAWorkflow``
+    本身不新增这个旋钮，`retrieve` step 仍然零参数调用 ``_build_retriever()``。
     """
-    effective_top_k = top_k if top_k is not None else load_env.DEFAULT_SIMILARITY_TOP_K
+    if top_k is not None:
+        effective_top_k = top_k
+    else:
+        effective_top_k = load_env.RERANK_RECALL_K if load_env.RERANK_ENABLED else load_env.DEFAULT_SIMILARITY_TOP_K
     indexes_snapshot = list(indexes)
     if not indexes_snapshot:
         return _EmptyRetriever()
     if len(indexes_snapshot) == 1:
-        return indexes_snapshot[0].as_retriever(similarity_top_k=effective_top_k)
+        return build_retriever_for_index(indexes_snapshot[0], effective_top_k)
 
     retriever_tools = [
         RetrieverTool.from_defaults(
-            retriever=index.as_retriever(similarity_top_k=effective_top_k),
+            retriever=build_retriever_for_index(index, effective_top_k),
             description=index_description(index),
         )
         for index in indexes_snapshot

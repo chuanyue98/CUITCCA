@@ -165,11 +165,12 @@ class TestIndexRouter(unittest.TestCase):
         async def mock_aquery(q):
             return FakeResponse("query answer")
         mock_engine.aquery = mock_aquery
-        self.fake_index.as_query_engine.return_value = mock_engine
 
-        with patch('router.index.Prompts') as mock_prompts:
+        with patch('router.index.Prompts') as mock_prompts, \
+             patch('router.index.RetrieverQueryEngine') as mock_retriever_query_engine:
             mock_prompts.QA_PROMPT.value.template = "QA template"
             mock_prompts.REFINE_PROMPT.value.template = "Refine template"
+            mock_retriever_query_engine.from_args.return_value = mock_engine
             response = self.client.post("/index/test_index/query", data={"query": "hello"})
 
         self.assertEqual(response.status_code, 200)

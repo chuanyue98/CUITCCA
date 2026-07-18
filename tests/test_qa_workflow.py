@@ -119,6 +119,7 @@ async def test_empty_retriever_returns_no_nodes():
 
 
 def test_build_retriever_with_single_index_uses_its_retriever_with_shared_top_k():
+    import configs.load_env as load_env
     from configs.load_env import DEFAULT_SIMILARITY_TOP_K
 
     fake_index = MagicMock()
@@ -126,10 +127,34 @@ def test_build_retriever_with_single_index_uses_its_retriever_with_shared_top_k(
     fake_retriever = MagicMock()
     fake_index.as_retriever.return_value = fake_retriever
 
-    with patch("handlers.qa_workflow.indexes", [fake_index]):
+    # RERANK_ENABLED=False：验证退化到 DEFAULT_SIMILARITY_TOP_K 这条分支；
+    # RERANK_ENABLED=True 时的 RERANK_RECALL_K 分支见下面单独的用例。
+    with patch.object(load_env, "RERANK_ENABLED", False), \
+         patch("handlers.qa_workflow.indexes", [fake_index]):
         retriever = _build_retriever()
 
     fake_index.as_retriever.assert_called_once_with(similarity_top_k=DEFAULT_SIMILARITY_TOP_K)
+    assert retriever is fake_retriever
+
+
+def test_build_retriever_without_top_k_uses_rerank_recall_k_when_rerank_enabled():
+    """RERANK_ENABLED=True 时不传 top_k 应该用 RERANK_RECALL_K，而不是
+    DEFAULT_SIMILARITY_TOP_K——否则 retrieve step 里的
+    ConditionalRerankPostprocessor 因为候选数 <= RERANK_TOP_N 永远跳过 rerank，
+    RERANK_ENABLED 打开也白打开。"""
+    import configs.load_env as load_env
+
+    fake_index = MagicMock()
+    fake_index.index_id = "idx1"
+    fake_retriever = MagicMock()
+    fake_index.as_retriever.return_value = fake_retriever
+
+    with patch.object(load_env, "RERANK_ENABLED", True), \
+         patch.object(load_env, "RERANK_RECALL_K", 20), \
+         patch("handlers.qa_workflow.indexes", [fake_index]):
+        retriever = _build_retriever()
+
+    fake_index.as_retriever.assert_called_once_with(similarity_top_k=20)
     assert retriever is fake_retriever
 
 
@@ -150,13 +175,15 @@ def test_build_retriever_with_explicit_top_k_overrides_default():
 
 
 def test_build_retriever_without_top_k_still_uses_default():
+    import configs.load_env as load_env
     from configs.load_env import DEFAULT_SIMILARITY_TOP_K
 
     fake_index = MagicMock()
     fake_index.index_id = "idx1"
     fake_index.as_retriever.return_value = MagicMock()
 
-    with patch("handlers.qa_workflow.indexes", [fake_index]):
+    with patch.object(load_env, "RERANK_ENABLED", False), \
+         patch("handlers.qa_workflow.indexes", [fake_index]):
         _build_retriever()
 
     fake_index.as_retriever.assert_called_once_with(similarity_top_k=DEFAULT_SIMILARITY_TOP_K)
@@ -179,6 +206,7 @@ def test_build_retriever_multi_index_and_generate_query_engine_tools_agree_on_de
 
         def __init__(self, index_id: str):
             self.index_id = index_id
+            self.vector_store = MagicMock()
 
         def as_query_engine(self, **kwargs):
             return MagicMock()

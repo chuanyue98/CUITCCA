@@ -16,8 +16,9 @@ evals/
 ├── ingest_corpus.py           一次性导入：把仓库里的真实文档全量导入 campus-corpus collection
 ├── run_retrieval_eval.py      核心：跑检索评测，算 hit-rate / MRR
 ├── run_rerank_eval.py         A/B 对比：向量检索基线 vs 召回20+cross-encoder重排取5
+├── run_hybrid_eval.py         A/B/C 对比：纯向量 vs BM25+dense混合 vs 混合+rerank
 ├── results/                   评测脚本的输出报告（JSON，按时间戳命名）
-└── ../backend/app/utils/rerank.py   生产环境条件触发式 Rerank（默认关闭）
+└── ../backend/app/utils/rerank.py   生产环境条件触发式 Rerank（Phase C 起默认开启）
 ```
 
 ## 现状（侦察结论，写这份 evals 时的事实）
@@ -104,9 +105,11 @@ uv run python evals/run_retrieval_eval.py --collection campus-corpus --top-k 5
 ### 4. Rerank A/B 评测（回答"值不值得上 reranker"）
 
 ```bash
-uv sync --group rerank   # sentence-transformers（刻意不进主依赖，评测证明值得再提升）
 uv run python evals/run_rerank_eval.py --collection campus-corpus
 ```
+
+（`sentence-transformers` 现在是主依赖，`uv sync` 就会装，不需要单独
+`--group rerank` 了——Phase C 评测证明值得默认上线后已提升为主依赖。）
 
 A 组：向量检索 top_k=5（= 线上主路径 = run_retrieval_eval 的配置）。
 B 组：向量召回 `--recall-k`（默认 20）条，再用本地 cross-encoder
@@ -115,7 +118,18 @@ top 5。两组都报 hit_rate@1/@2/@5、MRR@5 和每题检索延迟（均值/中
 结果写 `evals/results/rerank_*.json`。@1/@2 是关键指标：线上 `/query` 接口
 只取 top_k=2，rerank 的价值主要看能不能把正确来源顶进前两位。
 
-### 5.（可选）批量生成候选题
+### 5. 混合检索 A/B/C 评测（回答"值不值得上 BM25+dense 融合"）
+
+```bash
+uv run python evals/run_hybrid_eval.py --collection campus-corpus
+```
+
+A 组：纯向量基线。B 组：BM25（jieba 分词）+ dense，RRF 融合。C 组：混合检索
+先融合出 `--recall-k`（默认 20）条，再用 cross-encoder 重排取 top
+`--top-k`（默认 5）——这是线上 `HYBRID_RETRIEVAL_ENABLED` + `RERANK_ENABLED`
+都打开时的实际组合配置。结果写 `evals/results/hybrid_*.json`。
+
+### 6.（可选）批量生成候选题
 
 ```bash
 # 需要配置好 .env 里的 OPENAI_API_KEY / OPENAI_API_BASE / OPENAI_MODEL
@@ -176,51 +190,71 @@ hit-rate/MRR，逻辑不到 50 行，比强行适配 `RetrieverEvaluator` 更清
    经常会编造 golden 集里不存在的细节，或者把 chunk 切分导致的残缺上下文
    当成完整答案。
 
-## Rerank 生产环境集成（Phase 3.2）
+## Rerank + 混合检索生产环境集成（Phase C）
 
-生产环境已加入**条件触发式 Rerank**，默认关闭，不改变现有行为。
+生产环境已加入**条件触发式 Rerank**和**混合检索（BM25+dense RRF）**，两者
+默认都是打开的（`RERANK_ENABLED=True`、`HYBRID_RETRIEVAL_ENABLED=True`）。
+Phase 3.2 刚实现 rerank 时默认是关闭的（当时语料还没去重，评测数据也只有
+recall_k=10），下面是 Phase C 用 evals/run_hybrid_eval.py 在去重后的
+`campus-corpus` 上重新验证过的数字，默认值已按这份数据翻开。
 
 ### 实现位置
 
 `backend/app/utils/rerank.py` — `ConditionalRerankPostprocessor`
+`backend/app/handlers/hybrid_retriever.py` — `build_retriever_for_index`
 
 ### 环境变量
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `RERANK_ENABLED` | `False` | 总开关 |
-| `RERANK_RECALL_K` | `10` | rerank 前的向量召回数 |
+| `RERANK_ENABLED` | `True` | rerank 总开关 |
+| `RERANK_RECALL_K` | `20` | rerank 前的召回数（评测验证过的值，不是 10） |
 | `RERANK_TOP_N` | `5` | rerank 后保留的结果数 |
 | `RERANK_SCORE_THRESHOLD` | `0.75` | top1 分数 ≥ 此值时跳过 rerank |
 | `RERANKER_MODEL` | `BAAI/bge-reranker-v2-m3` | cross-encoder 模型 |
+| `HYBRID_RETRIEVAL_ENABLED` | `True` | 混合检索总开关 |
 
 ### 触发逻辑
 
 ```
-向量召回
+向量/混合检索召回
   ↓
-top1 分数 >= 0.75  →  跳过 rerank（~15ms）
-top1 分数 < 0.75   →  触发 cross-encoder rerank（~340ms）
+top1 分数 >= 0.75  →  跳过 rerank
+top1 分数 < 0.75   →  触发 cross-encoder rerank（CPU ~660ms）
 ```
 
-### 评测数据（`campus` 索引，recall_k=10）
+### 评测数据（`campus-corpus`，20 题，recall_k=20）
+
+`run_rerank_eval.py`（纯向量 + rerank，不含混合检索）：
 
 | 指标 | A 基线 | B rerank | 差值 |
 |------|--------|----------|------|
-| hit_rate@1 | 75% | **80%** | +5% |
-| hit_rate@5 | 90% | **95%** | +5% |
-| MRR@5 | 0.793 | **0.846** | +0.053 |
-| 平均延迟 | 14.6ms | 337.3ms | +322.7ms |
+| hit_rate@1 | 75% | **95%** | +20% |
+| hit_rate@2 | 90% | **95%** | +5% |
+| hit_rate@5 | 100% | 100% | +0% |
+| MRR@5 | 0.852 | **0.960** | +0.108 |
+| 平均延迟 | 15.8ms | 673.9ms | +658.2ms |
 
-**改善案例：** `q008`（转专业领导小组办公室设在哪个部门）从未命中 → 排名第 1。
+`run_hybrid_eval.py`（三组，C 组是线上实际会跑的组合配置）：
 
-**未改善：** `q010`（校园卡挂失）在 `campus` collection 中缺少 `挂失流程.txt`，rerank 也无法修复数据缺失问题。
+| 指标 | A 基线 | B 混合检索 | C 混合+rerank |
+|------|--------|-----------|---------------|
+| hit_rate@1 | 75% | **85%** | **90%** |
+| hit_rate@2 | 90% | 85% | 90% |
+| hit_rate@5 | 100% | 100% | 95% |
+| MRR@5 | 0.852 | **0.896** | **0.910** |
+| 平均延迟 | 13.2ms | 15.0ms | 678.0ms |
 
 ### 结论
 
-- 条件触发机制有效：高置信度查询跳过 rerank，低置信度查询获得提升
-- 延迟代价较大（CPU 上 ~340ms），**当前建议保持关闭**
-- 如需启用，建议先评估 Hybrid Search 方案（延迟更低，可能收益更高）
+- 混合检索（B 组）几乎零延迟成本（+2ms），hit@1/MRR 有实打实的提升，默认开启。
+- rerank 单独验证（纯向量+rerank）收益比"混合+rerank"组合更大（MRR
+  0.960 vs 0.910）——两个机制不是简单叠加，具体原因还没深入分析，不影响
+  默认都打开的决策：组合配置相对纯基线仍有明显提升（hit@1 75%→90%，
+  MRR 0.852→0.910）。
+- rerank 延迟代价仍然较大（CPU 上 ~660ms），条件触发（只在低置信度时触发）
+  缓解了这个代价，但没有消除；如果后续观察到延迟问题，`RERANK_ENABLED`
+  可以随时关回去，不影响混合检索本身。
 
 ---
 

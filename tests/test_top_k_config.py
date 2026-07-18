@@ -90,7 +90,11 @@ class TopKConfigWiringTest(unittest.TestCase):
         import configs.load_env as env_mod
         import handlers.qa_workflow as qa_workflow
 
-        with patch.dict(os.environ, {'SIMILARITY_TOP_K': '11'}):
+        # RERANK_ENABLED 显式设 False：_build_retriever() 不传 top_k 时会在
+        # DEFAULT_SIMILARITY_TOP_K 和 RERANK_RECALL_K 之间二选一（见
+        # qa_workflow.py 里的说明），这个用例只关心 DEFAULT_SIMILARITY_TOP_K
+        # 热重载是否生效，不选 RERANK_ENABLED 默认值恰好是什么。
+        with patch.dict(os.environ, {'SIMILARITY_TOP_K': '11', 'RERANK_ENABLED': 'False'}):
             importlib.reload(env_mod)
             try:
                 fake_index = MagicMock()

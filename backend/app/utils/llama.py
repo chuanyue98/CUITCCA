@@ -2,9 +2,11 @@ import asyncio
 import re
 
 from configs.config import Prompts
+from handlers.hybrid_retriever import build_retriever_for_index
 from llama_index.core import Settings, SimpleDirectoryReader
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.tools import QueryEngineTool
 
 _DEFAULT_QA_INSTRUCTION = (
@@ -111,11 +113,12 @@ def generate_query_engine_tools(
 ) -> list[QueryEngineTool]:
     query_engine_tools = []
     for index in indexes:
-        query_engine = index.as_query_engine(
+        retriever = build_retriever_for_index(index, similarity_top_k)
+        query_engine = RetrieverQueryEngine.from_args(
+            retriever=retriever,
             streaming=streaming,
             text_qa_template=Prompts.QA_PROMPT.value,
             refine_template=Prompts.REFINE_PROMPT.value,
-            similarity_top_k=similarity_top_k,
             node_postprocessors=node_postprocessors or [],
         )
         tool = QueryEngineTool.from_defaults(query_engine=query_engine, description=index_description(index))

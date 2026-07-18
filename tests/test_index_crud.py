@@ -1,5 +1,6 @@
 import asyncio
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import handlers.index_crud as index_crud
@@ -12,6 +13,7 @@ class FakeIndex:
         self.index_id = index_id
         self.inserted_docs = []
         self.summary = ""
+        self.vector_store = MagicMock()
 
     def insert_nodes(self, nodes):
         self.inserted_docs.extend(nodes)
@@ -42,19 +44,44 @@ class InsertIntoIndexTest(unittest.TestCase):
     def tearDown(self):
         index_crud.get_or_create_collection = self._orig_get_or_create_collection
 
-    @patch("utils.llama.get_nodes_from_file")
+    @patch("handlers.vector_store.persist_docstore")
+    @patch("handlers.vector_store.load_or_create_docstore")
+    @patch("handlers.ingestion_pipeline.ingest_files")
+    @patch("handlers.ingestion_pipeline.build_pipeline")
     @patch("handlers.graph_builder.summary_index")
-    def test_inserts_nodes_and_updates_summary(self, mock_summary, mock_get_nodes):
-        mock_nodes = [MagicMock(), MagicMock()]
-        mock_get_nodes.return_value = mock_nodes
+    def test_ingests_file_via_pipeline_and_updates_summary(
+        self, mock_summary, mock_build_pipeline, mock_ingest_files, mock_load_docstore, mock_persist_docstore
+    ):
+        mock_docstore = MagicMock()
+        mock_load_docstore.return_value = mock_docstore
+        mock_pipeline = MagicMock()
+        mock_build_pipeline.return_value = mock_pipeline
         mock_summary.return_value = "generated summary"
 
         asyncio.run(index_crud.insert_into_index(self.fake_index, "/path/to/file.pdf"))
 
-        self.assertEqual(self.fake_index.inserted_docs, mock_nodes)
+        mock_load_docstore.assert_called_once_with("test_idx")
+        mock_build_pipeline.assert_called_once_with(
+            vector_store=self.fake_index.vector_store, docstore=mock_docstore
+        )
+        mock_ingest_files.assert_called_once_with([Path("/path/to/file.pdf")], mock_pipeline)
+        mock_persist_docstore.assert_called_once_with("test_idx", mock_docstore)
         self.assertEqual(self.fake_index.summary, "generated summary")
-        mock_get_nodes.assert_called_once_with("/path/to/file.pdf")
         mock_summary.assert_called_once_with(self.fake_index)
+
+    @patch("handlers.vector_store.persist_docstore")
+    @patch("handlers.vector_store.load_or_create_docstore")
+    @patch("handlers.ingestion_pipeline.ingest_files")
+    @patch("handlers.ingestion_pipeline.build_pipeline")
+    @patch("handlers.graph_builder.summary_index")
+    def test_skip_summary_does_not_regenerate_summary(
+        self, mock_summary, mock_build_pipeline, mock_ingest_files, mock_load_docstore, mock_persist_docstore
+    ):
+        asyncio.run(index_crud.insert_into_index(self.fake_index, "/path/to/file.pdf", skip_summary=True))
+
+        mock_ingest_files.assert_called_once()
+        mock_summary.assert_not_called()
+        self.assertEqual(self.fake_index.summary, "")
 
 
 class GetAllDocsTest(unittest.TestCase):

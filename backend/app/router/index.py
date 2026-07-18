@@ -15,6 +15,7 @@ from dependencies import get_index
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from handlers import delete_collection, list_index_names
 from handlers.graph_builder import summary_index
+from handlers.hybrid_retriever import build_retriever_for_index, invalidate_hybrid_retriever_cache
 from handlers.index_crud import (
     _indexes_lock,
     citf,
@@ -30,6 +31,7 @@ from handlers.index_crud import (
     updateNodeById,
 )
 from llama_index.core import Document
+from llama_index.core.query_engine import RetrieverQueryEngine
 from models.response import IndexListResponse, QueryResponse, UploadResponse
 from starlette.responses import JSONResponse
 from utils.file import read_file_contents, safe_filename
@@ -68,6 +70,7 @@ async def create_index(index_name: str = Form(max_length=100)):
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(sanitized_name)
     await loadAllIndexes()
+    invalidate_hybrid_retriever_cache()
     return JSONResponse(content={
         'status': 'success',
         'msg': f'index {sanitized_name} created',
@@ -87,6 +90,7 @@ async def delete_index(index_name: str = Form(max_length=100)):
     if sanitized_name in list_index_names():
         delete_collection(sanitized_name)
         await loadAllIndexes()
+        invalidate_hybrid_retriever_cache()
         return {"status": "deleted"}
     else:
         return JSONResponse(content={'status': 'detail', 'message': 'index not exist'},
@@ -97,10 +101,11 @@ async def delete_index(index_name: str = Form(max_length=100)):
 async def query_index(index=Depends(get_index), query: str = Form(max_length=5000)):
     customer_logger.info(f"query index {index.index_id} with query {query}")
 
-    engine = index.as_query_engine(
+    retriever = build_retriever_for_index(index, load_env.QUERY_ENDPOINT_TOP_K)
+    engine = RetrieverQueryEngine.from_args(
+        retriever=retriever,
         text_qa_template=Prompts.QA_PROMPT.value.template,
         refine_template=Prompts.REFINE_PROMPT.value.template,
-        similarity_top_k=load_env.QUERY_ENDPOINT_TOP_K,
     )
 
     response = await engine.aquery(query)
@@ -138,6 +143,7 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
         async with aiofiles.open(savepath, 'wb') as f:
             await f.write(file_bytes)
         await insert_into_index(index, filepath)
+        invalidate_hybrid_retriever_cache()
     except Exception as e:
         error_logger.error(f"Error while handling file: {str(e)}")
         return JSONResponse(content={"status": "detail", "message": "文件处理出错，请检查文件格式或联系管理员"},
@@ -181,6 +187,7 @@ async def upload_files(index=Depends(get_index), files: list[UploadFile] = File(
         index.summary = await summary_index(index)
         from handlers.index_crud import _save_summary
         _save_summary(index)
+        invalidate_hybrid_retriever_cache()
 
     except Exception as e:
         error_logger.error(f"Error while handling files: {str(e)}")

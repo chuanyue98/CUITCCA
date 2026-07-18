@@ -38,14 +38,15 @@ dependencies = [
     "openinference-instrumentation-llama-index>=3.0",
     "opentelemetry-sdk>=1.20",
     "opentelemetry-exporter-otlp-proto-http>=1.20",
+    "jieba>=0.42.1",
+    "bm25s>=0.3.9",
+    # Rerank（Phase C）：本地 cross-encoder 重排（bge-reranker-v2-m3）。曾经是
+    # 可选的 rerank 依赖组，evals/run_rerank_eval.py 和 run_hybrid_eval.py 的
+    # C 组都验证过收益后提为主依赖，RERANK_ENABLED 默认打开。
+    "sentence-transformers>=3.0",
 ]
 
 [dependency-groups]
-# rerank 组：evals/run_rerank_eval.py 的本地 cross-encoder 重排（bge-reranker-v2-m3）。
-# 刻意不进主依赖——先用评测数据证明 rerank 值得上线再提升（见 evals/README.md）。
-rerank = [
-    "sentence-transformers>=3.0",
-]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
