@@ -119,6 +119,7 @@ async def test_empty_retriever_returns_no_nodes():
 
 
 def test_build_retriever_with_single_index_uses_its_retriever_with_shared_top_k():
+    import configs.load_env as load_env
     from configs.load_env import DEFAULT_SIMILARITY_TOP_K
 
     fake_index = MagicMock()
@@ -126,10 +127,34 @@ def test_build_retriever_with_single_index_uses_its_retriever_with_shared_top_k(
     fake_retriever = MagicMock()
     fake_index.as_retriever.return_value = fake_retriever
 
-    with patch("handlers.qa_workflow.indexes", [fake_index]):
+    # RERANK_ENABLED=False：验证退化到 DEFAULT_SIMILARITY_TOP_K 这条分支；
+    # RERANK_ENABLED=True 时的 RERANK_RECALL_K 分支见下面单独的用例。
+    with patch.object(load_env, "RERANK_ENABLED", False), \
+         patch("handlers.qa_workflow.indexes", [fake_index]):
         retriever = _build_retriever()
 
     fake_index.as_retriever.assert_called_once_with(similarity_top_k=DEFAULT_SIMILARITY_TOP_K)
+    assert retriever is fake_retriever
+
+
+def test_build_retriever_without_top_k_uses_rerank_recall_k_when_rerank_enabled():
+    """RERANK_ENABLED=True 时不传 top_k 应该用 RERANK_RECALL_K，而不是
+    DEFAULT_SIMILARITY_TOP_K——否则 retrieve step 里的
+    ConditionalRerankPostprocessor 因为候选数 <= RERANK_TOP_N 永远跳过 rerank，
+    RERANK_ENABLED 打开也白打开。"""
+    import configs.load_env as load_env
+
+    fake_index = MagicMock()
+    fake_index.index_id = "idx1"
+    fake_retriever = MagicMock()
+    fake_index.as_retriever.return_value = fake_retriever
+
+    with patch.object(load_env, "RERANK_ENABLED", True), \
+         patch.object(load_env, "RERANK_RECALL_K", 20), \
+         patch("handlers.qa_workflow.indexes", [fake_index]):
+        retriever = _build_retriever()
+
+    fake_index.as_retriever.assert_called_once_with(similarity_top_k=20)
     assert retriever is fake_retriever
 
 
@@ -150,13 +175,15 @@ def test_build_retriever_with_explicit_top_k_overrides_default():
 
 
 def test_build_retriever_without_top_k_still_uses_default():
+    import configs.load_env as load_env
     from configs.load_env import DEFAULT_SIMILARITY_TOP_K
 
     fake_index = MagicMock()
     fake_index.index_id = "idx1"
     fake_index.as_retriever.return_value = MagicMock()
 
-    with patch("handlers.qa_workflow.indexes", [fake_index]):
+    with patch.object(load_env, "RERANK_ENABLED", False), \
+         patch("handlers.qa_workflow.indexes", [fake_index]):
         _build_retriever()
 
     fake_index.as_retriever.assert_called_once_with(similarity_top_k=DEFAULT_SIMILARITY_TOP_K)
@@ -334,6 +361,36 @@ async def test_chat_history_is_forwarded_to_llm():
     sent_messages = llm.received_messages[0]
     assert sent_messages[0].content == "之前问过的问题"
     assert sent_messages[-1].role == MessageRole.USER
+
+
+@pytest.mark.asyncio
+async def test_retrieve_step_applies_conditional_rerank_postprocessor():
+    """retrieve step 检索完之后应该经过
+    ConditionalRerankPostprocessor.postprocess_nodes，这是生产环境已上线的
+    条件触发式 rerank 钩子（见模块 docstring"rerank：挂钩，不重新实现"）。
+    patch 目标是 qa_workflow 模块顶层 import 进来的引用，不是 utils.rerank
+    源头——qa_workflow.py 用的是 `from utils.rerank import
+    ConditionalRerankPostprocessor`，patch 必须打在使用处的模块命名空间。"""
+    from handlers.qa_workflow import QAWorkflow
+
+    raw_nodes = [_make_node("原始内容")]
+    reranked_nodes = [_make_node("重排后的内容")]
+    retriever = FakeRetriever(raw_nodes)
+
+    mock_postprocessor_instance = MagicMock()
+    mock_postprocessor_instance.postprocess_nodes.return_value = reranked_nodes
+    mock_postprocessor_cls = MagicMock(return_value=mock_postprocessor_instance)
+
+    with patch("handlers.qa_workflow.ConditionalRerankPostprocessor", mock_postprocessor_cls):
+        workflow = QAWorkflow(retriever=retriever, llm=RecordingLLM(), timeout=30)
+        result = await workflow.run(query="学校的校训是什么？", streaming=False)
+
+    mock_postprocessor_cls.assert_called_once()
+    mock_postprocessor_instance.postprocess_nodes.assert_called_once()
+    call_args = mock_postprocessor_instance.postprocess_nodes.call_args
+    assert call_args.args[0] == raw_nodes
+    assert call_args.kwargs["query_bundle"].query_str == "学校的校训是什么？"
+    assert result.source_nodes == reranked_nodes
 
 
 @pytest.mark.asyncio

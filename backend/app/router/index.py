@@ -14,8 +14,8 @@ from configs.load_env import LOAD_PATH, SAVE_PATH
 from dependencies import get_index
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from handlers import delete_collection, list_index_names
-from handlers.graph_builder import invalidate_query_engine_cache, summary_index
-from handlers.hybrid_retriever import build_retriever_for_index
+from handlers.graph_builder import summary_index
+from handlers.hybrid_retriever import build_retriever_for_index, invalidate_hybrid_retriever_cache
 from handlers.index_crud import (
     _indexes_lock,
     citf,
@@ -70,7 +70,7 @@ async def create_index(index_name: str = Form(max_length=100)):
         return JSONResponse(content={'status': 'error', 'msg': 'index already exists'})
     createIndex(sanitized_name)
     await loadAllIndexes()
-    invalidate_query_engine_cache()
+    invalidate_hybrid_retriever_cache()
     return JSONResponse(content={
         'status': 'success',
         'msg': f'index {sanitized_name} created',
@@ -90,7 +90,7 @@ async def delete_index(index_name: str = Form(max_length=100)):
     if sanitized_name in list_index_names():
         delete_collection(sanitized_name)
         await loadAllIndexes()
-        invalidate_query_engine_cache()
+        invalidate_hybrid_retriever_cache()
         return {"status": "deleted"}
     else:
         return JSONResponse(content={'status': 'detail', 'message': 'index not exist'},
@@ -143,7 +143,7 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
         async with aiofiles.open(savepath, 'wb') as f:
             await f.write(file_bytes)
         await insert_into_index(index, filepath)
-        invalidate_query_engine_cache()
+        invalidate_hybrid_retriever_cache()
     except Exception as e:
         error_logger.error(f"Error while handling file: {str(e)}")
         return JSONResponse(content={"status": "detail", "message": "文件处理出错，请检查文件格式或联系管理员"},
@@ -187,7 +187,7 @@ async def upload_files(index=Depends(get_index), files: list[UploadFile] = File(
         index.summary = await summary_index(index)
         from handlers.index_crud import _save_summary
         _save_summary(index)
-        invalidate_query_engine_cache()
+        invalidate_hybrid_retriever_cache()
 
     except Exception as e:
         error_logger.error(f"Error while handling files: {str(e)}")

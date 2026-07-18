@@ -4,12 +4,8 @@ import time
 from collections import OrderedDict
 
 from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect
-from handlers.graph_builder import (
-    compose_graph_chat_egine,
-    compose_graph_query_engine,
-    get_history_msg,
-)
-from handlers.index_crud import format_source_nodes_list, indexes
+from handlers.index_crud import format_source_nodes_list
+from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from models.response import QueryResponse, QuerySourcesResponse
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
@@ -59,44 +55,67 @@ def _client_id(request: Request) -> str:
     return request.cookies.get("session_id") or "unknown"
 
 
-_graph_chat_engines: TTLCache = TTLCache()
+_chat_histories: TTLCache = TTLCache()
 _last_query_response: TTLCache = TTLCache()
 
 
 @graph_app.post("/create")
 async def create_graph(request: Request):
     client_id = _client_id(request)
-    _graph_chat_engines.set(client_id, compose_graph_chat_egine())
+    _chat_histories.set(client_id, [])
     return {"status": "ok"}
 
 
 @graph_app.post("/chat_stream")
 async def chat_graph_stream(request: Request, query: str = Form(max_length=5000)):
+    from handlers.qa_workflow import QAWorkflow, TokenEvent
+
     client_id = _client_id(request)
-    chat_engine = _graph_chat_engines.get(client_id)
-    if chat_engine is None:
-        chat_engine = compose_graph_chat_egine()
-        _graph_chat_engines.set(client_id, chat_engine)
+    history: list[ChatMessage] = list(_chat_histories.get(client_id) or [])
     query = query.strip()
     customer_logger.info(f"chat_stream: {query}")
-    res = await chat_engine.astream_chat(query)
-    _last_query_response.set(client_id, getattr(res, "source_nodes", None) or [])
-    # astream_chat() feeds achat_stream/aqueue, not the sync chat_stream/queue that
-    # the sync response_gen property reads from — only async_response_gen() actually
-    # yields tokens for responses produced via the async streaming path.
-    return StreamingResponse(res.async_response_gen(), media_type="text/plain")
+    workflow = QAWorkflow(timeout=60)
+    handler = workflow.run(query=query, chat_history=history, streaming=True)
+
+    async def _token_gen():
+        try:
+            async for ev in handler.stream_events():
+                if isinstance(ev, TokenEvent):
+                    yield ev.token
+            result = await handler
+            _last_query_response.set(client_id, result.source_nodes)
+            history.append(ChatMessage(role=MessageRole.USER, content=query))
+            history.append(ChatMessage(role=MessageRole.ASSISTANT, content=result.response))
+            _chat_histories.set(client_id, history)
+        except Exception as e:
+            error_logger.error(f"chat_stream error: {e}")
+            yield "出错了，请稍后在试一下吧"
+
+    return StreamingResponse(_token_gen(), media_type="text/plain")
 
 
 @graph_app.post("/query_stream")
 async def query_graph_stream(request: Request, query: str = Form(max_length=5000)):
-    query_engine = compose_graph_query_engine(streaming=True)
+    from handlers.qa_workflow import QAWorkflow, TokenEvent
+
     query = query.strip()
     customer_logger.info(f"query_stream: {query}")
-    response = await query_engine.aquery(query)
-    customer_logger.info(f"res: {response.get_formatted_sources()}")
+    workflow = QAWorkflow(timeout=60)
+    handler = workflow.run(query=query, streaming=True)
     client_id = _client_id(request)
-    _last_query_response.set(client_id, response.source_nodes)
-    return StreamingResponse(response.response_gen, media_type="text/plain")
+
+    async def _token_gen():
+        try:
+            async for ev in handler.stream_events():
+                if isinstance(ev, TokenEvent):
+                    yield ev.token
+            result = await handler
+            _last_query_response.set(client_id, result.source_nodes)
+        except Exception as e:
+            error_logger.error(f"query_stream error: {e}")
+            yield "出错了，请稍后在试一下吧"
+
+    return StreamingResponse(_token_gen(), media_type="text/plain")
 
 
 @graph_app.post("/query_sources", response_model=QuerySourcesResponse)
@@ -117,37 +136,39 @@ async def query_sources(request: Request):
 
 @graph_app.post("/query", response_model=QueryResponse)
 async def query_graph(request: Request, query: str = Form(max_length=5000)):
+    from handlers.qa_workflow import QAWorkflow
+
     query_logger.info(f"query: {query}")
     try:
-        graph_query_engine = compose_graph_query_engine()
-        response = await graph_query_engine.aquery(query)
+        workflow = QAWorkflow(timeout=60)
+        result = await workflow.run(query=query, streaming=False)
     except Exception as e:
         error_logger.error(f"error: {e}")
         return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"},
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     client_id = _client_id(request)
-    _last_query_response.set(client_id, response.source_nodes)
-    for sn in format_source_nodes_list(response.source_nodes):
+    _last_query_response.set(client_id, result.source_nodes)
+    for sn in format_source_nodes_list(result.source_nodes):
         query_logger.info(f"source: {sn}")
-    query_logger.info(f"res: {response}")
-    if response.response == "Empty Response":
-        response.response = '我还不知道，请反馈给我吧'
-    return QueryResponse(response=response.response)
+    query_logger.info(f"res: {result.response}")
+    return QueryResponse(response=result.response)
 
 
 @graph_app.post("/agent", response_model=QueryResponse)
 async def agent(query: str = Form(max_length=5000)):
-    query_engine = compose_graph_query_engine()
+    from handlers.qa_workflow import QAWorkflow
+
     try:
-        response = await query_engine.aquery(query)
+        workflow = QAWorkflow(timeout=60)
+        result = await workflow.run(query=query, streaming=False)
     except Exception as e:
         error_logger.error(f"error: {e}")
         return JSONResponse(content={"status": "detail", "message": "出错了，请稍后在试一下吧"},
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    for sn in format_source_nodes_list(response.source_nodes):
+    for sn in format_source_nodes_list(result.source_nodes):
         query_logger.info(f"source: {sn}")
-    query_logger.info(f"res: {response}")
-    return QueryResponse(response=response.response)
+    query_logger.info(f"res: {result.response}")
+    return QueryResponse(response=result.response)
 
 
 @graph_app.websocket("/query")
@@ -163,15 +184,14 @@ async def websocket_query(websocket: WebSocket):
         return
     await websocket.accept()
     try:
-        query_engine = compose_graph_query_engine()
+        from handlers.qa_workflow import QAWorkflow
+
         while True:
             query = await websocket.receive_text()
             query = query.strip()[:5000]
-            response = await query_engine.aquery(query)
-            ans = str(response)
-            if ans == "Empty Response":
-                ans = '我还不知道，请反馈给我吧'
-            await websocket.send_text(ans)
+            workflow = QAWorkflow(timeout=60)
+            result = await workflow.run(query=query, streaming=False)
+            await websocket.send_text(result.response)
     except WebSocketDisconnect:
         pass
     except Exception as e:
@@ -184,32 +204,34 @@ async def websocket_query(websocket: WebSocket):
 
 @graph_app.post("/query_history")
 async def graph_history(request: Request):
-    chat_engine = _graph_chat_engines.get(_client_id(request))
-    if chat_engine is None:
+    history = _chat_histories.get(_client_id(request))
+    if history is None:
         return JSONResponse(content={"status": "detail", "message": "No query graph available"},
                             status_code=status.HTTP_404_NOT_FOUND)
-    history = get_history_msg(chat_engine)
     return {"history": [{"role": str(msg.role), "content": msg.content} for msg in history]}
 
 
 @graph_app.post("/query_router")
 async def query_router(query: str = Form(max_length=5000)):
-    from handlers.graph_builder import MultiIndexQueryEngine
-    query_engine = MultiIndexQueryEngine(indexes_snapshot=list(indexes))
+    from handlers.qa_workflow import QAWorkflow
+
     customer_logger.info(f"query_router: {query}")
-    response = await query_engine.aquery(query)
-    customer_logger.info(f"res: {response}")
-    return {"response": str(response)}
+    workflow = QAWorkflow(timeout=60)
+    result = await workflow.run(query=query, streaming=False)
+    customer_logger.info(f"res: {result.response}")
+    return {"response": result.response}
 
 
 # ---------------------------------------------------------------------------
-# Phase 3（验证性质）：llama_index.core.workflow 问答路径。
+# 上面 7 个既有端点（/create、/chat_stream、/query_stream、/query_sources、
+# /query、/agent、websocket /query）以及 /query_history、/query_router 都已
+# 经切到 handlers/qa_workflow.py 的 QAWorkflow 实现——不再有 Phase 3 时期
+# "并行验证"的两套链路。handlers/graph_builder.py 里对应的
+# CondenseQuestionChatEngine/RouterQueryEngine 组装代码已删除，只保留
+# summary_index()。
 #
-# 与上面 7 个既有端点完全并行、互不影响：/query、/query_stream、/chat_stream
-# 等继续走 handlers/graph_builder.py 的 query engine / chat engine 链路不变。
-# 这两个 /workflow_* 端点走 handlers/qa_workflow.py 的新 Workflow 实现，
-# 目的是验证"迁移到 Workflow 是否可行、检索质量是否不低于现有基线"，不是
-# 现有端点的替代品——是否正式切换是后续阶段的决策，这里只做并行验证。
+# 下面这两个 /workflow_* 端点是 Phase 3 阶段新增、本次切换前就已经在用
+# QAWorkflow 的验证端点，写法上和上面的既有端点基本一致，继续保留。
 # ---------------------------------------------------------------------------
 
 
