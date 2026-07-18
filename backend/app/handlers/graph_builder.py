@@ -12,13 +12,14 @@ import re
 import configs.load_env as load_env
 from configs.config import Prompts
 from configs.load_env import VERBOSE
+from handlers.hybrid_retriever import build_retriever_for_index, invalidate_hybrid_retriever_cache
 from handlers.index_crud import indexes
 from llama_index.core.base.response.schema import RESPONSE_TYPE
 from llama_index.core.callbacks import CallbackManager
 from llama_index.core.chat_engine import CondenseQuestionChatEngine
 from llama_index.core.chat_engine.types import BaseChatEngine
 from llama_index.core.indices.query.base import BaseQueryEngine
-from llama_index.core.query_engine import RouterQueryEngine
+from llama_index.core.query_engine import RetrieverQueryEngine, RouterQueryEngine
 from llama_index.core.selectors import LLMSingleSelector
 from utils.llama import generate_query_engine_tools
 from utils.rerank import ConditionalRerankPostprocessor
@@ -44,11 +45,11 @@ class MultiIndexQueryEngine(BaseQueryEngine):
             else []
         )
         return [
-            index.as_query_engine(
+            RetrieverQueryEngine.from_args(
+                retriever=build_retriever_for_index(index, recall_k),
                 streaming=self._streaming,
                 text_qa_template=Prompts.QA_PROMPT.value,
                 refine_template=Prompts.REFINE_PROMPT.value,
-                similarity_top_k=recall_k,
                 node_postprocessors=postprocessors,
                 verbose=VERBOSE,
             )
@@ -101,11 +102,12 @@ def _build_query_engine(streaming: bool) -> BaseQueryEngine:
             if load_env.RERANK_ENABLED
             else load_env.DEFAULT_SIMILARITY_TOP_K
         )
-        return indexes_snapshot[0].as_query_engine(
+        retriever = build_retriever_for_index(indexes_snapshot[0], recall_k)
+        return RetrieverQueryEngine.from_args(
+            retriever=retriever,
             streaming=streaming,
             text_qa_template=Prompts.QA_PROMPT.value,
             refine_template=Prompts.REFINE_PROMPT.value,
-            similarity_top_k=recall_k,
             node_postprocessors=postprocessors,
         )
 
@@ -154,6 +156,7 @@ def compose_graph_query_engine(streaming: bool = False) -> BaseQueryEngine:
 
 def invalidate_query_engine_cache():
     _query_engine_caches.clear()
+    invalidate_hybrid_retriever_cache()
 
 
 async def summary_index(index):

@@ -139,6 +139,9 @@ class GenerateQueryEngineToolsTest(unittest.TestCase):
             def as_query_engine(self, **kwargs):
                 return MagicMock()
 
+            def as_retriever(self, **kwargs):
+                return MagicMock()
+
         index = BareIndex()
 
         with patch('utils.llama.QueryEngineTool') as mock_tool_cls:
@@ -154,14 +157,18 @@ class GenerateQueryEngineToolsTest(unittest.TestCase):
         with patch('utils.llama.Prompts') as mock_prompts:
             mock_prompts.QA_PROMPT.value = 'qa prompt'
             mock_prompts.REFINE_PROMPT.value = 'refine prompt'
-            with patch('utils.llama.QueryEngineTool'):
+            with patch('utils.llama.QueryEngineTool'), \
+                 patch('utils.llama.RetrieverQueryEngine') as mock_retriever_query_engine:
                 llama_utils.generate_query_engine_tools([index])
 
-        index.as_query_engine.assert_called_once_with(
+        # HYBRID_RETRIEVAL_ENABLED 默认关闭：build_retriever_for_index 直接
+        # 退化成 index.as_retriever(similarity_top_k=...)。
+        index.as_retriever.assert_called_once_with(similarity_top_k=5)
+        mock_retriever_query_engine.from_args.assert_called_once_with(
+            retriever=index.as_retriever.return_value,
             streaming=False,
             text_qa_template='qa prompt',
             refine_template='refine prompt',
-            similarity_top_k=5,
             node_postprocessors=[],
         )
 

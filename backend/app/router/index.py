@@ -15,6 +15,7 @@ from dependencies import get_index
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from handlers import delete_collection, list_index_names
 from handlers.graph_builder import invalidate_query_engine_cache, summary_index
+from handlers.hybrid_retriever import build_retriever_for_index
 from handlers.index_crud import (
     _indexes_lock,
     citf,
@@ -30,6 +31,7 @@ from handlers.index_crud import (
     updateNodeById,
 )
 from llama_index.core import Document
+from llama_index.core.query_engine import RetrieverQueryEngine
 from models.response import IndexListResponse, QueryResponse, UploadResponse
 from starlette.responses import JSONResponse
 from utils.file import read_file_contents, safe_filename
@@ -99,10 +101,11 @@ async def delete_index(index_name: str = Form(max_length=100)):
 async def query_index(index=Depends(get_index), query: str = Form(max_length=5000)):
     customer_logger.info(f"query index {index.index_id} with query {query}")
 
-    engine = index.as_query_engine(
+    retriever = build_retriever_for_index(index, load_env.QUERY_ENDPOINT_TOP_K)
+    engine = RetrieverQueryEngine.from_args(
+        retriever=retriever,
         text_qa_template=Prompts.QA_PROMPT.value.template,
         refine_template=Prompts.REFINE_PROMPT.value.template,
-        similarity_top_k=load_env.QUERY_ENDPOINT_TOP_K,
     )
 
     response = await engine.aquery(query)

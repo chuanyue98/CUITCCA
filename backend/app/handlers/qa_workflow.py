@@ -78,6 +78,7 @@ from dataclasses import dataclass
 # 在每次真正调用时读到最新值。
 import configs.load_env as load_env
 from configs.config import Prompts
+from handlers.hybrid_retriever import build_retriever_for_index
 from handlers.index_crud import indexes
 from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
@@ -180,11 +181,11 @@ def _build_retriever(top_k: int | None = None) -> BaseRetriever:
     if not indexes_snapshot:
         return _EmptyRetriever()
     if len(indexes_snapshot) == 1:
-        return indexes_snapshot[0].as_retriever(similarity_top_k=effective_top_k)
+        return build_retriever_for_index(indexes_snapshot[0], effective_top_k)
 
     retriever_tools = [
         RetrieverTool.from_defaults(
-            retriever=index.as_retriever(similarity_top_k=effective_top_k),
+            retriever=build_retriever_for_index(index, effective_top_k),
             description=index_description(index),
         )
         for index in indexes_snapshot
