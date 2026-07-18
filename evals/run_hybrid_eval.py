@@ -13,8 +13,7 @@
 三组都算 hit_rate@1/@2/@5 和 MRR@5（文件级命中，逻辑与 run_retrieval_eval/
 run_rerank_eval 一致，共用 evals/_common.py），并分别记录每题检索耗时。
 
-依赖 pyproject 的 `rerank` 依赖组（sentence-transformers，C 组要用）：
-    uv sync --group rerank
+C 组依赖 sentence-transformers（主依赖，`uv sync` 就会装）。
 reranker 模型约 2.2GB，首次运行会从 HuggingFace 下载。
 
 用法:
@@ -268,7 +267,7 @@ def main() -> int:
         try:
             from llama_index.core.postprocessor import SentenceTransformerRerank  # noqa: F401
         except ImportError:
-            print("[run_hybrid_eval] 缺少 rerank 依赖，C 组将跳过（只跑 A/B）。如需 C 组: uv sync --group rerank")
+            print("[run_hybrid_eval] 缺少 rerank 依赖，C 组将跳过（只跑 A/B）。如需 C 组: uv sync")
             skip_rerank = True
 
     try:

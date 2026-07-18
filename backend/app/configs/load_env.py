@@ -20,8 +20,8 @@ chroma_db_path = ''
 db_path = ''
 COOKIE_SECURE = False
 COOKIE_MAX_AGE = 86400
-RERANK_ENABLED = False
-RERANK_RECALL_K = 10
+RERANK_ENABLED = True
+RERANK_RECALL_K = 20
 RERANK_TOP_N = 5
 RERANK_SCORE_THRESHOLD = 0.75
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
@@ -43,10 +43,13 @@ DEFAULT_SIMILARITY_TOP_K = 5
 QUERY_ENDPOINT_TOP_K = 2
 MULTI_INDEX_FALLBACK_TOP_K = 3
 
-# Rerank 配置（Phase 3.2 条件触发 + 轻量候选）。
-# 默认关，不改变现有线上行为；打开后仅在向量检索 top1 分数低于阈值时才触发 rerank。
-RERANK_ENABLED = False
-RERANK_RECALL_K = 10
+# Rerank 配置（Phase 3.2 条件触发 + 轻量候选；Phase C 默认转正）。
+# 仅在向量/混合检索 top1 分数低于阈值时才触发 rerank。RERANK_RECALL_K=20 是
+# evals/run_rerank_eval.py 和 run_hybrid_eval.py 的 C 组实际验证过的召回量
+# （campus-corpus 20 题：hit@1 75%->90%、MRR 0.852->0.910），不是拍脑袋的数字，
+# 不要在没有新评测数据支撑的情况下改回 10。
+RERANK_ENABLED = True
+RERANK_RECALL_K = 20
 RERANK_TOP_N = 5
 RERANK_SCORE_THRESHOLD = 0.75
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
@@ -92,8 +95,8 @@ def reload_env_variables():
     MULTI_INDEX_FALLBACK_TOP_K = int(os.environ.get('MULTI_INDEX_FALLBACK_TOP_K', '3'))
 
     global RERANK_ENABLED, RERANK_RECALL_K, RERANK_TOP_N, RERANK_SCORE_THRESHOLD, RERANKER_MODEL
-    RERANK_ENABLED = os.environ.get('RERANK_ENABLED', 'False').lower() in ('true', '1', 't')
-    RERANK_RECALL_K = int(os.environ.get('RERANK_RECALL_K', '10'))
+    RERANK_ENABLED = os.environ.get('RERANK_ENABLED', 'True').lower() in ('true', '1', 't')
+    RERANK_RECALL_K = int(os.environ.get('RERANK_RECALL_K', '20'))
     RERANK_TOP_N = int(os.environ.get('RERANK_TOP_N', '5'))
     RERANK_SCORE_THRESHOLD = float(os.environ.get('RERANK_SCORE_THRESHOLD', '0.75'))
     RERANKER_MODEL = os.environ.get('RERANKER_MODEL', 'BAAI/bge-reranker-v2-m3')

@@ -11,8 +11,7 @@
 共用 evals/_common.py 里的 first_hit_rank / hit_rate_at / mrr_at），并分别记录
 每题检索耗时，量化 rerank 的延迟代价。
 
-依赖 pyproject 的 `rerank` 依赖组（sentence-transformers）：
-    uv sync --group rerank
+依赖 sentence-transformers（主依赖，`uv sync` 就会装）。
 reranker 模型约 2.2GB，首次运行会从 HuggingFace 下载。
 
 用法:
@@ -238,7 +237,7 @@ def main() -> int:
     try:
         from llama_index.core.postprocessor import SentenceTransformerRerank  # noqa: F401
     except ImportError:
-        print("[run_rerank_eval] 缺少 rerank 依赖，请先执行: uv sync --group rerank")
+        print("[run_rerank_eval] 缺少 rerank 依赖，请先执行: uv sync")
         return 1
 
     try:
