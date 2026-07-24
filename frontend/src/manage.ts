@@ -777,6 +777,15 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  const summaryTextarea = document.getElementById('index-summary-textarea');
+  if (summaryTextarea) {
+    summaryTextarea.addEventListener('input', (e) => {
+      debouncedUpdateSummary((e.target as HTMLTextAreaElement).value);
+    });
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.btn_save_disk')?.addEventListener('click', saveCurrentIndexDisk);
   document.querySelector('.btn-success')?.addEventListener('click', createNewIndex);
   document.querySelector('.btn-danger')?.addEventListener('click', deleteCurrentIndex);

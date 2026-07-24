@@ -80,19 +80,18 @@
   const button = document.getElementById('button');
   if (button && container) {
     function adjustSidebar() {
-      if (!button || !container) return;
       if (window.innerWidth < 1024) {
-        button.style.display = 'block';
-        container.style.display = 'none';
+        button!.style.display = 'block';
+        container!.style.display = 'none';
       } else {
-        button.style.display = 'none';
-        container.style.display = 'block';
+        button!.style.display = 'none';
+        container!.style.display = 'block';
       }
     }
 
     window.addEventListener('resize', adjustSidebar);
-    button.addEventListener('click', function () {
-      container.style.display = (container.style.display === 'none' || container.style.display === '') ? 'block' : 'none';
+    button!.addEventListener('click', function () {
+      container!.style.display = (container!.style.display === 'none' || container!.style.display === '') ? 'block' : 'none';
     });
     adjustSidebar();
   }
