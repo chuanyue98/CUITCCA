@@ -3,15 +3,14 @@ import asyncio
 import unittest
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-import tests._pathsetup  # noqa: F401
 from handlers.hybrid_retriever import (
     _hybrid_retriever_cache,
     build_retriever_for_index,
     invalidate_hybrid_retriever_cache,
 )
-from handlers.index_crud import _get_index_lock, _index_locks, _index_locks_guard
+from handlers.index_crud import _get_index_lock, _index_locks
+
+import tests._pathsetup  # noqa: F401
 
 
 class HybridRetrieverCacheInvalidationTest(unittest.TestCase):

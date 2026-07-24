@@ -8,9 +8,9 @@ from starlette.status import (
     HTTP_401_UNAUTHORIZED,
     HTTP_503_SERVICE_UNAVAILABLE,
 )
+from utils.security import get_client_ip, require_configured_api_key
 
 import tests._pathsetup  # noqa: F401
-from utils.security import get_client_ip, require_configured_api_key
 
 
 class GetClientIpTest(unittest.TestCase):
