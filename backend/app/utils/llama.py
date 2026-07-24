@@ -75,7 +75,11 @@ async def generate_qa_batched(contents: str, prompt: str | None = None):
     chunks: list[str] = textSplitter.split_text(contents)
     if prompt is None:
         prompt = "我会发送一段长文本"
-    prompt = f"你是出题人。\n{prompt}从中提取出若干个,尽可能多的问题和答案。问题答案详完整详细,按下面格式返回:\nQ:\nA:\nQ:\nA:\n..."
+    prompt = (
+        "你是出题人。\n"
+        f"{prompt}从中提取出若干个,尽可能多的问题和答案。问题答案详完整详细,"
+        "按下面格式返回:\nQ:\nA:\nQ:\nA:\n..."
+    )
     semaphore = asyncio.Semaphore(5)
     async def sem_complete(content):
         async with semaphore:
