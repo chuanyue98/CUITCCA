@@ -28,9 +28,9 @@
                     <input type="email" id="email" class="feedback_email" placeholder="请输入您的邮箱地址..." required>
                     <textarea id="feedback" cols="10" rows="10" class="feedback_textarea" placeholder="请输入您的宝贵意见..."></textarea>
                     <div class="feedback_submit_wrap">
-                        <button class="feedback_submit" id="feedbackButton" onclick="submitFeedback()">
-                            提交反馈
-                        </button>
+                    <button class="feedback_submit" id="feedbackButton">
+                        提交反馈
+                    </button>
                     </div>
                 </div>
             </div>
@@ -39,6 +39,6 @@
     </div>
 
     <script type="module" src="./src/sidebar.ts" data-active="feed_back"></script>
-    <script src="./feedback.js"></script>
+    <script type="module" src="./src/feed_back.ts"></script>
 </body>
 </html>
