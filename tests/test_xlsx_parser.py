@@ -5,9 +5,9 @@ from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 from fastapi import UploadFile
+from utils.file import read_file_contents
 
 import tests._pathsetup  # noqa: F401
-from utils.file import read_file_contents
 
 
 class XlsxParserTest(unittest.TestCase):

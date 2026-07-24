@@ -25,8 +25,12 @@ CREATE TABLE IF NOT EXISTS feedback (
 
 
 def _connect(db_path: str) -> sqlite3.Connection:
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA cache_size=-64000")
+    conn.execute("PRAGMA temp_store=MEMORY")
     return conn
 
 
@@ -43,17 +47,19 @@ def flush_stats(db_path: str, stats: dict) -> None:
             "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
             (stats.get('total_visits', 0),),
         )
-        for ip, count in dict(stats.get('user_visits', {})).items():
-            conn.execute(
+        user_visits = dict(stats.get('user_visits', {}))
+        endpoint_visits = dict(stats.get('endpoint_visits', {}))
+        if user_visits:
+            conn.executemany(
                 "INSERT INTO ip_visits (ip, count) VALUES (?, ?) "
                 "ON CONFLICT(ip) DO UPDATE SET count = excluded.count",
-                (ip, count),
+                list(user_visits.items()),
             )
-        for endpoint, count in dict(stats.get('endpoint_visits', {})).items():
-            conn.execute(
+        if endpoint_visits:
+            conn.executemany(
                 "INSERT INTO endpoint_visits (endpoint, count) VALUES (?, ?) "
                 "ON CONFLICT(endpoint) DO UPDATE SET count = excluded.count",
-                (endpoint, count),
+                list(endpoint_visits.items()),
             )
         conn.commit()
 
