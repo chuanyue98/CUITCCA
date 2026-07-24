@@ -59,10 +59,16 @@ async def lifespan(app: FastAPI):
             await asyncio.to_thread(stats_db.flush_stats, db_path, snapshot)
 
     flush_task = asyncio.create_task(_periodic_flush())
+    rate_limit_cleanup_task = asyncio.create_task(_periodic_rate_limit_cleanup())
 
     yield
 
-    flush_task.cancel()
+    for task in (flush_task, rate_limit_cleanup_task):
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
     async with access_stats_lock:
         final_snapshot = {
             "total_visits": _mgmt_access_stats["total_visits"],
@@ -82,9 +88,29 @@ app.include_router(manage_app, prefix='/manage', tags=['manage'])
 # 速率限制：每 IP 每 60 秒最多 30 次请求（LLM 查询端点）
 RATE_LIMIT_WINDOW = 60
 RATE_LIMIT_MAX_REQUESTS = 30
-RATE_LIMIT_STORE_MAX = 10000
+_RATE_LIMIT_STORE_MAX = 5000
+RATE_LIMIT_STORE_MAX = _RATE_LIMIT_STORE_MAX  # backward-compat alias
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 _rate_limit_lock = asyncio.Lock()
+
+
+def _evict_expired_rate_limits() -> None:
+    now = time.time()
+    expired_keys = [k for k, v in _rate_limit_store.items() if not v or v[-1] < now - RATE_LIMIT_WINDOW]
+    for k in expired_keys:
+        _rate_limit_store.pop(k, None)
+    overflow = len(_rate_limit_store) - _RATE_LIMIT_STORE_MAX
+    if overflow > 0:
+        keys_to_remove = list(_rate_limit_store.keys())[:overflow]
+        for k in keys_to_remove:
+            _rate_limit_store.pop(k, None)
+
+
+async def _periodic_rate_limit_cleanup():
+    while True:
+        await asyncio.sleep(30)
+        async with _rate_limit_lock:
+            _evict_expired_rate_limits()
 
 
 async def check_rate_limit(client_ip: str) -> None:
@@ -100,11 +126,6 @@ async def check_rate_limit(client_ip: str) -> None:
                 detail=f"请求过于频繁，请 {RATE_LIMIT_WINDOW} 秒后重试",
             )
         timestamps.append(now)
-        # 清理过期 IP 条目防止内存泄漏
-        if len(_rate_limit_store) > RATE_LIMIT_STORE_MAX:
-            expired = [k for k, v in _rate_limit_store.items() if not v or v[-1] < now - RATE_LIMIT_WINDOW]
-            for k in expired:
-                _rate_limit_store.pop(k, None)
 
 
 @app.middleware("http")
@@ -131,6 +152,8 @@ async def session_and_stats_middleware(request, call_next):
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
+    response = await call_next(request)
+
     # 统计（排除静态文件）
     if not is_static:
         async with access_stats_lock:
@@ -139,7 +162,6 @@ async def session_and_stats_middleware(request, call_next):
             access_stats["endpoint_visits"][request.url.path] += 1
             access_stats["ip_count"] = len(access_stats["user_visits"])
 
-    response = await call_next(request)
     if not has_session and not is_static:
         response.set_cookie(
             key="session_id",

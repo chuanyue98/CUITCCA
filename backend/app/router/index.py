@@ -144,7 +144,7 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
             await f.write(file_bytes)
         async with aiofiles.open(savepath, 'wb') as f:
             await f.write(file_bytes)
-        await insert_into_index(index, filepath)
+        await insert_into_index(index, filepath, skip_summary=True)
         invalidate_hybrid_retriever_cache()
     except Exception as e:
         error_logger.error(f"Error while handling file: {str(e)}")

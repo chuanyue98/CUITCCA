@@ -79,10 +79,19 @@ class JiebaBM25Retriever(BaseRetriever):
 
 
 _hybrid_retriever_cache: dict[tuple[str, int], BaseRetriever] = {}
+_HYBRID_CACHE_MAX = 64
 
 
 def invalidate_hybrid_retriever_cache() -> None:
     _hybrid_retriever_cache.clear()
+
+
+def _hybrid_cache_evict_if_needed() -> None:
+    overflow = len(_hybrid_retriever_cache) - _HYBRID_CACHE_MAX
+    if overflow > 0:
+        keys_to_remove = list(_hybrid_retriever_cache.keys())[:overflow]
+        for k in keys_to_remove:
+            _hybrid_retriever_cache.pop(k, None)
 
 
 # 每路（dense/BM25）召回宽度相对最终 top_k 的放大倍数，以及召回下限。
@@ -150,4 +159,5 @@ def build_retriever_for_index(index: VectorStoreIndex, similarity_top_k: int) ->
     cache_key = (index.index_id, similarity_top_k)
     if cache_key not in _hybrid_retriever_cache:
         _hybrid_retriever_cache[cache_key] = _build_hybrid_retriever(index, similarity_top_k)
+        _hybrid_cache_evict_if_needed()
     return _hybrid_retriever_cache[cache_key]
