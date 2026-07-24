@@ -3,7 +3,7 @@ import os
 
 from configs.llm_predictor import build_llm
 from configs.load_env import PROJECT_ROOT, reload_env_variables
-from dependencies.manage import access_stats
+from dependencies.manage import access_stats, access_stats_lock
 from dotenv import dotenv_values, set_key
 from fastapi import APIRouter, Depends, Form, HTTPException
 from llama_index.core import Settings
@@ -12,7 +12,7 @@ from models.user import Feedback
 from starlette.requests import Request
 from utils.file import save_feedback
 from utils.logger import audit_logger
-from utils.security import require_configured_api_key
+from utils.security import get_client_ip, require_configured_api_key
 
 manage_app = APIRouter()
 
@@ -20,7 +20,6 @@ manage_app = APIRouter()
 @manage_app.get("/stats", response_model=StatsResponse, dependencies=[Depends(require_configured_api_key)])
 async def get_stats():
     """获取访问统计"""
-    from main import access_stats_lock
     async with access_stats_lock:
         return StatsResponse(
             total_visits=access_stats["total_visits"],
@@ -33,7 +32,7 @@ async def get_stats():
 @manage_app.post("/feedback", response_model=FeedbackResponse, dependencies=[Depends(require_configured_api_key)])
 async def create_feedback(feedback: Feedback, request: Request):
     """创建反馈"""
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = get_client_ip(request)
     await save_feedback(client_ip, feedback)
     return FeedbackResponse(message="Feedback received")
 
@@ -62,7 +61,7 @@ async def set_env(
         raise HTTPException(status_code=400, detail="OPENAI_API_KEY is required")
 
     # 审计日志：记录 LLM 后端变更
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = get_client_ip(request)
     audit_logger.info(
         f"AUDIT: LLM backend changed by {client_ip} | "
         f"base_url={openai_base_url} | key=***{openai_api_key[-4:] if len(openai_api_key) >= 4 else '****'}"

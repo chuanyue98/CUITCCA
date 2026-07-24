@@ -86,7 +86,8 @@ class UploadFileUsesAsyncIoTest(unittest.TestCase):
 
                 self.assertEqual(response.status_code, 200)
                 mock_insert.assert_called_once()
-                with open(os.path.join(save_dir, 'note.txt'), 'rb') as f:
+                # 重构后文件按 index_id 分子目录存储
+                with open(os.path.join(save_dir, 'demo', 'note.txt'), 'rb') as f:
                     self.assertEqual(f.read(), b'hello world')
 
 

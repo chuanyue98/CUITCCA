@@ -18,6 +18,7 @@ from configs.load_env import (
 from configs.observability import init_observability
 from dependencies import access_stats
 from dependencies.manage import access_stats as _mgmt_access_stats
+from dependencies.manage import access_stats_lock
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -25,11 +26,7 @@ from handlers.index_crud import loadAllIndexes
 from router import graph_app, index_app, manage_app, response_app
 from starlette.middleware.cors import CORSMiddleware
 from utils import db as stats_db
-
-
-def _get_client_ip(request) -> str:
-    """安全获取客户端 IP，仅信任直接连接的 client.host"""
-    return request.client.host if request.client else "unknown"
+from utils.security import get_client_ip
 
 
 @asynccontextmanager
@@ -75,8 +72,6 @@ async def lifespan(app: FastAPI):
     await asyncio.to_thread(stats_db.flush_stats, db_path, final_snapshot)
 
 
-access_stats_lock = asyncio.Lock()
-
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(index_app, prefix='/index', tags=['index'])
@@ -115,7 +110,7 @@ async def check_rate_limit(client_ip: str) -> None:
 @app.middleware("http")
 async def session_and_stats_middleware(request, call_next):
     is_static = request.url.path.startswith("/web")
-    client_ip = _get_client_ip(request)
+    client_ip = get_client_ip(request)
 
     session_id = request.cookies.get("session_id")
     has_session = bool(session_id)
@@ -174,8 +169,12 @@ app.add_middleware(
 )
 
 
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'frontend')
-if os.path.isdir(frontend_dir):
+
+if os.path.isdir(static_dir):
+    app.mount("/web", StaticFiles(directory=static_dir, html=True), name="web")
+elif os.path.isdir(frontend_dir):
     app.mount("/web", StaticFiles(directory=frontend_dir, html=True), name="web")
 
 

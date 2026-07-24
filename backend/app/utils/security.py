@@ -5,6 +5,15 @@ from fastapi import HTTPException, status
 from starlette.requests import Request
 
 
+def get_client_ip(request: Request) -> str:
+    """安全获取客户端 IP，仅信任直接连接的 client.host。
+
+    不信任 X-Real-IP / X-Forwarded-For 等可被客户端伪造的 header，
+    防止速率限制和访问统计被绕过。
+    """
+    return request.client.host if request.client else "unknown"
+
+
 def require_configured_api_key(request: Request) -> None:
     """
     要求调用方在 Authorization 头中提供与 CUITCCA_API_KEY 匹配的 Bearer token。

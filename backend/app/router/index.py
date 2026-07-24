@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import uuid
@@ -104,8 +105,8 @@ async def query_index(index=Depends(get_index), query: str = Form(max_length=500
     retriever = build_retriever_for_index(index, load_env.QUERY_ENDPOINT_TOP_K)
     engine = RetrieverQueryEngine.from_args(
         retriever=retriever,
-        text_qa_template=Prompts.QA_PROMPT.value.template,
-        refine_template=Prompts.REFINE_PROMPT.value.template,
+        text_qa_template=Prompts.QA_PROMPT.value,
+        refine_template=Prompts.REFINE_PROMPT.value,
     )
 
     response = await engine.aquery(query)
@@ -130,13 +131,14 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
         return JSONResponse(content={"status": "detail", "message": str(e)},
                             status_code=status.HTTP_400_BAD_REQUEST)
     filepath = None
+    savepath = None
     try:
         filename = safe_filename(file.filename)
         unique_id = str(uuid.uuid4())
         os.makedirs(LOAD_PATH, exist_ok=True)
-        os.makedirs(SAVE_PATH, exist_ok=True)
         filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
-        savepath = os.path.join(SAVE_PATH, filename)
+        savepath = os.path.join(SAVE_PATH, index.index_id, filename)
+        os.makedirs(os.path.dirname(savepath), exist_ok=True)
         file_bytes = await file.read()
         async with aiofiles.open(filepath, 'wb') as f:
             await f.write(file_bytes)
@@ -146,6 +148,8 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
         invalidate_hybrid_retriever_cache()
     except Exception as e:
         error_logger.error(f"Error while handling file: {str(e)}")
+        if savepath is not None and os.path.exists(savepath):
+            os.remove(savepath)
         return JSONResponse(content={"status": "detail", "message": "文件处理出错，请检查文件格式或联系管理员"},
                             status_code=status.HTTP_400_BAD_REQUEST)
     finally:
@@ -229,6 +233,7 @@ async def delete_doc(doc_id: str = Query(max_length=200), index=Depends(get_inde
         error_logger.error(f"delete doc error: {e}")
         return JSONResponse(content={"status": "detail", "message": "删除文档时出错"},
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    invalidate_hybrid_retriever_cache()
     return {"status": "deleted"}
 
 
@@ -236,10 +241,11 @@ async def delete_doc(doc_id: str = Query(max_length=200), index=Depends(get_inde
 async def delete_node(node_id: str = Query(max_length=200), index=Depends(get_index)):
     try:
         deleteNodeById(index, node_id)
-        return {"status": "deleted"}
     except Exception:
         return JSONResponse(content={"status": "detail", "message": "node_id: not found"},
                             status_code=status.HTTP_400_BAD_REQUEST)
+    invalidate_hybrid_retriever_cache()
+    return {"status": "deleted"}
 
 
 @index_app.get("/{index_name}/get_summary")
@@ -273,8 +279,12 @@ async def insert_docs(
     else:
         doc_id = doc_id.replace("\\\\", "\\")
         doc = Document(text=text, doc_id=doc_id)
-    index.insert_nodes([doc])
-    saveIndex(index)
+    from handlers.index_crud import _get_index_lock
+    lock = await _get_index_lock(index.index_id)
+    async with lock:
+        await asyncio.to_thread(index.insert_nodes, [doc])
+        saveIndex(index)
+    invalidate_hybrid_retriever_cache()
     return {"status": "ok"}
 
 

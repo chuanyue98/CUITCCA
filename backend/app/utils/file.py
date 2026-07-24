@@ -58,6 +58,20 @@ def _read_file_sync(file: UploadFile) -> str:
             for page in pdf.pages:
                 page_text = page.extract_text() or ''
                 content = content + page_text
+
+    elif ext == 'xlsx':
+        import openpyxl
+        wb = openpyxl.load_workbook(BytesIO(file.file.read()), read_only=True, data_only=True)
+        content_parts = []
+        for sheet in wb.sheetnames:
+            ws = wb[sheet]
+            for row in ws.iter_rows(values_only=True):
+                row_text = ' '.join(str(cell) for cell in row if cell is not None)
+                if row_text.strip():
+                    content_parts.append(row_text)
+        wb.close()
+        content = ' '.join(content_parts)
+
     else:
         contents = file.file.read()
         try:

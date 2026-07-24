@@ -1,4 +1,4 @@
-.PHONY: install dev test lint typecheck security clean run format help
+.PHONY: install dev test lint typecheck security clean run format help frontend-install frontend-dev frontend-build
 
 install: ## 安装依赖
 	python -m pip install -e ".[dev]" || python -m pip install -e . && pip install -r dev-requirements.txt
@@ -31,6 +31,15 @@ clean: ## 清理缓存
 	find . -type d -name .pytest_cache -exec rm -rf {} +
 	find . -type d -name .ruff_cache -exec rm -rf {} +
 	find . -type d -name .mypy_cache -exec rm -rf {} +
+
+frontend-install: ## 安装前端依赖
+	cd frontend && npm install
+
+frontend-dev: ## 启动前端开发服务器
+	cd frontend && npm run dev
+
+frontend-build: ## 构建前端生产产物
+	cd frontend && npm run build
 
 help: ## 显示帮助
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
