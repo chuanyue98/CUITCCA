@@ -5,6 +5,19 @@
 !/backend/.env.example
 /frontend/*
 !/frontend/vendor/
+!/frontend/package.json
+!/frontend/package-lock.json
+!/frontend/tsconfig.json
+!/frontend/vite.config.ts
+!/frontend/index.html
+!/frontend/manage.html
+!/frontend/use_function.html
+!/frontend/feed_back.html
+!/frontend/style.css
+!/frontend/icon.png
+!/frontend/logo.png
+!/frontend/user.gif
+!/frontend/src/
 /indexes/*
 .venv/
 # uv.lock removed from gitignore to support CI --frozen
