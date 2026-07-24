@@ -49,15 +49,15 @@
                             <select id="index-select" class="index_select">
                                 <option value="">加载中...</option>
                             </select>
-                            <button onclick="saveCurrentIndexDisk()" class="btn btn-primary btn_save_disk">
+                            <button class="btn btn-primary btn_save_disk">
                                 保存磁盘
                             </button>
                         </div>
 
                         <div class="index_create_row">
                             <input type="text" id="new-index-name" class="new_index_input" placeholder="输入新索引名称...">
-                            <button onclick="createNewIndex()" class="btn btn-success">新建</button>
-                            <button onclick="deleteCurrentIndex()" class="btn btn-danger">删除当前</button>
+                            <button class="btn btn-success">新建</button>
+                            <button class="btn btn-danger">删除当前</button>
                         </div>
 
                         <!-- 索引摘要 Summary 区域 -->
@@ -73,14 +73,14 @@
                     <!-- 数据导入 Card -->
                     <div class="glass_card glass_card_mt">
                         <div class="tabs_header">
-                            <button class="tab_btn active" onclick="switchTab('tab-upload')">文件上传</button>
-                            <button class="tab_btn" onclick="switchTab('tab-text')">文本录入</button>
-                            <button class="tab_btn" onclick="switchTab('tab-qa')">QA生成导入</button>
+                            <button class="tab_btn active" data-tab="tab-upload">文件上传</button>
+                            <button class="tab_btn" data-tab="tab-text">文本录入</button>
+                            <button class="tab_btn" data-tab="tab-qa">QA生成导入</button>
                         </div>
 
                         <!-- Tab 1: 文件拖拽上传 -->
                         <div id="tab-upload" class="tab_content active">
-                            <div class="drag_zone" id="drag-zone" onclick="document.getElementById('file-input').click()">
+                            <div class="drag_zone" id="drag-zone">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-cloud-arrow-up" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                                     <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
                                     <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.743 2.185 12 3.78 12h8.906c1.23 0 2.313-.984 2.313-2.227 0-1.226-1.02-2.127-2.23-2.203l-.683-.043-.058-.68C11.783 4.685 10.024 3 8 3c-1.528 0-2.88.948-3.418 2.223l-.147.348-.348.147zm.255 5.673a.5.5 0 0 1-.708-.708L6.293 7.5H4.5a.5.5 0 0 1 0-1h1.793L4.646 4.854a.5.5 0 1 1 .708-.708l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5z"/>
@@ -102,7 +102,7 @@
                                 <label for="input-doc-text">文档正文内容 (Text)</label>
                                 <textarea id="input-doc-text" rows="6" placeholder="请输入要索引的内容文本..."></textarea>
                             </div>
-                            <button onclick="submitDirectText()" class="btn-submit">确认插入文档</button>
+                            <button class="btn-submit">确认插入文档</button>
                         </div>
 
                         <!-- Tab 3: QA 生成式上传 -->
@@ -115,7 +115,7 @@
                                 <label for="qa-custom-prompt">QA 问答抽取 Prompt (可选)</label>
                                 <textarea id="qa-custom-prompt" rows="3" placeholder="默认会将文件内容切割为多块，并为每块生成对应的标准问答对..."></textarea>
                             </div>
-                            <button onclick="submitQAGeneration()" class="btn-submit btn-submit-qa">生成 QA 并导入</button>
+                            <button class="btn-submit btn-submit-qa">生成 QA 并导入</button>
                         </div>
                     </div>
                 </div>
@@ -141,8 +141,8 @@
                     <div id="pagination-bar">
                         <span id="page-indicator">第 1 / 1 页 (共 0 项)</span>
                         <div class="pagination_buttons">
-                            <button onclick="prevPage()" id="btn-prev-page" class="pagination_btn">上一页</button>
-                            <button onclick="nextPage()" id="btn-next-page" class="pagination_btn">下一页</button>
+                            <button id="btn-prev-page" class="pagination_btn">上一页</button>
+                            <button id="btn-next-page" class="pagination_btn">下一页</button>
                         </div>
                     </div>
                 </section>

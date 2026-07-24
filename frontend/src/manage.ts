@@ -322,7 +322,7 @@ function switchTab(tabId: string) {
     document.querySelectorAll('.tab_btn').forEach((btn: Element) => btn.classList.remove('active'));
     document.querySelectorAll('.tab_content').forEach((content: Element) => content.classList.remove('active'));
 
-    const activeBtn = Array.from(document.querySelectorAll('.tab_btn')).find(btn => btn.getAttribute('onclick') && btn.getAttribute('onclick')!.includes(tabId));
+    const activeBtn = Array.from(document.querySelectorAll('.tab_btn')).find(btn => btn.getAttribute('data-tab') === tabId);
     if (activeBtn) activeBtn.classList.add('active');
 
     const content = document.getElementById(tabId);
@@ -774,4 +774,21 @@ async function deleteDocByCard(docId: string) {
 window.addEventListener('DOMContentLoaded', () => {
     loadIndexes();
     initDragZone();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('.btn_save_disk')?.addEventListener('click', saveCurrentIndexDisk);
+  document.querySelector('.btn-success')?.addEventListener('click', createNewIndex);
+  document.querySelector('.btn-danger')?.addEventListener('click', deleteCurrentIndex);
+  document.querySelectorAll('.tab_btn').forEach(btn => {
+    const tabId = btn.getAttribute('data-tab');
+    if (tabId) btn.addEventListener('click', () => switchTab(tabId));
+  });
+  document.getElementById('drag-zone')?.addEventListener('click', () => {
+    document.getElementById('file-input')?.click();
+  });
+  document.querySelector('.btn-submit')?.addEventListener('click', submitDirectText);
+  document.querySelector('.btn-submit-qa')?.addEventListener('click', submitQAGeneration);
+  document.getElementById('btn-prev-page')?.addEventListener('click', prevPage);
+  document.getElementById('btn-next-page')?.addEventListener('click', nextPage);
 });

@@ -263,3 +263,9 @@ async function clearAllMessage() {
 window.addEventListener('DOMContentLoaded', () => {
     replayHistory();
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('.clear')?.addEventListener('click', clearAllMessage);
+  document.getElementById('stop-generating')?.addEventListener('click', stopGenerating);
+  document.getElementById('submit')?.addEventListener('click', sendMessage);
+});
