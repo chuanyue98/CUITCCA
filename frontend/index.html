@@ -1,60 +1,60 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="./icon.png" type="image/x-icon">
-  <link rel="stylesheet" href="./style.css">
-  <title>成信大校园助手</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="./style.css">
+    <title>成信大校园助手</title>
 </head>
 <body>
-  <div class="outline">
-    <nav id="side_left" aria-label="主导航"></nav>
-    <main class="side_right">
-      <header class="headline">
-        <div class="headline_hidemenu">
-          <button id="button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-              <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8Zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5Z"/>
-            </svg>
-          </button>
-        </div>
-        <div class="headline_head">校园问答助手</div>
-        <div class="share"></div>
-      </header>
-      <div class="talk_outline">
-        <div class="talk_outlinein">
-          <div class="talk_content" id="chatbox" aria-live="polite" aria-label="对话记录">
-            <div class="message bot">
-              <div class="content_bot_img"></div>
-              <div class="content_bot">你好！我是成信大校园助手，你可以问我关于学校的任何问题，比如：学校有哪些社团？图书馆怎么借书？</div>
-            </div>
-          </div>
-          <div class="chat_bottom"></div>
-          <footer class="foot_fix">
-            <div class="chat_container">
-              <button class="clear" title="清空对话" aria-label="清空对话">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
-                </svg>
-              </button>
-              <div class="chat_talk_container" id="changeborder_div">
-                <div class="chat_textarea">
-                  <div class="textarea">
-                    <textarea name="" id="input" cols="10" rows="1" aria-label="输入问题" placeholder="输入你的问题..."></textarea>
-                  </div>
+    <div class="outline">
+        <nav id="side_left" aria-label="主导航"></nav>
+        <main class="side_right">
+            <header class="headline">
+                <div class="headline_hidemenu">
+                    <button id="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                            <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8Zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5Z"/>
+                        </svg>
+                    </button>
                 </div>
-                <button class="chat_talk_stop is-hidden" id="stop-generating" title="停止生成" aria-label="停止生成">■</button>
-                <button class="chat_talk_submit" id="submit" aria-label="发送">&#10140;</button>
-              </div>
+                <div class="headline_head">校园问答助手</div>
+                <div class="share"></div>
+            </header>
+            <div class="talk_outline">
+                <div class="talk_outlinein">
+                    <div class="talk_content" id="chatbox" aria-live="polite" aria-label="对话记录">
+                        <div class="message bot">
+                            <div class="content_bot_img"></div>
+                            <div class="content_bot">你好！我是成信大校园助手，你可以问我关于学校的任何问题，比如：学校有哪些社团？图书馆怎么借书？</div>
+                        </div>
+                    </div>
+                    <div class="chat_bottom"></div>
+                    <footer class="foot_fix">
+                        <div class="chat_container">
+                            <button class="clear" title="清空对话" aria-label="清空对话">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
+                                </svg>
+                            </button>
+                            <div class="chat_talk_container" id="changeborder_div">
+                                <div class="chat_textarea">
+                                    <div class="textarea">
+                                        <textarea name="" id="input" cols="10" rows="1" aria-label="输入问题" placeholder="输入你的问题..."></textarea>
+                                    </div>
+                                </div>
+                                <button class="chat_talk_stop is-hidden" id="stop-generating" title="停止生成" aria-label="停止生成">■</button>
+                                <button class="chat_talk_submit" id="submit" aria-label="发送">&#10140;</button>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
             </div>
-          </footer>
-        </div>
-      </div>
-    </main>
-  </div>
+        </main>
+    </div>
 
-  <script type="module" src="./src/chat.ts"></script>
-  <script type="module" src="./src/sidebar.ts" data-active="index"></script>
+    <script type="module" src="./src/chat.ts"></script>
+    <script type="module" src="./src/sidebar.ts" data-active="index"></script>
 </body>
 </html>
