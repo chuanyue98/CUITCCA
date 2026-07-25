@@ -1,23 +1,10 @@
 // ===== 知识库管理页面逻辑 (manage.html) =====
 // 依赖: sidebar.ts 已在上方加载
 
-// Toast 工具函数
-function showToast(message: string, type: string = 'info') {
-    const container = document.getElementById('toast-container') as HTMLElement;
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerText = message;
-    container.appendChild(toast);
+import { apiFetch } from "./utils/api";
+import { showToast } from "./utils/toast";
+import { escapeHtml } from "./utils/dom";
 
-    // 触发淡入动画
-    setTimeout(() => toast.classList.add('show'), 50);
-
-    // 3秒后移除
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
 
 const baseURL = '/index';
 let currentActiveIndex: string | null = null;
@@ -47,8 +34,9 @@ async function loadIndexes() {
         clearTimeout(updateTimers[timerId]);
     }
     updateTimers = {};
+    if (searchDebounceTimer) { clearTimeout(searchDebounceTimer); searchDebounceTimer = null; }
     try {
-        const response = await fetch(`${baseURL}/list`);
+        const response = await apiFetch(`${baseURL}/list`);
         const data = await response.json();
         const select = document.getElementById('index-select') as HTMLSelectElement;
         select.innerHTML = '';
@@ -105,6 +93,7 @@ document.getElementById('index-select')!.addEventListener('change', (e: Event) =
         clearTimeout(updateTimers[timerId]);
     }
     updateTimers = {};
+    if (searchDebounceTimer) { clearTimeout(searchDebounceTimer); searchDebounceTimer = null; }
     const target = e.target as HTMLSelectElement | null;
     currentActiveIndex = target ? target.value : null;
     if (currentActiveIndex) {
@@ -138,7 +127,7 @@ async function loadIndexSummary(indexName: string) {
         statusTag.style.color = '#fa8c16';
     }
     try {
-        const response = await fetch(`${baseURL}/${indexName}/get_summary`);
+        const response = await apiFetch(`${baseURL}/${indexName}/get_summary`);
         const data = await response.json();
         if (textarea) {
             textarea.value = data.summary || '';
@@ -198,7 +187,7 @@ function debouncedUpdateSummary(text: string) {
             const body = new URLSearchParams();
             body.append('summary', text);
 
-            const response = await fetch(`${baseURL}/${currentActiveIndex}/set_summary`, {
+            const response = await apiFetch(`${baseURL}/${currentActiveIndex}/set_summary`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
@@ -235,11 +224,11 @@ async function createNewIndex() {
 
     const sanitized = name.replace(/[^\w\-]/g, '_');
     const body = new URLSearchParams();
-    body.append('index_name', name);
+    body.append('index_name', sanitized);
 
     showLoading('正在创建索引...');
     try {
-        const response = await fetch(`${baseURL}/create`, {
+        const response = await apiFetch(`${baseURL}/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: body.toString()
@@ -275,7 +264,7 @@ async function deleteCurrentIndex() {
 
     showLoading('正在删除索引...');
     try {
-        const response = await fetch(`${baseURL}/delete`, {
+        const response = await apiFetch(`${baseURL}/delete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: body.toString()
@@ -302,7 +291,7 @@ async function saveCurrentIndexDisk() {
     }
     showLoading('正在保存索引到磁盘...');
     try {
-        const response = await fetch(`${baseURL}/${currentActiveIndex}/save`, {
+        const response = await apiFetch(`${baseURL}/${currentActiveIndex}/save`, {
             method: 'POST'
         });
         if (response.ok) {
@@ -386,7 +375,7 @@ async function uploadFiles(files: FileList) {
     }
 
     try {
-        const response = await fetch(`${baseURL}/${currentActiveIndex}/uploadFiles`, {
+        const response = await apiFetch(`${baseURL}/${currentActiveIndex}/uploadFiles`, {
             method: 'POST',
             body: formData
         });
@@ -406,7 +395,7 @@ async function uploadFiles(files: FileList) {
             progressList.innerHTML = `<p class="upload_progress_msg upload_progress_msg--success">✓ 全部文件上传成功！</p>`;
         } else {
             showToast(data.message || '文件上传解析失败', 'error');
-            progressList.innerHTML = `<p class="upload_progress_msg upload_progress_msg--error">✗ 上传失败: ${data.message || '未知错误'}</p>`;
+            progressList.innerHTML = `<p class="upload_progress_msg upload_progress_msg--error">✗ 上传失败: ${escapeHtml(data.message || '未知错误')}</p>`;
         }
     } catch (error) {
         showToast('网络错误，文件上传失败', 'error');
@@ -441,7 +430,7 @@ async function submitDirectText() {
 
     showLoading('正在插入文档...');
     try {
-        const response = await fetch(`${baseURL}/${currentActiveIndex}/insertdoc`, {
+        const response = await apiFetch(`${baseURL}/${currentActiveIndex}/insertdoc`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: body.toString()
@@ -490,7 +479,7 @@ async function submitQAGeneration() {
     }
 
     try {
-        const response = await fetch(`${baseURL}/${currentActiveIndex}/upload_file_by_QA`, {
+        const response = await apiFetch(`${baseURL}/${currentActiveIndex}/upload_file_by_QA`, {
             method: 'POST',
             body: formData
         });
@@ -537,7 +526,7 @@ async function loadIndexNodes(indexName: string) {
     if (pagBar) pagBar.style.display = 'none';
 
     try {
-        const response = await fetch(`${baseURL}/${indexName}/info`);
+        const response = await apiFetch(`${baseURL}/${indexName}/info`);
         const data = await response.json();
         allNodesList = data.docs || [];
 
@@ -602,11 +591,11 @@ function renderNodesPage() {
         card.innerHTML = `
             <div class="node_meta_row">
                 <span>Doc ID: <span class="node_doc_id"></span></span>
-                <span class="node_id_text">Node ID: ${node.node_id}</span>
+                <span class="node_id_text">Node ID: ${escapeHtml(node.node_id)}</span>
             </div>
             <textarea class="node_editor"></textarea>
             <div class="node_actions">
-                <span class="node_status_tag" id="status-${node.node_id}">未做修改</span>
+                <span class="node_status_tag" id="status-${escapeHtml(node.node_id)}">未做修改</span>
                 <div class="node_action_buttons">
                     <button class="btn-delete-node btn-delete-doc">删除整档</button>
                     <button class="btn-delete-node btn-delete-chunk">删除分块</button>
@@ -685,7 +674,7 @@ function debouncedUpdateNode(nodeId: string, text: string, statusElement: HTMLEl
             const body = new URLSearchParams();
             body.append('text', text);
 
-            const response = await fetch(`${baseURL}/${currentActiveIndex}/update?nodeId=${nodeId}`, {
+            const response = await apiFetch(`${baseURL}/${currentActiveIndex}/update?nodeId=${nodeId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
@@ -720,7 +709,7 @@ async function deleteNodeByCard(nodeId: string) {
     const statusEl = document.getElementById(`status-${nodeId}`) as HTMLElement | null;
     if (statusEl) statusEl.innerText = '删除中...';
     try {
-        const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteNode?node_id=${nodeId}`, {
+        const response = await apiFetch(`${baseURL}/${currentActiveIndex}/deleteNode?node_id=${nodeId}`, {
             method: 'POST'
         });
         const data = await response.json();
@@ -754,7 +743,7 @@ async function deleteDocByCard(docId: string) {
         }
     });
     try {
-        const response = await fetch(`${baseURL}/${currentActiveIndex}/deleteDoc?doc_id=${docId}`, {
+        const response = await apiFetch(`${baseURL}/${currentActiveIndex}/deleteDoc?doc_id=${docId}`, {
             method: 'POST'
         });
         const data = await response.json();

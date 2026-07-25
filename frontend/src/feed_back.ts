@@ -1,23 +1,8 @@
-// ===== 问题反馈页面逻辑 (feed_back.html) =====
+// ===== 问题反馈页面的逻辑 (feed_back.html) =====
 // 依赖: sidebar.ts 已在上方加载
 
-// Toast 工具函数
-export function showToast(message: string, type: string = 'info') {
-    const container = document.getElementById('toast-container')!;
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerText = message;
-    container.appendChild(toast);
-
-    // 触发淡入动画
-    setTimeout(() => toast.classList.add('show'), 50);
-
-    // 3秒后移除
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
+import { apiFetch } from "./utils/api";
+import { showToast } from "./utils/toast";
 
 async function submitFeedback() {
     const emailInput = document.getElementById("email") as HTMLInputElement | null;
@@ -36,12 +21,9 @@ async function submitFeedback() {
     if (feedbackButton) feedbackButton.disabled = true;
 
     try {
-        const response = await fetch('/manage/feedback', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + (localStorage.getItem('api_key') || '')
-            },
+        const response = await apiFetch("/manage/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 email: emailInput.value,
                 message: text.value
@@ -63,9 +45,9 @@ async function submitFeedback() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('feedbackButton');
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("feedbackButton");
     if (btn) {
-        btn.addEventListener('click', submitFeedback);
+        btn.addEventListener("click", submitFeedback);
     }
 });

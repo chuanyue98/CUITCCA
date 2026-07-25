@@ -1,6 +1,8 @@
 // ===== 聊天页面逻辑 (index.html) =====
 // 依赖: sidebar.ts、marked.min.js、purify.min.js 已在上方加载
 
+import { apiFetch } from './utils/api';
+
 const HISTORY_KEY = 'cuitcca_chat_history_v1';
 const HISTORY_MAX = 50;
 
@@ -162,8 +164,27 @@ async function streamAnswer(query: string, answerEl: HTMLElement, citationsEl: H
     let fullText = '';
     let firstChunk = true;
 
+    // rAF 节流: 避免每个 chunk 都触发 Markdown 解析 + DOM 重绘
+    let rafId: number | null = null;
+    let pendingText: string | null = null;
+
+    const flushRender = () => {
+        if (pendingText !== null) {
+            answerEl.innerHTML = renderMarkdown(pendingText);
+            scrollToBottom();
+            pendingText = null;
+        }
+    };
+
+    const cancelPendingRaf = () => {
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+    };
+
     try {
-        const response = await fetch('/graph/chat_stream', {
+        const response = await apiFetch('/graph/chat_stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'query=' + encodeURIComponent(query),
@@ -185,9 +206,20 @@ async function streamAnswer(query: string, answerEl: HTMLElement, citationsEl: H
                 firstChunk = false;
             }
             fullText += decoder.decode(value, { stream: true });
-            answerEl.innerHTML = renderMarkdown(fullText);
-            scrollToBottom();
+
+            // 节流: 仅在无待执行 rAF 时调度新帧
+            pendingText = fullText;
+            if (rafId === null) {
+                rafId = requestAnimationFrame(() => {
+                    rafId = null;
+                    flushRender();
+                });
+            }
         }
+
+        // 流结束: 取消待执行 rAF 并做最终渲染
+        cancelPendingRaf();
+        flushRender();
 
         if (!fullText.trim()) {
             fullText = '我还不知道，请反馈给我吧';
@@ -197,7 +229,9 @@ async function streamAnswer(query: string, answerEl: HTMLElement, citationsEl: H
         appendHistory('bot', fullText);
         await loadCitations(citationsEl);
     } catch (error) {
+        cancelPendingRaf();
         if (error instanceof Error && error.name === 'AbortError') {
+            flushRender();
             if (fullText) {
                 appendHistory('bot', fullText);
             } else {
@@ -216,7 +250,7 @@ async function streamAnswer(query: string, answerEl: HTMLElement, citationsEl: H
 
 async function loadCitations(citationsEl: HTMLElement) {
     try {
-        const response = await fetch('/graph/query_sources', { method: 'POST' });
+        const response = await apiFetch('/graph/query_sources', { method: 'POST' });
         if (!response.ok) return;
         const data = await response.json();
         const nodes = (data.source_nodes || []).filter((n: { text?: string }) => n && n.text);
@@ -251,12 +285,12 @@ async function clearAllMessage() {
     chatbox.innerHTML = '';
     clearHistory();
     try {
-        await fetch('/graph/create', { method: 'POST' });
+        await apiFetch('/graph/create', { method: 'POST' });
     } catch (e) {
         // 服务端重置失败不阻塞本地清空
     }
     const { answerEl } = appendBotBubble({ persist: false });
-    answerEl.innerHTML = renderMarkdown('你好！我是成信大校园助手，你可以问我关于学校的任何问题，比如：学校有哪些社团？图书馆怎么借书？');
+    answerEl.innerHTML = renderMarkdown('你好！我是成都信息工程大学校园助手，你可以问我关于学校的任何问题，比如：学校有哪些社团？图书馆怎么借书？');
 }
 
 // ===== 页面初始化 =====
