@@ -88,7 +88,7 @@ jobs:
         run: uv sync --frozen
 
       - name: pip-audit (scan Python deps for known CVEs)
-        run: uv run pip-audit
+        run: uv run pip-audit --ignore-vuln PYSEC-2026-311  # chromadb 1.5.9, no fix available yet
 
       - name: bandit (static security analysis of backend source)
         run: uv run bandit -r backend/app/ -ll
