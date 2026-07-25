@@ -186,7 +186,7 @@ test('聊天页面 UI/UX 深度检查', async ({ page }) => {
   }
 
   // 截图
-  await page.screenshot({ path: '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots/index-uiux.png' });
+  await page.screenshot({ path: './screenshots/index-uiux.png' });
   console.log('\n截图已保存: screenshots/index-uiux.png');
 
   // 如果有关键问题，标记失败

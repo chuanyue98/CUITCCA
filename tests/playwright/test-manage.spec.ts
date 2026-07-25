@@ -9,7 +9,7 @@ const BASE_URL = 'http://localhost:8522';
 const MANAGE_URL = `${BASE_URL}/web/manage.html`;
 
 // 确保截图目录存在
-const screenshotDir = '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots';
+const screenshotDir = './screenshots';
 mkdirSync(screenshotDir, { recursive: true });
 
 interface CheckResult {

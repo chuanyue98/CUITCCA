@@ -114,7 +114,7 @@ test('使用指南页面 UI/UX 深度检查', async ({ page }) => {
   if (parseFloat(lineHeight) < 1.5) issues.push(`.guide_card p lineHeight 过小: ${lineHeight}`);
 
   // Screenshot
-  await page.screenshot({ path: '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots/use_function-uiux.png' });
+  await page.screenshot({ path: './screenshots/use_function-uiux.png' });
   console.log('\n截图已保存: screenshots/use_function-uiux.png');
 
   console.log(`\n=== 发现问题数: ${issues.length} ===`);

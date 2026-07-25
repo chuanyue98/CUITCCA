@@ -127,7 +127,7 @@ test.describe('问题反馈页面 (feed_back.html)', () => {
     await page.goto(FEEDBACK_URL);
     await page.waitForTimeout(500); // 确保所有动画/加载完成
     await page.screenshot({
-      path: '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots/feedback.png',
+      path: './screenshots/feedback.png',
       fullPage: false,
     });
   });
