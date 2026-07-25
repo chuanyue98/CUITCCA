@@ -83,5 +83,5 @@ def _read_file_sync(file: UploadFile) -> str:
 
 
 async def read_file_contents(file: UploadFile) -> str:
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, _read_file_sync, file)

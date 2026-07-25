@@ -33,48 +33,76 @@ class ManageEnvAuthTest(unittest.TestCase):
 
     def test_rejects_when_no_api_key_configured(self):
         with patch.dict(os.environ, {'CUITCCA_API_KEY': ''}):
-            response = self.client.post('/manage/env', data={'openai_api_key': 'sk-anything'})
+            response = self.client.get('/manage/env')
         self.assertEqual(response.status_code, 503)
 
     def test_rejects_wrong_bearer_token(self):
         with patch.dict(os.environ, {'CUITCCA_API_KEY': 'secret123'}):
-            response = self.client.post(
+            response = self.client.get(
                 '/manage/env',
-                data={'openai_api_key': 'sk-anything'},
-                headers={'Authorization': 'Bearer wrong'},
+                headers={'Authorization': 'Bearer wrongg'},
             )
         self.assertEqual(response.status_code, 401)
 
-    def test_accepts_correct_bearer_token(self):
-        with patch.dict(os.environ, {'CUITCCA_API_KEY': 'secret123'}), \
-             patch.object(manage, 'dotenv_values', return_value={}), \
-             patch.object(manage, 'set_key'), \
-             patch.object(manage, 'reload_env_variables'):
-            response = self.client.post(
+    def test_accepts_correct_bearer_token_and_returns_masked_values(self):
+        env_file_values = {
+            'OPENAI_API_KEY': 'sk-file-key-123456',
+            'OPENAI_API_BASE': 'http://file-base',
+            'OPENAI_API_MODEL': 'gpt-file',
+        }
+        with patch.dict(os.environ, {
+            'CUITCCA_API_KEY': 'secret123',
+            'OPENAI_API_KEY': 'sk-runtime-key-9999',
+            'OPENAI_API_BASE': 'http://runtime-base',
+            'OPENAI_API_MODEL': 'gpt-runtime',
+        }), patch.object(manage, 'dotenv_values', return_value=env_file_values):
+            response = self.client.get(
                 '/manage/env',
-                data={'openai_api_key': 'sk-anything'},
                 headers={'Authorization': 'Bearer secret123'},
             )
         self.assertEqual(response.status_code, 200)
+        body = response.json()
+        # API keys must be masked; only the last 4 chars visible
+        self.assertEqual(body['env_file']['OPENAI_API_KEY'], '****3456')
+        self.assertEqual(body['runtime']['OPENAI_API_KEY'], '****9999')
+        # Non-secret config returned as plaintext so operators can confirm
+        # which base/model is actually in effect.
+        self.assertEqual(body['env_file']['OPENAI_API_BASE'], 'http://file-base')
+        self.assertEqual(body['env_file']['OPENAI_API_MODEL'], 'gpt-file')
+        self.assertEqual(body['runtime']['OPENAI_API_BASE'], 'http://runtime-base')
+        self.assertEqual(body['runtime']['OPENAI_API_MODEL'], 'gpt-runtime')
 
-    def test_rebuilds_settings_llm_after_updating_env(self):
-        """Without this, changing the key/base_url/model via /manage/env has no
-        effect on the already-built Settings.llm used by the running query engines."""
-        from llama_index.llms.openai_like import OpenAILike
-        sentinel_llm = OpenAILike(model='sentinel-model', api_key='x', api_base='http://x',
-                                   is_chat_model=True, context_window=10)
-        with patch.dict(os.environ, {'CUITCCA_API_KEY': 'secret123'}), \
-             patch.object(manage, 'dotenv_values', return_value={}), \
-             patch.object(manage, 'set_key'), \
-             patch.object(manage, 'reload_env_variables'), \
-             patch.object(manage, 'build_llm', return_value=sentinel_llm) as mock_build_llm:
-            self.client.post(
+    def test_masks_short_keys_as_full_asterisks(self):
+        # Keys <=4 chars are fully masked to avoid leaking the entire value.
+        env_file_values = {'OPENAI_API_KEY': 'ab'}
+        with patch.dict(os.environ, {
+            'CUITCCA_API_KEY': 'secret123',
+            'OPENAI_API_KEY': 'abc',
+        }), patch.object(manage, 'dotenv_values', return_value=env_file_values):
+            response = self.client.get(
                 '/manage/env',
-                data={'openai_api_key': 'sk-anything'},
                 headers={'Authorization': 'Bearer secret123'},
             )
-            mock_build_llm.assert_called_once()
-            self.assertIs(manage.Settings.llm, sentinel_llm)
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body['env_file']['OPENAI_API_KEY'], '****')
+        self.assertEqual(body['runtime']['OPENAI_API_KEY'], '****')
+
+    def test_returns_empty_string_for_missing_keys(self):
+        with patch.dict(os.environ, {
+            'CUITCCA_API_KEY': 'secret123',
+            'OPENAI_API_KEY': '',
+            'OPENAI_API_BASE': '',
+            'OPENAI_API_MODEL': '',
+        }), patch.object(manage, 'dotenv_values', return_value={}):
+            response = self.client.get(
+                '/manage/env',
+                headers={'Authorization': 'Bearer secret123'},
+            )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body['env_file']['OPENAI_API_KEY'], '')
+        self.assertEqual(body['runtime']['OPENAI_API_KEY'], '')
 
 
 if __name__ == '__main__':

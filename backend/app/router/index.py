@@ -43,9 +43,10 @@ from utils.llama import (
     generate_qa_batched,
 )
 from utils.logger import customer_logger, error_logger
+from utils.security import require_api_key_if_configured
 from utils.upload import FileTooLargeError, InvalidFileTypeError, validate_upload_file
 
-index_app = APIRouter()
+index_app = APIRouter(dependencies=[Depends(require_api_key_if_configured)])
 
 
 def _sanitize_index_name(name: str) -> str:
@@ -211,6 +212,11 @@ async def upload_files(index=Depends(get_index), files: list[UploadFile] = File(
 
 @index_app.post("/{index_name}/upload_file_by_QA")
 async def upload_qa(index=Depends(get_index), prompt: str = Form(None, max_length=5000), file: UploadFile = File(...)):
+    try:
+        validate_upload_file(file)
+    except (FileTooLargeError, InvalidFileTypeError) as e:
+        return JSONResponse(content={"status": "detail", "message": str(e)},
+                            status_code=status.HTTP_400_BAD_REQUEST)
     contents = await read_file_contents(file)
     safe_prompt = build_qa_generation_prompt(prompt)
     qa_pairs = await generate_qa_batched(contents, safe_prompt)
@@ -277,7 +283,6 @@ async def insert_docs(
     if doc_id is None:
         doc = Document(text=text)
     else:
-        doc_id = doc_id.replace("\\\\", "\\")
         doc = Document(text=text, doc_id=doc_id)
     from handlers.index_crud import _get_index_lock
     lock = await _get_index_lock(index.index_id)

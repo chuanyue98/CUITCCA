@@ -2,7 +2,7 @@ import os
 import secrets
 
 from fastapi import HTTPException, status
-from starlette.requests import Request
+from starlette.requests import HTTPConnection, Request
 
 
 def get_client_ip(request: Request) -> str:
@@ -32,3 +32,17 @@ def require_configured_api_key(request: Request) -> None:
     provided_key = auth.removeprefix('Bearer ')
     if not secrets.compare_digest(provided_key, api_key):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+
+def require_api_key_if_configured(conn: HTTPConnection) -> None:
+    api_key = os.environ.get('CUITCCA_API_KEY', '')
+    if not api_key:
+        return
+    if conn.scope.get('type') == 'websocket':
+        return
+    auth = conn.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Unauthorized')
+    provided_key = auth.removeprefix('Bearer ')
+    if not secrets.compare_digest(provided_key, api_key):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Unauthorized')
