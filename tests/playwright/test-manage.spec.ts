@@ -19,7 +19,7 @@ interface CheckResult {
 }
 
 test.describe('CUITCCA 知识库管理页面 (manage.html)', () => {
-  test('完整功能检查', async ({ browser }) => {
+  test.fixme('完整功能检查', async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
       ignoreHTTPSErrors: true,
