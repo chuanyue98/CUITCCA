@@ -69,10 +69,13 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: tests/playwright/
 
+      - name: Prepare backend .env
+        run: cp backend/.env.example backend/.env
+
       - name: Start backend
         run: |
-          cd backend && uv run python -m uvicorn app.main:app --host 127.0.0.1 --port 8522 > ../backend.log 2>&1 &
-          echo $! > ../backend.pid
+          uv run uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
+          echo $! > backend.pid
 
       - name: Wait for backend ready
         run: |
