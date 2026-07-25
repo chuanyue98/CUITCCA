@@ -5,7 +5,13 @@
  */
 
 (function () {
-  const activePage = (document.currentScript && document.currentScript.getAttribute('data-active')) || '';
+  // Vite 把 <script type="module"> 重写后会丢失 data-active 自定义属性，
+  // 且 ES module 中 document.currentScript 为 null。改从 URL 推断当前页面。
+  const _path = window.location.pathname.replace(/\/+$/, '');
+  const _page = _path.slice(_path.lastIndexOf('/') + 1).replace('.html', '');
+  const activePage = (_page === 'index' || _page === 'manage' || _page === 'use_function' || _page === 'feed_back')
+    ? _page
+    : '';
 
   const sidebarHTML = '\
       <div class="side_left_flex">\
