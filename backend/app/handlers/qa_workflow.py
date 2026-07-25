@@ -84,6 +84,7 @@ query_str``）会同时用于检索和生成阶段的 prompt，这跟老链路�
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 
 # DEFAULT_SIMILARITY_TOP_K 故意不在这里用 `from configs.load_env import X` 直接
@@ -120,6 +121,12 @@ DEFAULT_MAX_RETRIEVAL_ITERATIONS = 1
 """检索迭代上限的钩子。当前唯一实现的行为是跑 1 轮检索；这个参数为未来
 multi-hop/自适应检索（第一轮结果不够时改写问题重新检索）预留，评测阶段的
 经验建议这类迭代不超过 3 轮。见模块 docstring。"""
+
+def safe_format(template: str, **kwargs) -> str:
+    import string
+    converted = re.sub(r'\{(\w+)\}', r'$\1', template)
+    return string.Template(converted).safe_substitute(**kwargs)
+
 
 _FALLBACK_ANSWER = "我还不知道，请反馈给我吧"
 """与现有 /query、websocket /query 端点里 Empty Response 的兜底文案保持一致。"""
@@ -258,7 +265,11 @@ class QAWorkflow(Workflow):
             return CondenseEvent(query_str=query_str, chat_history=chat_history, streaming=streaming)
 
         history_str = "\n".join(f"{m.role.value}: {m.content}" for m in chat_history)
-        prompt_str = Prompts.CONDENSE_QUESTION_PROMPT.value.format(chat_history=history_str, question=query_str)
+        prompt_str = safe_format(
+            Prompts.CONDENSE_QUESTION_PROMPT.value.template,
+            chat_history=history_str,
+            question=query_str,
+        )
 
         llm = self._llm if self._llm is not None else Settings.llm
         try:
@@ -310,7 +321,11 @@ class QAWorkflow(Workflow):
             return StopEvent(result=QAWorkflowResult(response=_FALLBACK_ANSWER, source_nodes=[]))
 
         context_str = "\n\n".join(node.get_content() for node in ev.nodes)
-        prompt_str = Prompts.QA_PROMPT.value.format(context_str=context_str, query_str=ev.query_str)
+        prompt_str = safe_format(
+            Prompts.QA_PROMPT.value.template,
+            context_str=context_str,
+            query_str=ev.query_str,
+        )
         messages = [*ev.chat_history, ChatMessage(role=MessageRole.USER, content=prompt_str)]
 
         llm = self._llm if self._llm is not None else Settings.llm

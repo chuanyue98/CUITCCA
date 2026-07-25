@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 
-const SCREENSHOT_DIR = '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots';
+const SCREENSHOT_DIR = './screenshots';
 const SCREENSHOT_PATH = join(SCREENSHOT_DIR, 'use_function.png');
 
 // 测试结果收集

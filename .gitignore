@@ -43,3 +43,4 @@ test.py
 /tests/playwright/screenshots/
 /tests/playwright/test-results.json
 /tests/playwright/playwright-report/
+backend/app/static/

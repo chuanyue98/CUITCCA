@@ -24,6 +24,9 @@ Chroma collection 本身才是"这个索引当前实际有哪些 chunk"的唯一
 """
 from __future__ import annotations
 
+import threading
+from collections import OrderedDict
+
 # load_env.X 属性访问而不是 from...import：reload_env_variables() 热重载改的
 # 是 configs.load_env 模块内的变量，from...import 在导入时就把值拷贝进了当前
 # 命名空间，之后源模块改了值这里感知不到（同样的坑见
@@ -78,20 +81,19 @@ class JiebaBM25Retriever(BaseRetriever):
         ]
 
 
-_hybrid_retriever_cache: dict[tuple[str, int], BaseRetriever] = {}
+_hybrid_retriever_cache: OrderedDict[tuple[str, int], BaseRetriever] = OrderedDict()
 _HYBRID_CACHE_MAX = 64
+_hybrid_cache_lock = threading.Lock()
 
 
 def invalidate_hybrid_retriever_cache() -> None:
-    _hybrid_retriever_cache.clear()
+    with _hybrid_cache_lock:
+        _hybrid_retriever_cache.clear()
 
 
 def _hybrid_cache_evict_if_needed() -> None:
-    overflow = len(_hybrid_retriever_cache) - _HYBRID_CACHE_MAX
-    if overflow > 0:
-        keys_to_remove = list(_hybrid_retriever_cache.keys())[:overflow]
-        for k in keys_to_remove:
-            _hybrid_retriever_cache.pop(k, None)
+    while len(_hybrid_retriever_cache) > _HYBRID_CACHE_MAX:
+        _hybrid_retriever_cache.popitem(last=False)
 
 
 # 每路（dense/BM25）召回宽度相对最终 top_k 的放大倍数，以及召回下限。
@@ -157,7 +159,14 @@ def build_retriever_for_index(index: VectorStoreIndex, similarity_top_k: int) ->
         return index.as_retriever(similarity_top_k=similarity_top_k)
 
     cache_key = (index.index_id, similarity_top_k)
-    if cache_key not in _hybrid_retriever_cache:
-        _hybrid_retriever_cache[cache_key] = _build_hybrid_retriever(index, similarity_top_k)
+    with _hybrid_cache_lock:
+        if cache_key in _hybrid_retriever_cache:
+            _hybrid_retriever_cache.move_to_end(cache_key)
+            return _hybrid_retriever_cache[cache_key]
+    retriever = _build_hybrid_retriever(index, similarity_top_k)
+    with _hybrid_cache_lock:
+        if cache_key in _hybrid_retriever_cache:
+            return _hybrid_retriever_cache[cache_key]
+        _hybrid_retriever_cache[cache_key] = retriever
         _hybrid_cache_evict_if_needed()
-    return _hybrid_retriever_cache[cache_key]
+    return retriever

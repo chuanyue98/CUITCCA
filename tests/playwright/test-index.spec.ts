@@ -152,7 +152,7 @@ test.describe('CUITCCA 聊天页面 (index.html) 检查', () => {
     }
 
     // ---- 截图 ----
-    const screenshotDir = '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots';
+    const screenshotDir = './screenshots';
     await page.screenshot({ path: path.join(screenshotDir, 'index.png'), fullPage: false });
 
     // ---- 输出报告 ----

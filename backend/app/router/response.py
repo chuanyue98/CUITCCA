@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, Form
 from handlers.llama_handler import get_prompt_by_name
 from llama_index.core import get_response_synthesizer
 from models.response import QueryResponse
+from utils.security import require_api_key_if_configured
 
-response_app = APIRouter()
+response_app = APIRouter(dependencies=[Depends(require_api_key_if_configured)])
 
 
 @response_app.post("/{index_name}/query", response_model=QueryResponse)

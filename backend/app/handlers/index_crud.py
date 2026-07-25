@@ -133,7 +133,9 @@ def updateNodeById(index: VectorStoreIndex, id_: str, text: str):
     data = collection.get(ids=[id_])
     if not data or not data['ids']:
         raise KeyError(f"node_id {id_} not found")
-    collection.update(ids=[id_], documents=[text])
+    from llama_index.core import Settings
+    emb = Settings.embed_model.get_text_embedding(text)
+    collection.update(ids=[id_], documents=[text], embeddings=[emb])
 
 
 def deleteNodeById(index: VectorStoreIndex, id_: str):

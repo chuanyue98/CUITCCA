@@ -110,7 +110,7 @@ test('聊天页面 UI/UX 最终检查', async ({ page }) => {
   console.log(`\n总计: ✅${passCount} ❌${failCount}`);
 
   // Screenshot
-  await page.screenshot({ path: '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots/index-uiux-final.png' });
+  await page.screenshot({ path: './screenshots/index-uiux-final.png' });
   console.log('\n截图已保存: screenshots/index-uiux-final.png');
 
   expect(failCount).toBe(0);

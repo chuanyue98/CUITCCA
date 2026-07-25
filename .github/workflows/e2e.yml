@@ -1,0 +1,143 @@
+name: E2E (Playwright)
+
+# Playwright 端到端测试流水线。
+#
+# 真实问答 spec（test-chat-e2e.spec.ts）需要后端能调用 LLM，因此必须在仓库
+# Settings → Secrets and variables → Actions 中配置：
+#   - OPENAI_API_KEY  : LLM API Key
+#   - LLM_BASE_URL    : 兼容 OpenAI 的接入点（如不配置则后端走默认值）
+#
+# 若未配置上述 Secret，本流水线会自动跳过真实问答 spec，仅运行 UI 结构/交互类用例，
+# 避免因 CI 环境无 LLM 而误报失败。
+# CUITCCA_API_KEY 留空使后端跳过 API Key 认证，便于 CI 环境。
+#
+# 触发条件：手动运行，或 PR 改动前端 / 后端路由 / Playwright 用例 / 本工作流时运行。
+on:
+  workflow_dispatch: {}
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'backend/app/router/**'
+      - 'backend/app/main.py'
+      - 'tests/playwright/**'
+      - '.github/workflows/e2e.yml'
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    # CUITCCA_API_KEY 留空 → 后端跳过认证；LLM key 从 Secrets 注入（未配置则为空）
+    env:
+      CUITCCA_API_KEY: ''
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync --frozen
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            tests/playwright/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend/
+
+      - name: Install Playwright dependencies
+        run: npm ci
+        working-directory: tests/playwright/
+
+      - name: Build frontend into backend/app/static
+        run: make frontend-build
+
+      - name: Install Playwright browser (chromium)
+        run: npx playwright install --with-deps chromium
+        working-directory: tests/playwright/
+
+      - name: Prepare backend .env
+        run: cp backend/.env.example backend/.env
+
+      # 首次启动后端时 init_settings() 要从 HF Hub 下载 BAAI/bge-m3 embedding
+      # 模型（~2GB），30s 超时不够。这里用 actions/cache 缓存 HF hub 目录，
+      # 首次冷启动允许 180s，后续命中缓存通常 <5s。
+      - name: Cache HuggingFace hub models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-hub-bge-m3-${{ runner.os }}
+
+      - name: Pre-download embedding model
+        run: |
+          uv run python -c "from llama_index.embeddings.huggingface import HuggingFaceEmbedding; HuggingFaceEmbedding(model_name='BAAI/bge-m3', device='cpu', normalize=True, trust_remote_code=True)"
+
+      - name: Start backend
+        run: |
+          PYTHONPATH=backend/app uv run uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      - name: Wait for backend ready
+        run: |
+          # 轮询 /web/ 直到返回任意 HTTP 响应（含 3xx/4xx 都算服务已起来）
+          # 首次冷启动需要下载 bge-m3 模型，给 180s；缓存命中通常 <5s
+          for i in $(seq 1 180); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8522/web/ || true)
+            if [ -n "$code" ] && [ "$code" != "000" ]; then
+              echo "Backend is up (HTTP $code)"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend failed to start within 180s"
+          cat backend.log || true
+          exit 1
+
+      - name: Run Playwright tests
+        working-directory: tests/playwright/
+        run: |
+          # 没有 LLM key 时跳过真实问答 spec（test-chat-e2e.spec.ts），
+          # 仅运行 UI 结构/交互类用例，避免因后端无 LLM 而误报失败。
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::notice::OPENAI_API_KEY 未配置，跳过真实问答 spec (test-chat-e2e)"
+            npx playwright test --grep-invert "真实收发"
+          else
+            echo "::notice::已检测到 OPENAI_API_KEY，运行全部 spec（含真实问答）"
+            npx playwright test
+          fi
+
+      - name: Stop backend
+        if: always()
+        run: |
+          if [ -f backend.pid ]; then
+            kill "$(cat backend.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/playwright/playwright-report/
+          if-no-files-found: ignore
+
+      - name: Upload backend log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: backend.log
+          if-no-files-found: ignore

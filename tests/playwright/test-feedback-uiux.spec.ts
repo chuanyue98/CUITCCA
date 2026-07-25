@@ -110,7 +110,7 @@ test('问题反馈页面 UI/UX 深度检查', async ({ page }) => {
   console.log('.glass_card 背景:', feedbackCardStyle.backgroundColor, '圆角:', feedbackCardStyle.borderRadius);
 
   // Screenshot
-  await page.screenshot({ path: '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots/feedback-uiux.png' });
+  await page.screenshot({ path: './screenshots/feedback-uiux.png' });
   console.log('\n截图已保存: screenshots/feedback-uiux.png');
 
   console.log(`\n=== 发现问题数: ${issues.length} ===`);

@@ -92,10 +92,14 @@ class UpdateNodeByIdTest(unittest.TestCase):
     def tearDown(self):
         self._patcher.stop()
 
-    def test_updates_node_content(self):
+    @patch('llama_index.core.Settings')
+    def test_updates_node_content(self, mock_settings):
         index = FakeIndex(index_id='myindex')
+        mock_settings.embed_model.get_text_embedding.return_value = [0.1, 0.2, 0.3]
         lh.updateNodeById(index, 'n1', 'new text')
-        self._fake_collection.update.assert_called_once_with(ids=['n1'], documents=['new text'])
+        self._fake_collection.update.assert_called_once_with(
+            ids=['n1'], documents=['new text'], embeddings=[[0.1, 0.2, 0.3]]
+        )
 
 
 if __name__ == '__main__':

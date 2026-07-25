@@ -169,7 +169,7 @@ test.describe('CUITCCA 页面检查 - 多Agent并发测试', () => {
       console.log(`  总计: ✅${passCount} ❌${failCount} ⚠️${warnCount}`);
       
       // 截图
-      await page.screenshot({ path: `/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots/${pageConfig.name}.png` });
+      await page.screenshot({ path: `./screenshots/${pageConfig.name}.png` });
       
       await context.close();
       

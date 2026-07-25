@@ -3,15 +3,16 @@ import secrets
 import time
 from collections import OrderedDict
 
-from fastapi import APIRouter, Form, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Form, Request, WebSocket, WebSocketDisconnect
 from handlers.index_crud import format_source_nodes_list
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from models.response import QueryResponse, QuerySourcesResponse
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
 from utils.logger import customer_logger, error_logger, query_logger
+from utils.security import require_api_key_if_configured
 
-graph_app = APIRouter()
+graph_app = APIRouter(dependencies=[Depends(require_api_key_if_configured)])
 
 # 会话缓存最大容量
 _MAX_SESSIONS = 200

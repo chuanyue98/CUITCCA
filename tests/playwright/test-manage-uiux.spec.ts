@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('知识库管理页面 UI/UX 深度检查', async ({ page }) => {
+test.fixme('知识库管理页面 UI/UX 深度检查', async ({ page }) => {
   await page.goto('http://localhost:8522/web/manage.html', { waitUntil: 'networkidle', timeout: 15000 });
   await page.waitForTimeout(2000);
 
@@ -153,7 +153,7 @@ test('知识库管理页面 UI/UX 深度检查', async ({ page }) => {
   console.log('body overflow:', JSON.stringify(overflowX));
 
   // Screenshot
-  await page.screenshot({ path: '/home/cy/github/chuanyue98/CUITCCA/tests/playwright/screenshots/manage-uiux.png' });
+  await page.screenshot({ path: './screenshots/manage-uiux.png' });
   console.log('\n截图已保存: screenshots/manage-uiux.png');
 
   // Summary

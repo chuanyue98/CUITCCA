@@ -1,0 +1,76 @@
+name: Release
+
+# 基于 tag 的发布流水线：推送 v* tag 时触发。
+# 流程：跑测试保证质量 → 构建前端 → 从 CHANGELOG.md 提取对应版本说明 → 创建 GitHub Release。
+#
+# 说明：本仓库当前没有 Dockerfile，因此暂不构建/推送 Docker 镜像。
+#       新增 Dockerfile 后，请在 "Build frontend" 步骤之后补充：
+#         - docker build -t ghcr.io/<owner>/cuitcca:${GITHUB_REF_NAME} .
+#         - docker push ghcr.io/<owner>/cuitcca:${GITHUB_REF_NAME}
+#       并补充 packages: write 权限与 docker login ghcr.io 登录步骤。
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # softprops/action-gh-release 创建 Release 需要
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync --frozen
+
+      - name: Run tests with coverage
+        run: uv run pytest tests/ --cov=backend/app --cov-report=term
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend/
+
+      - name: Build frontend
+        run: make frontend-build
+
+      # TODO(Docker): 仓库新增 Dockerfile 后在此处补充 build/push 到 ghcr.io 的步骤。
+
+      - name: Extract changelog for this release
+        id: changelog
+        run: |
+          # 从 tag 名（如 v0.3.0）去掉前导 v，提取 CHANGELOG.md 中对应 [VERSION] 段落
+          VERSION="${GITHUB_REF_NAME#v}"
+          BODY=$(awk -v v="$VERSION" '
+            BEGIN { p=0 }
+            /^## \[/ {
+              if (p) { exit }
+              if (index($0, "[" v "]") > 0) { p=1; next }
+            }
+            p { print }
+          ' CHANGELOG.md)
+          if [ -z "$BODY" ]; then
+            BODY="Release ${VERSION}. See CHANGELOG.md for details."
+          fi
+          printf '%s\n' "$BODY" > release_body.md
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          body_path: release_body.md
+          generate_release_notes: false
