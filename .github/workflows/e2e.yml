@@ -74,7 +74,7 @@ jobs:
 
       - name: Start backend
         run: |
-          uv run uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
+          PYTHONPATH=backend/app uv run uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
           echo $! > backend.pid
 
       - name: Wait for backend ready
