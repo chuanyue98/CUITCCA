@@ -72,6 +72,19 @@ jobs:
       - name: Prepare backend .env
         run: cp backend/.env.example backend/.env
 
+      # 首次启动后端时 init_settings() 要从 HF Hub 下载 BAAI/bge-m3 embedding
+      # 模型（~2GB），30s 超时不够。这里用 actions/cache 缓存 HF hub 目录，
+      # 首次冷启动允许 180s，后续命中缓存通常 <5s。
+      - name: Cache HuggingFace hub models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-hub-bge-m3-${{ runner.os }}
+
+      - name: Pre-download embedding model
+        run: |
+          uv run python -c "from llama_index.embeddings.huggingface import HuggingFaceEmbedding; HuggingFaceEmbedding(model_name='BAAI/bge-m3', device='cpu', normalize=True, trust_remote_code=True)"
+
       - name: Start backend
         run: |
           PYTHONPATH=backend/app uv run uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
@@ -80,7 +93,8 @@ jobs:
       - name: Wait for backend ready
         run: |
           # 轮询 /web/ 直到返回任意 HTTP 响应（含 3xx/4xx 都算服务已起来）
-          for i in $(seq 1 30); do
+          # 首次冷启动需要下载 bge-m3 模型，给 180s；缓存命中通常 <5s
+          for i in $(seq 1 180); do
             code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8522/web/ || true)
             if [ -n "$code" ] && [ "$code" != "000" ]; then
               echo "Backend is up (HTTP $code)"
@@ -88,7 +102,7 @@ jobs:
             fi
             sleep 1
           done
-          echo "Backend failed to start within 30s"
+          echo "Backend failed to start within 180s"
           cat backend.log || true
           exit 1
 
