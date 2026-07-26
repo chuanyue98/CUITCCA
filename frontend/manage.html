@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="./icon.png" type="image/x-icon">
     <link rel="stylesheet" href="./style.css">
-    <title>成信大校园助手 - 知识库管理</title>
+    <title>成信大校园助手 — 知识库编辑台</title>
 </head>
-<body>
+<body class="console-page">
     <!-- 全局加载遮罩 -->
     <div id="loading-overlay">
         <div class="spinner"></div>
@@ -15,78 +15,92 @@
     </div>
 
     <div class="outline">
-        <!-- 左侧边栏 -->
+        <!-- 左侧边栏（sidebar.ts 注入） -->
         <nav id="side_left"></nav>
 
         <!-- 右侧工作区 -->
         <main class="side_right">
-            <header class="headline">
-                <div class="headline_hidemenu">
-                    <button id="button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                            <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8Zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5Z"/>
+            <!-- Editorial Masthead -->
+            <header class="console_masthead">
+                <div class="masthead_brand">
+                    <button id="button" class="masthead_toggle" aria-label="切换侧栏">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/>
                         </svg>
                     </button>
+                    <div class="masthead_wordmark">
+                        <span class="eyebrow">Editorial Operations Console</span>
+                        <h1 class="masthead_title">知识库<em>编辑台</em></h1>
+                    </div>
                 </div>
-                <div class="headline_head">知识库管理工作台</div>
-                <div class="share"></div>
+                <div class="masthead_meta">
+                    <span class="meta_kv"><span class="meta_k">Edition</span><span class="meta_v">v0.2.0</span></span>
+                    <span class="meta_kv"><span class="meta_k">Session</span><span class="meta_v">Local</span></span>
+                </div>
             </header>
 
             <!-- 核心内容工作区 -->
             <div class="dashboard_container">
+                <!-- 左面板 -->
                 <div class="panel_left" id="panel-left-container">
-                    <!-- 索引管理 card -->
-                    <div class="glass_card">
-                        <h3 class="panel-heading">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="rgb(25, 84, 142)" class="bi bi-database" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0Z"/>
-                                <path d="M8 1c-1.573 0-3 .107-4.03.284-1.018.173-1.977.48-2.693.94-.716.46-1.127 1.055-1.127 1.776v9c0 .721.411 1.316 1.127 1.776.716.46 1.675.767 2.693.94C5 15.893 6.427 16 8 16c.09 0 .18 0 .27-.002A4.989 4.989 0 0 1 7.02 14c-.33-.007-.66-.017-.98-.03-1.008-.04-1.92-.19-2.5-.47a1.642 1.642 0 0 1-.87-.79 2.22 2.22 0 0 1-.13-.71V11c0 .093.023.18.067.262.138.256.452.484.872.665.58.25 1.492.4 2.5.44.382.016.78.026 1.185.028-.109-.328-.17-.677-.17-1.04 0-.177.016-.35.046-.519-.344.004-.693.003-1.036-.005-1.008-.027-1.92-.148-2.5-.39a1.64 1.64 0 0 1-.87-.745 2.235 2.235 0 0 1-.13-.676V7c0 .093.023.18.067.262.138.256.452.484.872.665.58.25 1.492.4 2.5.44.596.024 1.2.035 1.79.032a4.994 4.994 0 0 1 1.012-1.944C9.55 6.02 8.788 6 8 6c-1.573 0-3-.107-4.03-.284-1.018-.173-1.977-.48-2.693-.94C.566 4.316 0 3.721 0 3c0-.721.411-1.316 1.127-1.776.716-.46 1.675-.767 2.693-.94C4.82 1.107 6.247 1 8 1Zm0 6c-1.573 0-3-.107-4.03-.284-1.018-.173-1.977-.48-2.693-.94C.566 2.316 0 1.721 0 1c0-.721.411-1.316 1.127-1.776.716-.46 1.675-.767 2.693-.94C4.82.107 6.247 0 8 0s3.18.107 4.203.284c1.018.173 1.977.48 2.693.94.716.46 1.127 1.055 1.127 1.776v3c0 .245-.048.483-.138.706a4.996 4.996 0 0 0-1.884-.702c.015-.027.022-.056.022-.086V4c0 .093-.023.18-.067.262-.138.256-.452.484-.872.665-.58.25-1.492.4-2.5.44-.382.016-.78.026-1.185.028-.109-.328-.17-.677-.17-1.04v-.03c0-.02-.002-.04-.002-.06 0-.33.047-.648.13-.948a4.98 4.98 0 0 1 .472.032Z"/>
-                            </svg>
-                            活跃知识库索引 (Indexes)
-                        </h3>
+                    <!-- § 01 索引管理 -->
+                    <section class="console_panel">
+                        <header class="console_panel_head">
+                            <span class="section_no">§ 01</span>
+                            <div class="console_panel_title_group">
+                                <span class="eyebrow">Index Registry</span>
+                                <h2 class="console_panel_title">活跃知识库索引</h2>
+                            </div>
+                        </header>
 
                         <div class="index_action_row">
+                            <label class="field_label" for="index-select">索引</label>
                             <select id="index-select" class="index_select">
                                 <option value="">加载中...</option>
                             </select>
-                            <button class="btn btn-primary btn_save_disk">
-                                保存磁盘
-                            </button>
+                            <button class="btn btn-primary btn_save_disk">保存磁盘</button>
                         </div>
 
                         <div class="index_create_row">
-                            <input type="text" id="new-index-name" class="new_index_input" placeholder="输入新索引名称...">
+                            <input type="text" id="new-index-name" class="new_index_input" placeholder="输入新索引名称…">
                             <button class="btn btn-success">新建</button>
                             <button class="btn btn-danger">删除当前</button>
                         </div>
 
-                        <!-- 索引摘要 Summary 区域 -->
+                        <!-- 索引摘要 Summary -->
                         <div class="summary_section">
                             <div class="summary_header">
-                                <span class="summary_label">索引摘要 (Summary)</span>
-                                <span id="summary-status-tag">未做修改</span>
+                                <span class="summary_label">索引摘要 <span class="summary_label_en">/ Summary</span></span>
+                                <span id="summary-status-tag" class="status_tag">未做修改</span>
                             </div>
-                            <textarea id="index-summary-textarea" class="summary_textarea" placeholder="选择或载入索引以编辑其摘要..."></textarea>
+                            <textarea id="index-summary-textarea" class="summary_textarea" placeholder="选择或载入索引以编辑其摘要…"></textarea>
                         </div>
-                    </div>
+                    </section>
 
-                    <!-- 数据导入 Card -->
-                    <div class="glass_card glass_card_mt">
+                    <!-- § 02 数据导入 -->
+                    <section class="console_panel">
+                        <header class="console_panel_head">
+                            <span class="section_no">§ 02</span>
+                            <div class="console_panel_title_group">
+                                <span class="eyebrow">Data Ingestion</span>
+                                <h2 class="console_panel_title">数据导入</h2>
+                            </div>
+                        </header>
+
                         <div class="tabs_header">
                             <button class="tab_btn active" data-tab="tab-upload">文件上传</button>
                             <button class="tab_btn" data-tab="tab-text">文本录入</button>
-                            <button class="tab_btn" data-tab="tab-qa">QA生成导入</button>
+                            <button class="tab_btn" data-tab="tab-qa">QA 生成导入</button>
                         </div>
 
                         <!-- Tab 1: 文件拖拽上传 -->
                         <div id="tab-upload" class="tab_content active">
                             <div class="drag_zone" id="drag-zone">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-cloud-arrow-up" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                                    <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
-                                    <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.743 2.185 12 3.78 12h8.906c1.23 0 2.313-.984 2.313-2.227 0-1.226-1.02-2.127-2.23-2.203l-.683-.043-.058-.68C11.783 4.685 10.024 3 8 3c-1.528 0-2.88.948-3.418 2.223l-.147.348-.348.147zm.255 5.673a.5.5 0 0 1-.708-.708L6.293 7.5H4.5a.5.5 0 0 1 0-1h1.793L4.646 4.854a.5.5 0 1 1 .708-.708l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5z"/>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.25" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
                                 </svg>
-                                <p class="drag_zone_main_text">拖拽 TXT/PDF/Markdown 文件到这里，或者点击选择</p>
-                                <p class="drag_zone_hint_text">支持多文件一次性上传和自动解析分块</p>
+                                <p class="drag_zone_main_text">拖拽 TXT / PDF / Markdown 文件到这里，或点击选择</p>
+                                <p class="drag_zone_hint_text">支持多文件一次性上传与自动解析分块</p>
                             </div>
                             <input type="file" id="file-input" multiple accept=".txt,.pdf,.md,.csv,.xlsx,.docx" class="file_input_hidden">
                             <div id="upload-progress-list" class="upload_progress_list"></div>
@@ -95,12 +109,12 @@
                         <!-- Tab 2: 直接文本录入 -->
                         <div id="tab-text" class="tab_content">
                             <div class="form_group">
-                                <label for="input-doc-id">文档标识符 (Doc ID - 可选)</label>
-                                <input type="text" id="input-doc-id" placeholder="例如: rule_dormitory_v1 (为空则系统自动生成)">
+                                <label for="input-doc-id">文档标识符 <span class="field_hint">Doc ID · 可选</span></label>
+                                <input type="text" id="input-doc-id" placeholder="例如：rule_dormitory_v1（留空则系统自动生成）">
                             </div>
                             <div class="form_group">
-                                <label for="input-doc-text">文档正文内容 (Text)</label>
-                                <textarea id="input-doc-text" rows="6" placeholder="请输入要索引的内容文本..."></textarea>
+                                <label for="input-doc-text">文档正文 <span class="field_hint">Text</span></label>
+                                <textarea id="input-doc-text" rows="6" placeholder="请输入要索引的内容文本…"></textarea>
                             </div>
                             <button class="btn-submit">确认插入文档</button>
                         </div>
@@ -108,38 +122,39 @@
                         <!-- Tab 3: QA 生成式上传 -->
                         <div id="tab-qa" class="tab_content">
                             <div class="form_group">
-                                <label for="qa-file-input">选择数据源文件 (TXT / MD 等)</label>
+                                <label for="qa-file-input">选择数据源文件 <span class="field_hint">TXT / MD 等</span></label>
                                 <input type="file" id="qa-file-input" accept=".txt,.pdf,.md,.csv,.xlsx,.docx">
                             </div>
                             <div class="form_group">
-                                <label for="qa-custom-prompt">QA 问答抽取 Prompt (可选)</label>
-                                <textarea id="qa-custom-prompt" rows="3" placeholder="默认会将文件内容切割为多块，并为每块生成对应的标准问答对..."></textarea>
+                                <label for="qa-custom-prompt">QA 问答抽取 Prompt <span class="field_hint">可选</span></label>
+                                <textarea id="qa-custom-prompt" rows="3" placeholder="默认会将文件内容切割为多块，并为每块生成对应的标准问答对…"></textarea>
                             </div>
                             <button class="btn-submit btn-submit-qa">生成 QA 并导入</button>
                         </div>
-                    </div>
+                    </section>
                 </div>
-                <section class="panel_right" id="panel-right-container">
-                    <!-- 搜索头部栏 -->
-                    <div class="node_search_header">
-                        <h3 class="panel-heading panel-heading_inline">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="rgb(25, 84, 142)" class="bi bi-list-check" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                                <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.5.5 1.146-1.147a.5.5 0 0 1 .708 0z"/>
-                            </svg>
-                            数据分块浏览器 (Nodes)
-                        </h3>
 
-                        <input type="text" id="node-search" class="node_search_input" placeholder="搜索关键词 / Doc ID...">
+                <!-- 右面板：节点浏览器 -->
+                <section class="panel_right" id="panel-right-container">
+                    <div class="node_search_header">
+                        <header class="console_panel_head console_panel_head--inline">
+                            <span class="section_no">§ 03</span>
+                            <div class="console_panel_title_group">
+                                <span class="eyebrow">Chunk Inspector</span>
+                                <h2 class="console_panel_title">数据分块浏览器</h2>
+                            </div>
+                        </header>
+                        <input type="text" id="node-search" class="node_search_input" placeholder="搜索关键词 / Doc ID…">
                     </div>
 
-                    <!-- 节点展示主区 (滚动容器) -->
+                    <!-- 节点展示主区 -->
                     <div id="node-list-viewport" class="node_list_viewport">
                         <div class="node_empty_hint">选择或载入索引以查看分块数据</div>
                     </div>
 
                     <!-- 分页控制栏 -->
                     <div id="pagination-bar">
-                        <span id="page-indicator">第 1 / 1 页 (共 0 项)</span>
+                        <span id="page-indicator" class="page_indicator">第 1 / 1 页 · 共 0 项</span>
                         <div class="pagination_buttons">
                             <button id="btn-prev-page" class="pagination_btn">上一页</button>
                             <button id="btn-next-page" class="pagination_btn">下一页</button>
