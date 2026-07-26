@@ -6,6 +6,19 @@ import { apiFetch } from './utils/api';
 const HISTORY_KEY = 'cuitcca_chat_history_v1';
 const HISTORY_MAX = 50;
 
+// 统一欢迎语与示例问题，避免初始化 / 清空后两处文案不一致
+const WELCOME_MESSAGE = '你好！我是成信大校园助手，你可以问我关于学校的任何问题。';
+const WELCOME_EXAMPLES_HTML = `
+    <div class="welcome_examples" id="welcome-examples">
+        <div class="welcome_examples_hint">💡 试试这些问题，或接着追问「需要带什么证件？」体验多轮对话</div>
+        <div class="example_questions">
+            <button class="example_q" type="button">学校有哪些社团？</button>
+            <button class="example_q" type="button">图书馆怎么借书？</button>
+            <button class="example_q" type="button">宿舍几点熄灯？</button>
+            <button class="example_q" type="button">怎么申请奖学金？</button>
+        </div>
+    </div>`;
+
 // ===== 输入框事件 =====
 const inputEl = document.getElementById('input') as HTMLInputElement;
 inputEl.addEventListener('keydown', function (event: KeyboardEvent) {
@@ -141,6 +154,9 @@ function sendMessage() {
     const question = input.value.trim();
     if (question === '') return;
 
+    // 首次发送后移除欢迎示例区
+    document.getElementById('welcome-examples')?.remove();
+
     appendUserBubble(question);
     input.value = '';
 
@@ -240,8 +256,28 @@ async function streamAnswer(query: string, answerEl: HTMLElement, citationsEl: H
             return;
         }
         console.error('请求失败:', error);
-        fullText = fullText || ('请求失败: ' + (error instanceof Error ? error.message : String(error)));
+        const errText = '请求失败: ' + (error instanceof Error ? error.message : String(error));
+        fullText = fullText || errText;
+        // 失败气泡: 显示已生成的部分 + 错误信息 + 重试按钮
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'chat_retry_btn';
+        retryBtn.type = 'button';
+        retryBtn.textContent = '🔄 重试';
+        retryBtn.addEventListener('click', () => {
+            // 清空当前气泡内容, 重新发起相同 query 的流式生成
+            answerEl.innerHTML = '';
+            citationsEl.classList.add('is-hidden');
+            citationsEl.innerHTML = '';
+            showThinkingIndicator(answerEl);
+            // 新建一个 abort controller, 避免与已结束的请求冲突
+            const newAbort = new AbortController();
+            activeAbortController = newAbort;
+            streamAnswer(query, answerEl, citationsEl).finally(() => setGeneratingUI(false));
+            setGeneratingUI(true);
+            retryBtn.remove();
+        });
         answerEl.innerHTML = renderMarkdown(fullText);
+        answerEl.appendChild(retryBtn);
         appendHistory('bot', fullText);
     } finally {
         activeAbortController = null;
@@ -262,12 +298,25 @@ async function loadCitations(citationsEl: HTMLElement) {
         toggle.type = 'button';
         toggle.textContent = `参考来源 (${nodes.length})`;
         const list = document.createElement('div');
-        list.className = 'citations_list is-hidden';
+        list.className = 'citations_list';
         nodes.forEach((node: { text: string }) => {
             const item = document.createElement('div');
             item.className = 'citation_item';
             const snippet = node.text.length > 200 ? node.text.slice(0, 200) + '…' : node.text;
             item.textContent = snippet;
+            // 加复制按钮, 提升效率
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'citation_copy_btn';
+            copyBtn.type = 'button';
+            copyBtn.title = '复制';
+            copyBtn.textContent = '📋';
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard?.writeText(node.text).then(() => {
+                    copyBtn.textContent = '✓';
+                    setTimeout(() => { copyBtn.textContent = '📋'; }, 1200);
+                }).catch(() => { /* 静默 */ });
+            });
+            item.appendChild(copyBtn);
             list.appendChild(item);
         });
         toggle.addEventListener('click', () => list.classList.toggle('is-hidden'));
@@ -279,8 +328,11 @@ async function loadCitations(citationsEl: HTMLElement) {
     }
 }
 
-// ===== 清空对话 =====
+// ===== 清空对话（带二次确认，避免误触丢失全部历史） =====
 async function clearAllMessage() {
+    if (!window.confirm('确定要清空当前对话吗？此操作不可恢复。')) {
+        return;
+    }
     const chatbox = document.getElementById('chatbox') as HTMLElement;
     chatbox.innerHTML = '';
     clearHistory();
@@ -289,8 +341,14 @@ async function clearAllMessage() {
     } catch (e) {
         // 服务端重置失败不阻塞本地清空
     }
-    const { answerEl } = appendBotBubble({ persist: false });
-    answerEl.innerHTML = renderMarkdown('你好！我是成都信息工程大学校园助手，你可以问我关于学校的任何问题，比如：学校有哪些社团？图书馆怎么借书？');
+    appendWelcomeBubble();
+}
+
+// 欢迎气泡（含示例问题），初始化与清空后共用
+function appendWelcomeBubble() {
+    const { answerEl, content } = appendBotBubble({ persist: false });
+    answerEl.innerHTML = renderMarkdown(WELCOME_MESSAGE);
+    content.insertAdjacentHTML('beforeend', WELCOME_EXAMPLES_HTML);
 }
 
 // ===== 页面初始化 =====
@@ -302,4 +360,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.clear')?.addEventListener('click', clearAllMessage);
   document.getElementById('stop-generating')?.addEventListener('click', stopGenerating);
   document.getElementById('submit')?.addEventListener('click', sendMessage);
+
+  // 示例问题点击: 填入并发送 (事件委托, 清空重建后依然生效)
+  document.getElementById('chatbox')?.addEventListener('click', (e: Event) => {
+    const target = e.target as HTMLElement;
+    if (!target || !target.classList.contains('example_q')) return;
+    const input = document.getElementById('input') as HTMLInputElement;
+    input.value = target.textContent || '';
+    // 隐藏欢迎区, 标记首次使用已开始
+    const welcome = document.getElementById('welcome-examples');
+    if (welcome) welcome.remove();
+    sendMessage();
+  });
 });

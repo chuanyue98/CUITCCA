@@ -29,13 +29,13 @@
                         </svg>
                     </button>
                     <div class="masthead_wordmark">
-                        <span class="eyebrow">Editorial Operations Console</span>
+                        <span class="eyebrow">校园知识库管理台</span>
                         <h1 class="masthead_title">知识库<em>编辑台</em></h1>
                     </div>
                 </div>
                 <div class="masthead_meta">
-                    <span class="meta_kv"><span class="meta_k">Edition</span><span class="meta_v">v0.2.0</span></span>
-                    <span class="meta_kv"><span class="meta_k">Session</span><span class="meta_v">Local</span></span>
+                    <span class="meta_kv"><span class="meta_k">版本</span><span class="meta_v">v0.2.0</span></span>
+                    <span class="meta_kv"><span class="meta_k">会话</span><span class="meta_v">本地</span></span>
                 </div>
             </header>
 
@@ -48,7 +48,7 @@
                         <header class="console_panel_head">
                             <span class="section_no">§ 01</span>
                             <div class="console_panel_title_group">
-                                <span class="eyebrow">Index Registry</span>
+                                <span class="eyebrow">索引注册表</span>
                                 <h2 class="console_panel_title">活跃知识库索引</h2>
                             </div>
                         </header>
@@ -58,19 +58,19 @@
                             <select id="index-select" class="index_select">
                                 <option value="">加载中...</option>
                             </select>
-                            <button class="btn btn-primary btn_save_disk">保存磁盘</button>
+                            <button class="btn btn-primary btn_save_disk" title="将内存中的索引变更写入磁盘永久存储">保存到磁盘</button>
                         </div>
 
                         <div class="index_create_row">
-                            <input type="text" id="new-index-name" class="new_index_input" placeholder="输入新索引名称…">
-                            <button class="btn btn-success">新建</button>
-                            <button class="btn btn-danger">删除当前</button>
+                            <input type="text" id="new-index-name" class="new_index_input" placeholder="输入新索引名称…" maxlength="64">
+                            <button class="btn btn-success">新建索引</button>
+                            <button class="btn btn-danger">删除当前索引</button>
                         </div>
 
                         <!-- 索引摘要 Summary -->
                         <div class="summary_section">
                             <div class="summary_header">
-                                <span class="summary_label">索引摘要 <span class="summary_label_en">/ Summary</span></span>
+                                <span class="summary_label">索引摘要 <span class="summary_label_en">/ 用于让检索更精准</span></span>
                                 <span id="summary-status-tag" class="status_tag">未做修改</span>
                             </div>
                             <textarea id="index-summary-textarea" class="summary_textarea" placeholder="选择或载入索引以编辑其摘要…"></textarea>
@@ -82,7 +82,7 @@
                         <header class="console_panel_head">
                             <span class="section_no">§ 02</span>
                             <div class="console_panel_title_group">
-                                <span class="eyebrow">Data Ingestion</span>
+                                <span class="eyebrow">数据导入</span>
                                 <h2 class="console_panel_title">数据导入</h2>
                             </div>
                         </header>
@@ -109,14 +109,14 @@
                         <!-- Tab 2: 直接文本录入 -->
                         <div id="tab-text" class="tab_content">
                             <div class="form_group">
-                                <label for="input-doc-id">文档标识符 <span class="field_hint">Doc ID · 可选</span></label>
+                                <label for="input-doc-id">文档标识符 <span class="field_hint">可选 · 留空系统自动生成</span></label>
                                 <input type="text" id="input-doc-id" placeholder="例如：rule_dormitory_v1（留空则系统自动生成）">
                             </div>
                             <div class="form_group">
-                                <label for="input-doc-text">文档正文 <span class="field_hint">Text</span></label>
+                                <label for="input-doc-text">文档正文 <span class="field_hint">必填</span></label>
                                 <textarea id="input-doc-text" rows="6" placeholder="请输入要索引的内容文本…"></textarea>
                             </div>
-                            <button class="btn-submit">确认插入文档</button>
+                            <button class="btn-submit">插入文档</button>
                         </div>
 
                         <!-- Tab 3: QA 生成式上传 -->
@@ -126,7 +126,7 @@
                                 <input type="file" id="qa-file-input" accept=".txt,.pdf,.md,.csv,.xlsx,.docx">
                             </div>
                             <div class="form_group">
-                                <label for="qa-custom-prompt">QA 问答抽取 Prompt <span class="field_hint">可选</span></label>
+                                <label for="qa-custom-prompt">QA 抽取提示词 <span class="field_hint">可选 · 留空用默认</span></label>
                                 <textarea id="qa-custom-prompt" rows="3" placeholder="默认会将文件内容切割为多块，并为每块生成对应的标准问答对…"></textarea>
                             </div>
                             <button class="btn-submit btn-submit-qa">生成 QA 并导入</button>
@@ -140,7 +140,7 @@
                         <header class="console_panel_head console_panel_head--inline">
                             <span class="section_no">§ 03</span>
                             <div class="console_panel_title_group">
-                                <span class="eyebrow">Chunk Inspector</span>
+                                <span class="eyebrow">数据分块浏览器</span>
                                 <h2 class="console_panel_title">数据分块浏览器</h2>
                             </div>
                         </header>
