@@ -4,6 +4,8 @@
  * data-active 属性指定当前页面的高亮菜单项: index | manage | use_function | feed_back
  */
 
+import { getApiKey, setApiKey, clearApiKey, onUnauthorized } from './utils/api';
+
 (function () {
   // Vite 把 <script type="module"> 重写后会丢失 data-active 自定义属性，
   // 且 ES module 中 document.currentScript 为 null。改从 URL 推断当前页面。
@@ -12,6 +14,9 @@
   const activePage = (_page === 'index' || _page === 'manage' || _page === 'use_function' || _page === 'feed_back')
     ? _page
     : '';
+
+  const currentKey = getApiKey();
+  const hasKey = !!currentKey;
 
   const sidebarHTML = '\
       <div class="side_left_flex">\
@@ -75,12 +80,97 @@
                       </div>\
                   </a>\
               </div>\
-          </div>';
+          </div>\
+          <div class="side_bottom">\
+              <button class="side_action_btn" id="theme-toggle" type="button" title="切换深色 / 浅色模式">🌙 主题</button>\
+              <button class="side_action_btn" id="api-key-btn" type="button" title="设置后端访问密钥">' + (hasKey ? '🔑 已配置密钥' : '🔑 设置访问密钥') + '</button>\
+          </div>\
+      </div>';
 
   const container = document.getElementById('side_left');
   if (container) {
     container.innerHTML = sidebarHTML;
   }
+
+  // ===== 主题切换 (localStorage 记忆, 覆盖 prefers-color-scheme) =====
+  const THEME_KEY = 'cuitcca_theme';
+  function applyTheme(theme: 'light' | 'dark') {
+    // 用 data-theme 显式覆盖 prefers-color-scheme (light 也强制设置, 避免系统暗色覆盖)
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+  // 初始应用 (优先 localStorage, 否则跟随系统)
+  const savedTheme = localStorage.getItem(THEME_KEY) as 'light' | 'dark' | null;
+  if (savedTheme) {
+    applyTheme(savedTheme);
+  }
+  const themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const isDark = current === 'dark' ||
+        (!current && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const next: 'light' | 'dark' = isDark ? 'light' : 'dark';
+      applyTheme(next);
+      localStorage.setItem(THEME_KEY, next);
+    });
+  }
+
+  // ===== API Key 设置弹窗 =====
+  function promptApiKey(title: string, message: string) {
+    const existing = document.getElementById('apikey-modal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'apikey-modal';
+    modal.className = 'apikey_modal';
+    modal.innerHTML = `
+      <div class="apikey_dialog">
+        <div class="apikey_title">${title}</div>
+        <div class="apikey_message">${message}</div>
+        <input type="password" id="apikey-input" class="apikey_input" placeholder="粘贴 CUITCCA_API_KEY..." autocomplete="off">
+        <div class="apikey_actions">
+          <button class="apikey_btn apikey_btn--ghost" id="apikey-cancel">取消</button>
+          ${hasKey ? '<button class="apikey_btn apikey_btn--danger" id="apikey-clear">清除密钥</button>' : ''}
+          <button class="apikey_btn apikey_btn--primary" id="apikey-save">保存</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    const input = document.getElementById('apikey-input') as HTMLInputElement;
+    input.value = currentKey;
+    setTimeout(() => input.focus(), 50);
+    document.getElementById('apikey-cancel')?.addEventListener('click', () => modal.remove());
+    document.getElementById('apikey-save')?.addEventListener('click', () => {
+      const val = input.value.trim();
+      if (val) {
+        setApiKey(val);
+      } else {
+        clearApiKey();
+      }
+      modal.remove();
+      location.reload();
+    });
+    if (hasKey) {
+      document.getElementById('apikey-clear')?.addEventListener('click', () => {
+        clearApiKey();
+        modal.remove();
+        location.reload();
+      });
+    }
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+  }
+
+  const apiKeyBtn = document.getElementById('api-key-btn');
+  if (apiKeyBtn) {
+    apiKeyBtn.addEventListener('click', () => {
+      promptApiKey('设置访问密钥', '当后端配置了 CUITCCA_API_KEY 时，前端需要携带密钥才能调用受保护的接口。');
+    });
+  }
+
+  // 注册 401 回调: 自动弹出密钥设置对话框
+  onUnauthorized(() => {
+    promptApiKey('检测到访问密钥未配置或失效', '管理接口返回 401，请设置正确的 CUITCCA_API_KEY 后重试。');
+  });
 
   // 侧边栏折叠逻辑
   const button = document.getElementById('button');
