@@ -260,6 +260,7 @@ def _build_retriever(top_k: int | None = None) -> BaseRetriever:
     retriever_tools = [
         RetrieverTool.from_defaults(
             retriever=build_retriever_for_index(index, effective_top_k),
+            name=index.index_id,
             description=index_description(index),
         )
         for index in indexes_snapshot
@@ -342,7 +343,15 @@ class QAWorkflow(Workflow):
             )
 
         retriever = self._retriever if self._retriever is not None else _build_retriever()
-        nodes = await retriever.aretrieve(QueryBundle(query_str=query_str))
+        try:
+            nodes = await retriever.aretrieve(QueryBundle(query_str=query_str))
+        except Exception:
+            # RouterRetriever 的 LLM 选择器偶尔会解析出越界索引（"Failed to
+            # select retriever"），把第一次检索也兜住：检索失败降级为空 nodes，
+            # 让 synthesize 走"我还不知道"的兜底文案，而不是 500。检索是回答
+            # 问题的前置条件，失败不该让整个请求炸穿。
+            logger.warning("首次检索失败，降级为空结果。", exc_info=True)
+            nodes = []
         # 条件触发查询改写：top1 置信度低时用 LLM 改写问题再检索一次。见模块
         # docstring"条件触发查询改写"一节。
         query_str, nodes = await self._maybe_rewrite_and_retrieve(retriever, query_str, nodes)
@@ -391,7 +400,13 @@ class QAWorkflow(Workflow):
 
         logger.info("查询改写: %r -> %r（top1=%.3f < %.2f）",
                     query_str, rewritten, nodes[0].score, load_env.QUERY_REWRITE_SCORE_THRESHOLD)
-        rewritten_nodes = await retriever.aretrieve(QueryBundle(query_str=rewritten))
+        try:
+            rewritten_nodes = await retriever.aretrieve(QueryBundle(query_str=rewritten))
+        except Exception:
+            # 第二次检索（改写后）失败同样降级：改写是加分项，检索失败不能
+            # 让请求 500——降级保留第一次检索的结果。见模块 docstring。
+            logger.warning("改写后的二次检索失败，降级使用首次检索结果。", exc_info=True)
+            return query_str, nodes
         if not rewritten_nodes:
             return query_str, nodes
 

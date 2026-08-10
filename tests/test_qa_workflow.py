@@ -636,3 +636,124 @@ async def test_query_rewrite_ignored_when_llm_returns_empty_or_same():
 
     assert retriever.calls == ["学校有什么政策"], "改写结果与原始相同不应重复检索"
     assert result.source_nodes == nodes
+
+
+@pytest.mark.asyncio
+async def test_query_rewrite_falls_back_when_second_retrieval_raises():
+    """改写触发后、第二次（改写后）检索抛异常时（比如 RouterRetriever 的
+    LLM 选择器偶发解析出越界索引，报 "Failed to select retriever"），降级
+    保留第一次检索的结果，整个 workflow 不 500——模块 docstring 承诺"任何
+    一步失败都降级"，第二次检索失败也必须兑现。"""
+    import configs.load_env as load_env
+    from handlers.qa_workflow import QAWorkflow
+
+    original_nodes = [_make_node("低置信度的原始内容", file_name="原文档.txt", score=0.3)]
+
+    class ExplodingSecondRetriever(BaseRetriever):
+        """第一次检索正常返回，第二次（改写后）检索直接抛错。"""
+
+        def __init__(self):
+            self.calls: list[str] = []
+            super().__init__()
+
+        def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+            self.calls.append(query_bundle.query_str)
+            if query_bundle.query_str == "改写后的查询":
+                raise ValueError("Failed to select retriever")
+            return original_nodes
+
+        async def _aretrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+            return self._retrieve(query_bundle)
+
+    retriever = ExplodingSecondRetriever()
+    llm = RecordingLLM()
+    llm.set_rewrite_response("改写后的查询")
+
+    with patch.object(load_env, "QUERY_REWRITE_ENABLED", True), \
+         patch.object(load_env, "QUERY_REWRITE_SCORE_THRESHOLD", 0.6):
+        workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+        result = await workflow.run(query="学校有什么政策", streaming=False)
+
+    # 改写确实触发了第二次检索（不是被跳过），只是检索失败了
+    assert retriever.calls == ["学校有什么政策", "改写后的查询"]
+    # 降级：保留第一次检索的结果，正常走 synthesize
+    assert result.source_nodes == original_nodes
+    assert result.response.strip() != ""
+
+
+@pytest.mark.asyncio
+async def test_first_retrieval_raises_falls_back_to_empty_and_fallback_answer():
+    """第一次检索就抛异常时（同一类 RouterRetriever 选择失败），降级为空
+    nodes，synthesize 走"我还不知道"的兜底文案，而不是 500 炸穿请求。"""
+    from handlers.qa_workflow import _FALLBACK_ANSWER, QAWorkflow
+
+    class ExplodingRetriever(BaseRetriever):
+        def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+            raise ValueError("Failed to select retriever")
+
+        async def _aretrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+            return self._retrieve(query_bundle)
+
+    workflow = QAWorkflow(retriever=ExplodingRetriever(), llm=RecordingLLM(), timeout=30)
+    result = await workflow.run(query="学校有什么政策", streaming=False)
+
+    assert result.response == _FALLBACK_ANSWER
+    assert result.source_nodes == []
+
+
+def test_index_description_truncates_long_summary():
+    """index_description 应该把超长的 summary 截断到
+    _INDEX_DESCRIPTION_MAX_CHARS 字以内——选择器 prompt 里四个候选的描述
+    长度和形态越接近，LLMSingleSelector 输出越稳定，否则偶发解析出越界索引
+    （线上 "Failed to select retriever" 的根因之一）。短 summary 和没有
+    summary 的行为保持原样。"""
+    import utils.llama as llama_utils
+
+    class FakeIndex:
+        def __init__(self, index_id: str, summary: str | None):
+            self.index_id = index_id
+            self.summary = summary
+
+    long_summary = "摘要" * 200  # 400 字，远超 120 上限
+    desc = llama_utils.index_description(FakeIndex("idx1", long_summary))
+    assert len(desc) <= llama_utils._INDEX_DESCRIPTION_MAX_CHARS
+    assert desc == long_summary.strip()[:llama_utils._INDEX_DESCRIPTION_MAX_CHARS]
+
+    short_desc = llama_utils.index_description(FakeIndex("idx2", "campus dorm rules"))
+    assert short_desc == "campus dorm rules"
+
+    fallback = llama_utils.index_description(FakeIndex("idx3", None))
+    assert fallback == "知识库索引: idx3"
+
+
+@pytest.mark.asyncio
+async def test_multi_index_retriever_tools_have_unique_names():
+    """多索引分支的每个 RetrieverTool 应该带唯一 name（index_id），而不是全部
+    落在默认的 "retriever_tool"——同名工具会让 LLMSingleSelector 解析出越界
+    索引（"Failed to select retriever"）。这也是修复该线上 bug 的回归测试。"""
+    from llama_index.core import Settings
+    from llama_index.core.tools import RetrieverTool
+
+    fake_index1 = MagicMock()
+    fake_index1.index_id = "campus"
+    fake_index1.summary = "校园生活"
+    fake_index1.as_retriever.return_value = MagicMock()
+
+    fake_index2 = MagicMock()
+    fake_index2.index_id = "campus-web"
+    fake_index2.summary = "官网抓取"
+    fake_index2.as_retriever.return_value = MagicMock()
+
+    captured_names: list[str] = []
+    real_from_defaults = RetrieverTool.from_defaults
+
+    def _capture(*args, **kwargs):
+        captured_names.append(kwargs.get("name"))
+        return real_from_defaults(*args, **kwargs)
+
+    with patch("handlers.qa_workflow.indexes", [fake_index1, fake_index2]), \
+            patch.object(Settings, "_llm", MagicMock()), \
+            patch("handlers.qa_workflow.RetrieverTool.from_defaults", side_effect=_capture):
+        _build_retriever()
+
+    assert captured_names == ["campus", "campus-web"]

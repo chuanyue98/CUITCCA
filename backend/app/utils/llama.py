@@ -91,15 +91,30 @@ async def generate_qa_batched(contents: str, prompt: str | None = None):
     return qa_pairs
 
 
+_INDEX_DESCRIPTION_MAX_CHARS = 120
+"""selector 展示的索引描述长度上限。
+
+``summary`` 是索引创建时生成的整篇摘要（可能几百字），如果原样塞给
+LLMSingleSelector，会把选择 prompt 撑得臃肿：模型需要在"一段简历准备心得"
+和"知识库索引: test-index"之间做选择，描述质量参差会显著放大输出噪声——
+线上偶发出现过选择器解析出越界索引（"Failed to select retriever"）。截断到
+首句附近，让每个候选的描述长度和形态接近，选择器才能稳定工作。
+"""
+
+
 def index_description(index: BaseIndex) -> str:
     """索引的人类可读描述，供 selector（RouterQueryEngine/RouterRetriever）挑选
-    索引时展示。用 ``.summary``（如果已经设置过），否则退化成 index_id。
+    索引时展示。用 ``.summary`` 的前 ``_INDEX_DESCRIPTION_MAX_CHARS`` 字（如果
+    已经设置过），否则退化成 index_id。
 
     被 ``generate_query_engine_tools()``（下面）和
     ``handlers/qa_workflow.py`` 的 ``_build_retriever()`` 多索引分支共用——
     两边过去各自内联同一行表达式，抽出来避免两处失步。
     """
-    return getattr(index, "summary", None) or f"知识库索引: {index.index_id}"
+    summary = getattr(index, "summary", None)
+    if summary:
+        return summary.strip()[: _INDEX_DESCRIPTION_MAX_CHARS]
+    return f"知识库索引: {index.index_id}"
 
 
 def generate_query_engine_tools(
