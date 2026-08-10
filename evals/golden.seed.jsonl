@@ -18,3 +18,59 @@
 {"id": "q018", "question": "成都信息工程大学的校风、教风、学风分别是什么？", "expected_answer": "校风：爱心 责任 行动；教风：爱生、敬业、求实、创新；学风：尊师、好学、励志、笃行。", "expected_sources": ["大学精神.txt"], "category": "comprehension"}
 {"id": "q019", "question": "学校现有多少个学院（部、中心）、多少个本科专业、在校生规模大约是多少？", "expected_answer": "现有19个学院（部、中心），61个本科专业（其中招生专业52个），2.5万余名全日制在校生。", "expected_sources": ["学校简介.txt"], "category": "simple_fact"}
 {"id": "q020", "question": "学校助学措施中，除了国家助学金和国家助学贷款，还有哪些帮助经济困难学生的方式？", "expected_answer": "还包括学费减免、勤工助学，以及广州助学基金、蓝剑助学基金、呈祥助学基金、春燕助学基金、成信助学基金、栋梁工程基金、“爱心一家人”等社会资助项目。", "expected_sources": ["助学措施.txt"], "category": "comprehension"}
+{"id": "q021", "question": "成都信息工程大学现有专任教师多少人，其中博士有多少人？", "expected_answer": "现有专任教师1600余人，其中博士800余人，高级职称600余人。", "expected_sources": ["师资队伍.txt", "学校简介.txt"], "category": "simple_fact"}
+{"id": "q022", "question": "学校聘请了多少名院士、长江学者、杰青等高层次专家担任兼职教授？", "expected_answer": "聘有100余名院士、长江、杰青等高层次专家为学校兼职教授。", "expected_sources": ["师资队伍.txt"], "category": "simple_fact"}
+{"id": "q023", "question": "本校教师在校外担任兼职博士生导师的有多少人？", "expected_answer": "本校教师担任校外兼职博士生导师28人，比较有影响力的主要学术兼职46项。", "expected_sources": ["师资队伍.txt"], "category": "simple_fact"}
+{"id": "q024", "question": "学校师资队伍建设坚持的理念是什么？", "expected_answer": "坚持“以人为本、人才强校”的理念，以提升师资队伍整体素质为目标，以优势学科、特色学科为依托，以特色专业建设为导向，以“提高质量、突出特色、强化优势”为主线。", "expected_sources": ["师资队伍.txt"], "category": "comprehension"}
+{"id": "q025", "question": "国家助学金的资助标准是多少？", "expected_answer": "国家助学金用于资助普通本专科在校生中的家庭经济困难学生，资助标准为2000—4000元/人年。", "expected_sources": ["助学措施.txt"], "category": "simple_fact"}
+{"id": "q026", "question": "学校勤工助学的工资标准是多少？", "expected_answer": "勤工助学工资标准为150—200元/人月。", "expected_sources": ["助学措施.txt"], "category": "simple_fact"}
+{"id": "q027", "question": "目前已经开展生源地助学贷款的省市有哪些？", "expected_answer": "已经开展生源地贷款的省市有江苏、甘肃、陕西、重庆、湖北、四川，另有新疆、内蒙古、贵州、云南、浙江、山东、江西、安徽、青海、海南、广西、山西、河北、上海、辽宁等省正在陆续开展。", "expected_sources": ["助学措施.txt"], "category": "comprehension"}
+{"id": "q028", "question": "学校设有哪些社会资助项目帮助家庭经济困难的优秀学生？", "expected_answer": "主要项目有广州助学基金、蓝剑助学基金、呈祥助学基金、春燕助学基金、成信助学基金、栋梁工程基金、“爱心一家人”等，资金来源于企业、校友、教职工捐赠。", "expected_sources": ["助学措施.txt"], "category": "comprehension"}
+{"id": "q029", "question": "什么条件的新生可以获得新生一等奖学金，金额是多少？", "expected_answer": "报考我校且高考成绩排名在各省（自治区、直辖市）文理科前200名的新生，颁发一等奖学金，入学后一次性奖励10000元/生。", "expected_sources": ["奖学措施.txt"], "category": "simple_fact"}
+{"id": "q030", "question": "新生二等奖学金的评定条件和金额是什么？", "expected_answer": "第一志愿报考我校，且高考成绩高于学校在该省理科调档线70分、文科调档线50分的新生，颁发二等奖学金，入学后一次性奖励2000元/生。", "expected_sources": ["奖学措施.txt"], "category": "simple_fact"}
+{"id": "q031", "question": "高中参加过学科奥林匹克竞赛获奖的新生能拿到什么奖励？", "expected_answer": "在录取的应届新生中，高中阶段参加由中国科协主办的全国中学生学科（数学、物理、化学、生物、信息学）奥林匹克竞赛获得全国决赛一、二、三等奖的新生，颁发单项奖，入学后一次性奖励1000元/生。", "expected_sources": ["奖学措施.txt"], "category": "simple_fact"}
+{"id": "q032", "question": "国家奖学金和国家励志奖学金的奖励标准分别是多少，面向哪些学生？", "expected_answer": "国家奖学金奖励二年级以上（含二年级）普通本专科学生中特别优秀的学生，标准8000元/人年；国家励志奖学金奖励二年级以上品学兼优的家庭经济困难学生，标准5000元/人年。", "expected_sources": ["奖学措施.txt"], "category": "multi_hop"}
+{"id": "q033", "question": "学校的等级奖学金分几个等级，最高金额是多少，覆盖比例是多少？", "expected_answer": "等级奖学金共分四个等级：特等奖、一等奖、二等奖、三等奖，最高金额2000元/生·学年，占在校生比例的33%。", "expected_sources": ["奖学措施.txt"], "category": "simple_fact"}
+{"id": "q034", "question": "新生奖学金办法从哪一级新生开始实施，由哪个部门负责解释？", "expected_answer": "本办法自2016级新生开始实施，由学校招生就业处负责解释。", "expected_sources": ["奖学措施.txt"], "category": "multi_hop"}
+{"id": "q035", "question": "学校转专业工作对学生转出有没有设置门槛？", "expected_answer": "在国家政策许可范围内，学校对学院各专业允许转出的条件不作限制，不设置转出门槛。", "expected_sources": ["转专业政策.txt"], "category": "simple_fact"}
+{"id": "q036", "question": "转专业工作应遵循什么原则？", "expected_answer": "转专业工作应遵循公平、公开、公正和择优录取原则，建立公示制度，按照程序规范操作。", "expected_sources": ["转专业政策.txt"], "category": "simple_fact"}
+{"id": "q037", "question": "学校转专业工作分为几级管理，领导小组组长由谁担任，办公室设在哪里？", "expected_answer": "转专业工作分为校、院两级管理。学校转专业工作领导小组组长由分管本科教学的校领导担任，成员包括教务处、学生工作处、招生就业处等部门负责人；领导小组办公室设在教务处。", "expected_sources": ["转专业政策.txt"], "category": "multi_hop"}
+{"id": "q038", "question": "学院转专业工作小组由哪些人组成？", "expected_answer": "工作小组成员包括学院分党委书记、院长、分管本科教学工作副院长、学生科科长、教务科科长、本科教学秘书、辅导员代表以及教师代表等。", "expected_sources": ["转专业政策.txt"], "category": "comprehension"}
+{"id": "q039", "question": "转专业管理办法的制定依据是哪些文件？", "expected_answer": "依据教育部《普通高等学校学生管理规定》（教育部第41号令）、《成都信息工程大学普通本科学生学籍管理规定》以及学校“三段培养、两次分流”的人才培养模式整体改革要求制定。", "expected_sources": ["转专业政策.txt"], "category": "comprehension"}
+{"id": "q040", "question": "图书馆每天的开馆时间是几点到几点？", "expected_answer": "图书馆周一至周日开馆时间为8:00-22:00，节假日开馆时间另见公告。", "expected_sources": ["图书馆.txt"], "category": "simple_fact"}
+{"id": "q041", "question": "本科生在图书馆最多能借几本书，借期多长？", "expected_answer": "本科生允许借书总册数10册，正常借期一个月，允许续借1次，续借借期一个月。", "expected_sources": ["图书馆.txt"], "category": "table_lookup"}
+{"id": "q042", "question": "硕士研究生和教师的图书借阅册数与借期分别是多少？", "expected_answer": "硕士生和教师均可借15册；硕士生借期二个月、可续借1次续借二个月，教师借期三个月、可续借1次续借三个月。", "expected_sources": ["图书馆.txt"], "category": "table_lookup"}
+{"id": "q043", "question": "图书馆哪些类型的书刊资料不外借？", "expected_answer": "中外文工具书、现刊、外文影印版、外文原版书、过刊合订本、报纸等书刊报资料仅供室内阅览，概不外借，出借图书以普通图书为限。", "expected_sources": ["图书馆.txt"], "category": "comprehension"}
+{"id": "q044", "question": "在图书馆借的书还没还，一卡通丢了应该去哪里办理挂失？", "expected_answer": "应及时到图书馆一楼咨询服务台办理挂失手续；挂失前账户中所有图书（含自借、他人冒用盗借）均由原一卡通所有人负责归还。", "expected_sources": ["图书馆.txt"], "category": "procedural"}
+{"id": "q045", "question": "已经超期的图书还能续借吗？", "expected_answer": "不能。需续借的图书应在到期前来图书馆或在图书馆网站办理续借手续，已经超期的图书不能续借。", "expected_sources": ["图书馆.txt"], "category": "simple_fact"}
+{"id": "q046", "question": "学生的校园一卡通有哪些功能？", "expected_answer": "学生卡具有校园电子身份认证、图书自助借阅、航空港学生公寓21栋热水洗澡消费（需易校园APP绑定校园卡）、学生食堂及校园超市消费等功能。", "expected_sources": ["校园一卡通.txt"], "category": "comprehension"}
+{"id": "q047", "question": "教工卡比学生卡多了什么功能？", "expected_answer": "教工卡具有校园电子身份认证、图书自助借阅、各校区交通车、教工食堂、学生食堂及校园超市消费等功能，相比学生卡多了各校区交通车和教工食堂消费功能。", "expected_sources": ["校园一卡通.txt"], "category": "multi_hop"}
+{"id": "q048", "question": "校园一卡通怎么充值？", "expected_answer": "在易校园APP或微信小程序“易校园”内使用支付宝和微信充值。", "expected_sources": ["校园一卡通.txt"], "category": "procedural"}
+{"id": "q049", "question": "电子校园卡怎么申领？", "expected_answer": "校园一卡通服务中心已完成个人信息录入和加密工作，在易校园APP或微信小程序“易校园”内申领并激活电子校园卡，申领流程参看《校园卡（电子卡）申领流程》。", "expected_sources": ["校园一卡通.txt"], "category": "procedural"}
+{"id": "q050", "question": "学生公寓的热水怎么收费？", "expected_answer": "学生公寓热水刷卡使用，按流量0.04元/升计费。", "expected_sources": ["公寓热水.txt"], "category": "simple_fact"}
+{"id": "q051", "question": "热水卡在哪里充值，充值时间是什么时候？", "expected_answer": "充值地点在15栋学生公寓一楼热水管理中心；充值时间为周一至周五下午15:00-18:00（节假日除外）。", "expected_sources": ["公寓热水.txt"], "category": "multi_hop"}
+{"id": "q052", "question": "学生公寓热水每天的供水时段是怎么安排的？", "expected_answer": "热水实行分时段供水：早上7:00-9:00，中午12:00-14:00，晚上17:30-24:00。", "expected_sources": ["公寓热水.txt"], "category": "table_lookup"}
+{"id": "q053", "question": "热水设施出故障了报修电话是多少？", "expected_answer": "如出现热水设施故障（水小、不出水、水温低、扣费异常等），报修电话为1519818。", "expected_sources": ["公寓热水.txt"], "category": "contact_lookup"}
+{"id": "q054", "question": "热水卡丢了余额还能找回吗？", "expected_answer": "不能。热水卡为专用卡，学生凭学生证办理，卡内余额无法挂失，需妥善保管。", "expected_sources": ["公寓热水.txt"], "category": "simple_fact"}
+{"id": "q055", "question": "学校的快递点都在哪里？", "expected_answer": "菜鸟驿站位于一栋右侧，除京东和顺丰外基本所有快递都在此处，取件需取件码；顺丰快递位于一食堂背后、二栋附近；京东快递位于二食堂附近。", "expected_sources": ["快递.txt"], "category": "comprehension"}
+{"id": "q056", "question": "寄快递到航空港校区应该填什么地址和邮编？", "expected_answer": "航空港校区地址为成都市西南航空港经济开发区学府路一段24号，邮编610225。", "expected_sources": ["快递.txt"], "category": "simple_fact"}
+{"id": "q057", "question": "龙泉校区的快递地址和邮编是什么？", "expected_answer": "龙泉校区地址是成都市龙泉驿区阳光城幸福路10号，邮编610103。", "expected_sources": ["快递.txt"], "category": "simple_fact"}
+{"id": "q058", "question": "取菜鸟驿站的快递需要准备什么？", "expected_answer": "取快递需要取件码，下载菜鸟裹裹APP即可获取。", "expected_sources": ["快递.txt"], "category": "procedural"}
+{"id": "q059", "question": "从人南校区到航空港校区的交通车有哪几个班次？", "expected_answer": "人南到航空港的班次有07:20（教学班次、经停地铁8号线顺风站B口附近）、07:50（经停地铁8号线顺风站B口附近）、09:30（教学班次）、13:20（经停地铁8号线顺风站B口附近）。", "expected_sources": ["校车时刻表.txt"], "category": "table_lookup"}
+{"id": "q060", "question": "航空港校区回人南的交通车什么时候发车？", "expected_answer": "航空港到人南的班次有12:20（经停地铁8号线顺风站）、15:55（教学班次、经地铁8号线顺风站）、17:50（经停地铁8号线顺风站）。", "expected_sources": ["校车时刻表.txt"], "category": "table_lookup"}
+{"id": "q061", "question": "人南到龙泉校区的交通车经停哪里？", "expected_answer": "人南到龙泉的班次经停净居寺，班次有07:10（教学班次、经停净居寺）、07:20（经停净居寺）、08:50（经停净居寺）、12:50（12:20航空港→人南12:50→龙泉）。", "expected_sources": ["校车时刻表.txt"], "category": "table_lookup"}
+{"id": "q062", "question": "毕业证或学位证遗失了要补办证明书，需要准备哪些材料？", "expected_answer": "需要：①填写《成都信息工程大学毕业证（学位证）遗失补办证明书申请表》；②3张1寸最近的彩色标准纸质像片并提供电子版照片；③本人身份证原件及正反面复印件一张；④档案馆出具的学历证明（2000年及以前毕业的学生）；⑤财务处学费交清证明；⑥委托他人代办的还需授权委托书和双方身份证正反面复印件。", "expected_sources": ["普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt"], "category": "procedural"}
+{"id": "q063", "question": "补办毕业证明书要多久，在哪里办理？", "expected_answer": "办理时间2-3个工作日，通讯地址为成都信息工程大学航空港校区行政楼208。", "expected_sources": ["普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt"], "category": "multi_hop"}
+{"id": "q064", "question": "办理毕业证遗失补办的联系电话是多少，找哪位老师？", "expected_answer": "联系电话028-85967803，段老师、吴老师。", "expected_sources": ["普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt"], "category": "contact_lookup"}
+{"id": "q065", "question": "毕业证遗失补办的受理范围是哪些人？", "expected_answer": "受理范围为我校毕业的普通全日制本专科毕业生，包括航空港、龙泉校区毕业的普通全日制本专科学生。", "expected_sources": ["普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt"], "category": "simple_fact"}
+{"id": "q066", "question": "毕业设计（论文）管理系统有哪几种登录方式？", "expected_answer": "提供两种登录方式：一是校内统一身份认证登录，使用学校信息中心统一提供的用户名和密码，校外使用需要借助WebVPN；二是直接登录，使用知网（CNKI）系统的用户名和密码，内网和外网均可直接登录，无需WebVPN。", "expected_sources": ["毕业设计（论文）管理系统登录.txt"], "category": "comprehension"}
+{"id": "q067", "question": "在校外访问毕业设计管理系统，用统一身份认证登录需要什么条件？", "expected_answer": "校外使用统一身份认证登录需要借助WebVPN；如果不想用WebVPN，可以改用知网（CNKI）账号直接登录，内外网均可访问。", "expected_sources": ["毕业设计（论文）管理系统登录.txt"], "category": "multi_hop"}
+{"id": "q068", "question": "学校现有几个校区，占地面积多少？", "expected_answer": "学校现有航空港、龙泉两个校区，占地面积2000余亩。", "expected_sources": ["学校简介.txt"], "category": "simple_fact"}
+{"id": "q069", "question": "学校的人才培养模式是什么？", "expected_answer": "学校借鉴国际CDIO工程教育理念，构建起“三段培养、两次分流，多元发展”的人才培养模式，致力于培养具有健康心智体魄、良好人文素质、系统理论知识、扎实实践能力的高素质应用型专门人才。", "expected_sources": ["学校简介.txt"], "category": "comprehension"}
+{"id": "q070", "question": "成都信息工程大学是由哪些单位共建的？", "expected_answer": "学校是四川省和中国气象局共建、四川省重点发展的省属普通本科院校。", "expected_sources": ["学校简介.txt"], "category": "simple_fact"}
+{"id": "q071", "question": "学校加入了哪些高校联盟或国际组织？", "expected_answer": "学校是国际CDIO组织、中国气象人才培养联盟、成渝地区双城经济圈高校联盟的正式成员。", "expected_sources": ["学校简介.txt"], "category": "comprehension"}
+{"id": "q072", "question": "校训“成于大气”具体是什么含义？", "expected_answer": "“成于大气”既指学校诞生、成长和发展于中国气象事业，更指学校办学、师生做人做事成就于大气精神和成功于大气品质。大气精神指坚定奋斗方向、统观大局、把握大势的气度，海纳百川、兼收并蓄的气量，自强不息、求真务实、拼搏进取的气概，立大志、干大事、创大业的气魄；大气品质指宽广的胸襟、豁达的心境、积极的态度、博大的爱心和厚重的责任。", "expected_sources": ["大学精神.txt"], "category": "comprehension"}
+{"id": "q073", "question": "校训“信达天下”是什么意思？", "expected_answer": "“信达天下”最基本的是做人的要求，即以诚取信，以良好的信用和信誉达于天下；其次指成信大和成信人在信息时代必须面向世界、面向未来和面向现代化，开拓开放，通达天下。", "expected_sources": ["大学精神.txt"], "category": "comprehension"}
+{"id": "q074", "question": "学校中等专业学校时期的第一任教学主任是谁，任职时间是什么时候？", "expected_answer": "彭平，男，任教学主任，任职时间1951年1月至1954年4月。", "expected_sources": ["历任领导.txt"], "category": "table_lookup"}
+{"id": "q075", "question": "四川统计学校时期担任过校长的有哪些人？", "expected_answer": "四川统计学校时期担任过校长的包括万里（1950.12-1952.08）、孟功才（1952.10-1961.05）、孙世义（1961.05-1963.03）、尹光荣（代校长1963.03-1964.02、1965.03-1967.02，校长1978.02-1984.05）等。", "expected_sources": ["历任领导.txt"], "category": "table_lookup"}
+{"id": "q076", "question": "校园卡丢了去哪里挂失？", "expected_answer": "校园卡挂失请到一卡通服务中心办理。", "expected_sources": ["挂失流程.txt"], "category": "procedural"}

@@ -109,6 +109,41 @@ def test_run_rerank_eval_module_imports_without_side_effects():
     assert run_rerank_eval.DEFAULT_RECALL_K == 20
 
 
+def test_run_refusal_eval_module_imports_without_side_effects():
+    import evals.run_refusal_eval as run_refusal_eval
+
+    assert callable(run_refusal_eval.main)
+    assert callable(run_refusal_eval.run_eval)
+    assert run_refusal_eval.DEFAULT_GOLDEN.name == "golden.refusal.jsonl"
+
+
+def test_run_answer_eval_module_imports_without_side_effects():
+    """回答质量评测（LLM-as-judge）：import 不应触发 LLM 调用/模型加载
+    （AnswerJudge 的 LLM 在 __init__ 里才构造，模块导入不实例化它）。"""
+    import evals.run_answer_eval as run_answer_eval
+
+    assert callable(run_answer_eval.main)
+    assert callable(run_answer_eval.run_eval)
+    assert callable(run_answer_eval.AnswerJudge)
+    assert run_answer_eval.PASS_SCORE == 4
+
+
+def test_run_answer_eval_extract_json_handles_fenced_and_noisy_output():
+    """judge LLM 的输出经常带 ```json 围栏或前后废话，_extract_json 应该都能
+    抠出第一个 JSON 对象；完全没 JSON 时抛 ValueError 而不是返回脏数据。"""
+    import evals.run_answer_eval as run_answer_eval
+
+    extract = run_answer_eval._extract_json
+    assert extract('{"score": 5}') == {"score": 5}
+    assert extract('```json\n{"score": 4}\n```') == {"score": 4}
+    assert extract('好的，我的判断是：{"score": 3, "reason": "ok"} 结束') == {"score": 3, "reason": "ok"}
+    assert extract('{"statements": [{"statement": "a", "supported": true}]}') == {
+        "statements": [{"statement": "a", "supported": True}]
+    }
+    with pytest.raises(ValueError):
+        extract("完全没有json")
+
+
 def test_common_rank_metric_helpers():
     from evals._common import hit_rate_at, mrr_at
 

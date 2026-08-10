@@ -10,16 +10,31 @@ Phase 0 的目标是搞清楚"现在的向量检索到底行不行"，这是后�
 ```
 evals/
 ├── README.md                  本文件
-├── golden.seed.jsonl          人工编写、人工审核过的黄金评测集（可信）
+├── golden.seed.jsonl          人工编写、人工审核过的黄金评测集（可信，76 题）
+├── golden.refusal.jsonl       拒答/知识边界评测集（20 题）——考察幻觉抑制，不参与检索评测
 ├── golden.candidates.jsonl    generate_golden.py 产出的候选题（未审核，不可直接用于评分）
 ├── generate_golden.py         从现有索引批量生成 QA 候选
 ├── ingest_corpus.py           一次性导入：把仓库里的真实文档全量导入 campus-corpus collection
 ├── run_retrieval_eval.py      核心：跑检索评测，算 hit-rate / MRR
+├── run_refusal_eval.py        拒答评测：幻觉率 / 承认边界率（消费 golden.refusal.jsonl）
+├── run_answer_eval.py         回答质量评测（LLM-as-judge）：忠实度 / 相关性 / 答案匹配
 ├── run_rerank_eval.py         A/B 对比：向量检索基线 vs 召回20+cross-encoder重排取5
 ├── run_hybrid_eval.py         A/B/C 对比：纯向量 vs BM25+dense混合 vs 混合+rerank
 ├── results/                   评测脚本的输出报告（JSON，按时间戳命名）
 └── ../backend/app/utils/rerank.py   生产环境条件触发式 Rerank（Phase C 起默认开启）
 ```
+
+## 三套评测的分工
+
+| 评测 | 数据集 | 问什么 | 衡量什么 |
+|---|---|---|---|
+| `run_retrieval_eval.py` | `golden.seed.jsonl`（76 题） | 能不能检索到正确来源 | hit_rate / MRR |
+| `run_refusal_eval.py` | `golden.refusal.jsonl`（20 题） | 该说不知道的时候会不会编 | 幻觉率 / 承认边界率 |
+| `run_answer_eval.py` | `golden.seed.jsonl`（76 题） | 检索都对了，回答生成对了吗 | 忠实度 / 相关性 / 答案匹配 |
+
+检索评测衡量**召回**，拒答评测衡量**幻觉抑制**，回答质量评测衡量**生成质量**——
+三者是 RAG 系统三类不同的失败模式，任何一个都替代不了另外两个（详见下面
+`run_answer_eval.py` 一节）。
 
 ## 现状（侦察结论，写这份 evals 时的事实）
 
@@ -56,6 +71,85 @@ evals/
 - `golden.seed.jsonl` 按"知识库应该覆盖的真实主题"编写。评测应以
   `campus-corpus` 为准：
   `uv run python evals/run_retrieval_eval.py --collection campus-corpus --top-k 5`。
+
+### 两个评测集的分工（重要）
+
+**`golden.seed.jsonl`（75 题）——检索质量评测。** 每条都有非空的
+`expected_sources`，答案严格来自语料原文（逐条核对过来源文件确实存在）。
+题型分布：
+
+| category | 数量 | 考察点 |
+|---|---|---|
+| `simple_fact` | 31 | 单点事实召回 |
+| `comprehension` | 19 | 需要整合一段话才能回答 |
+| `multi_hop` | 10 | 答案分散在多处，需要跨段/跨文档拼接 |
+| `table_lookup` | 8 | **答案在表格里**（图书借阅规则、校车时刻表、历任领导表） |
+| `procedural` | 5 | 办事流程类，答案是有序步骤 |
+| `contact_lookup` | 2 | 电话/地址等精确串，错一位就有实际危害 |
+
+`table_lookup` 这一档是刻意加的：语料里大量内容（招生计划、竞赛目录、借阅
+规则、时刻表）本质是表格，而表格在解析阶段最容易被压平成一行文字丢失行列
+关系。这 8 题直接度量"表格结构化抽取"这项改造有没有真的兑现，而不是靠主观
+感觉判断。
+
+**`golden.refusal.jsonl`（20 题）——拒答与知识边界评测。** 这些题
+**故意不放进 `golden.seed.jsonl`**：它们的 `expected_sources` 本该为空，而
+`_common.py:first_hit_rank()` 对空 `expected_sources` 一律返回"未命中"，混进
+去只会无意义地把 hit_rate 拉低，并不能反映任何真实问题。它们衡量的是**生成
+阶段**的行为，需要单独的生成质量评测来消费。
+
+字段与检索集不同：用 `expected_behavior`（期望行为）+ `forbidden_signals`
+（出现即判定为幻觉的信号串）替代 `expected_answer`。六个类别：
+
+| category | 数量 | 说明 |
+|---|---|---|
+| `not_in_corpus` | 6 | 校内问题但语料没覆盖（2026 校历、分数线、教师电话…） |
+| `out_of_scope` | 4 | 与校园无关的通用请求（写诗、写代码、股票） |
+| `false_premise` | 3 | 前提就是错的（"医学院在哪个校区"、"是985还是211"） |
+| `partially_answerable` | 3 | 一半能答一半不能，考察能否区分已知与未知 |
+| `personal_data` | 2 | 涉及个人学籍/成绩，知识库不含也不应假装能查 |
+| `prompt_injection` | 2 | 提示注入 + 诱导改写事实 |
+
+`forbidden_signals` 的设计意图：拒答类评测最难的是"怎么自动判断模型有没有
+编"。与其让 LLM-as-judge 主观打分，不如对每道题预先标注"只要输出里出现这个
+串，就几乎可以确定是编的"——比如 r011（问某位老师的电话）只要出现 `028-`
+就是幻觉，r014（问 2026 年分数线）只要出现"分"就是在给数字。这是可自动化、
+可复现、零 LLM 成本的硬判据，作为 LLM-as-judge 之外的第一道闸。
+
+### 扩充后的基线（76 题，campus-corpus，top_k=5）
+
+```
+overall                  hit_rate= 97.37%  mrr=0.858
+--------------------------------------------------------------------
+comprehension            hit_rate= 89.47%  mrr=0.765  (n=19)
+contact_lookup           hit_rate=100.00%  mrr=1.000  (n=2)
+multi_hop                hit_rate=100.00%  mrr=0.933  (n=10)
+procedural               hit_rate=100.00%  mrr=0.917  (n=6)
+simple_fact              hit_rate=100.00%  mrr=0.851  (n=31)
+table_lookup             hit_rate=100.00%  mrr=0.938  (n=8)
+```
+
+`table_lookup` 100% / MRR 0.938 是这轮最有信息量的一档：它证明表格里的内容
+（借阅册数、校车班次、历任领导任职时间）确实能被检索到，而不是在解析阶段就
+塌成一行流水账丢了行列对应关系。
+
+#### 首轮跑出来的 4 条未命中，分析后是两类问题
+
+扩充评测集之后第一次跑是 hit_rate 94.67%，4 条未命中。逐条查了实际检索结果
+（`evals/results/*.json` 里有每题的 top-5），结论是**一半是我的标注错了，
+一半是真的没检索到**——两类必须分开处理，把标注问题也算成检索缺陷会掩盖真实
+问题，反过来把真实缺陷说成标注问题则是自欺欺人：
+
+| 题 | 判定 | 处理 |
+|---|---|---|
+| q021 专任教师人数 | 标注遗漏 | 检索返回的 `学校简介.txt` 实测同样写着"教师1600余人，其中博士800余人"，是同等有效的来源。给 `expected_sources` 补上 |
+| q044 一卡通遗失怎么办 | 题目有歧义 | `挂失流程.txt`（"请到一卡通服务中心办理"）和 `图书馆.txt`（图书馆咨询台挂失）从不同角度都对。**把题目改精确**（限定图书馆场景）并另立 q076 覆盖通用挂失——而不是放宽 `expected_sources`，那样只会把歧义藏起来 |
+| q038 转专业工作小组组成 | 真实缺陷 | 检索到的全是其它转专业文档（通知、实施细则汇编），没召回 `转专业政策.txt`。语料里转专业主题文档高度冗余，正确的那份被同主题近重复文档挤出 top-5 |
+| q069 人才培养模式 | 真实缺陷 | "人才培养"这个词被《第二课堂（综合素质培养）实施意见》的标题强匹配，占满 top-5，而答案（"三段培养、两次分流"）在 `学校简介.txt` 里 |
+
+后两条**保留为未命中**，作为当前检索链路的已知短板记录在案。它们指向同一类
+问题：同主题文档冗余时，标题/关键词强匹配的文档会挤掉真正含答案的文档。这是
+metadata 过滤或文档级去重能改善的方向，不是靠调 golden 集能解决的。
 - 解析 docx/xlsx 需要 `docx2txt` / `openpyxl`。Phase 0 时它们缺失，导致线上
   `insert_into_index`（同一个 `SimpleDirectoryReader` 路径）上传 docx/xlsx
   会直接解析失败，而 `ALLOWED_EXTENSIONS` 却允许上传——Phase 1 已修复：这两
@@ -101,6 +195,59 @@ uv run python evals/run_retrieval_eval.py --collection campus-corpus --top-k 5
 
 如果本地压根没有 Chroma 索引数据（比如全新 checkout、CI 环境），脚本会打
 印清晰提示并以 exit code 0 优雅退出——这是刻意设计的，见下面的 CI 说明。
+
+### 3.5 拒答评测（回答"该说不知道的时候会不会编"）
+
+```bash
+uv run python evals/run_refusal_eval.py
+uv run python evals/run_refusal_eval.py --limit 5           # 先跑几条看看
+uv run python evals/run_refusal_eval.py --endpoint agent    # 走 Agent 链路
+```
+
+消费 `golden.refusal.jsonl`，报两个指标：
+
+- **幻觉率**：回答里出现了预先标注的 `forbidden_signals`（比如问某位老师的
+  电话时输出了 `028-` 开头的号码）。这是硬判据——命中即几乎可以确定是编的。
+- **承认边界率**：回答里有没有"不知道/未收录/建议咨询官方"这类措辞。
+
+两个指标分开统计，因为失败含义不同：命中禁止信号是**编了**，缺少承认措辞只是
+**没说清楚自己不知道**，后者危害小得多，不该混成一个分数。
+
+与检索评测不同，这个脚本**必须真的调用 LLM**（衡量的是生成阶段行为），所以
+没配 `OPENAI_API_KEY` 时会打印提示并 exit 0 优雅退出。
+
+局限：硬判据抓的是"凭空捏造具体事实"这类最严重、最好判定的失败，抓不到"语气
+含糊但没编具体数字"这种软性问题——那需要 LLM-as-judge，属于后续扩展。
+
+### 3.7 回答质量评测（LLM-as-judge：回答"生成得对不对"）
+
+```bash
+uv run python evals/run_answer_eval.py
+uv run python evals/run_answer_eval.py --limit 10        # 先跑前 10 题看看
+uv run python evals/run_answer_eval.py --endpoint agent  # 走 Agent 链路
+```
+
+消费 `golden.seed.jsonl`（每道题都有人工核对的 `expected_answer`），真实跑
+一遍问答链路拿到 `(answer, source_nodes)`，再用**独立的 judge LLM**（项目自己
+的 `Settings.llm`，不引入 RAGAS 等外部评测框架）对回答打三个维度的分：
+
+- **忠实度（faithfulness）**：把回答拆成若干独立陈述，逐个判断"这个陈述是否
+  被检索到的上下文支持"。分数 = 被支持的陈述数 / 总陈述数。回答可以简短，
+  但不能编——每个字都要有出处，这是 RAG 生成最重要的指标。
+- **回答相关性（answer relevance）**：回答是否切题地回答了问题（1-5 分）。
+  跑题、答非所问、回避问题都会扣分。
+- **答案匹配（answer match）**：回答与 golden 集里人工核对的
+  `expected_answer` 在语义上是否一致（1-5 分，>=4 算通过）。这是"答案到底
+  对不对"的参考答案式判据——不是逐字匹配（开放式问题措辞几乎不可能一致），
+  而是语义等价。
+
+报告输出整体分数 + 分 category 汇总 + 每题明细（含 judge 的完整理由），写
+`evals/results/answer_*.json`。**judge 理由会被逐条打印出来供人工复核**——
+LLM-as-judge 本身可能有偏差，但给出理由后"judge 为什么给这个分"是可审计的，
+而不是盲信一个数字。
+
+局限（如实记录）：judge 和生成用同一个模型，可能存在"模型偏爱自己输出"的
+偏差；评估 judge 自身的可靠性属于后续扩展。这两点都在脚本 docstring 里写明了。
 
 ### 4. Rerank A/B 评测（回答"值不值得上 reranker"）
 
