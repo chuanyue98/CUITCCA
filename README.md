@@ -38,13 +38,18 @@
 ## 功能列表
 
 - 📚 **多索引知识库管理** — 创建 / 删除 / 摘要生成 / 节点级增删改
-- 📤 **多格式文档上传** — PDF / DOCX / TXT / MD / CSV / XLSX，单文件与批量
+- 📤 **14 种格式摄取** — PDF / DOCX / **DOC** / XLSX / **XLS** / **PPTX** / **HTML** / **图片 OCR** / TXT / MD / CSV，解析器注册表按扩展名分派
+- 📐 **结构化解析** — PDF 表格用 bbox 过滤去重后转 Markdown 表格；docx 按文档原始顺序混合抽取段落与表格
+- 🕸️ **Web 数据连接器** — 配置驱动的校园站群增量爬虫，礼貌抓取（robots / 限速 / 退避重试），产出带完整溯源 metadata 的语料
+- ✂️ **表格感知分块** — 表格作为原子单位不被切断，超长表按行切且每片重复表头
+- 🤖 **Agent 工具编排** — 工具注册表 + FunctionAgent，模型自主决定调哪个工具、调几次；护栏含最大轮数、超时、优雅收尾与降级
 - 🔍 **混合检索** — BM25（jieba 分词）+ Dense 向量，RRF 融合，默认开启
+- ✍️ **条件查询改写** — 检索 top1 置信度低时 LLM 改写问题再查一次（解决"正确文档没进召回"），高置信度零额外开销
 - 🎯 **条件重排** — cross-encoder（bge-reranker-v2-m3），仅低置信度时触发，性能与质量兼顾
 - 💬 **流式问答** — QAWorkflow 三步（condense → retrieve → synthesize），token 级流式
 - 🧠 **多轮对话** — 问题压缩（condense）+ 会话历史（session cookie + TTLCache）
 - 🔄 **增量摄取管道** — UPSERTS 去重，同名冲突消解（同目录取新 / 跨目录全保留）
-- 📊 **评测框架** — golden 集 + hit_rate/MRR + A/B/C 对比脚本
+- 📊 **三套评测体系** — 检索质量（76 题 golden，hit_rate/MRR）+ 拒答与知识边界（20 题，幻觉率）+ 回答质量（LLM-as-judge 忠实度/相关性/答案匹配）
 - 🛡️ **安全防护** — 可选 API Key 认证、速率限制、路径穿越防护、文件白名单、CORS 白名单
 - 🔭 **可观测性** — OpenTelemetry + OpenInference，span 树导出，环境变量门控
 - 🌙 **暗色模式** — 跟随 prefers-color-scheme，覆盖全部页面
@@ -64,6 +69,9 @@
 | 嵌入模型 | HuggingFace BAAI/bge-m3（本地运行，无需 API key） |
 | 重排序 | sentence-transformers BAAI/bge-reranker-v2-m3（约 2.2GB） |
 | 混合检索 | bm25s + jieba 分词，RRF 融合（QueryFusionRetriever） |
+| 文档解析 | pdfplumber（含表格 bbox 抽取）、python-docx、python-pptx、openpyxl、xlrd、olefile（OLE2）、BeautifulSoup+lxml |
+| OCR（可选） | rapidocr-onnxruntime，`uv sync --extra ocr` 启用 |
+| 数据采集 | httpx + BeautifulSoup，YAML 站点配置驱动，robots.txt 合规 |
 | 关系存储 | SQLite（访问统计与用户反馈） |
 | 前端 | TypeScript, Vite MPA, HTML/CSS（无框架）, marked.js + DOMPurify |
 | 包管理 | uv（Python）, npm（前端） |
@@ -91,6 +99,20 @@ flowchart TB
             IP["IngestionPipeline<br/>UPSERTS 去重"]
             CR["ConditionalRerank<br/>条件触发重排"]
         end
+        subgraph AgentLayer["Agent 层"]
+            TR["ToolRegistry<br/>注册 / 启停 / 子集选择"]
+            AG["FunctionAgent<br/>多轮工具调用<br/>max_iterations + timeout"]
+            TL["工具: 知识库检索 · 索引目录<br/>按来源取原文 · 当前日期"]
+        end
+        subgraph Ingest["摄取链路"]
+            PR["ParserRegistry<br/>14 种格式按扩展名分派<br/>成功 / 失败 / 能力不可用 三态"]
+            CK["TableAwareSplitter<br/>表格不被切断"]
+            FM["FrontMatter<br/>溯源字段提升为 metadata"]
+        end
+    end
+    subgraph Sources["数据源"]
+        WC["WebConnector<br/>站点配置驱动 · 增量 hash<br/>robots / 限速 / 退避重试"]
+        FS["静态语料<br/>信息搜集汇总/"]
     end
     LI["LlamaIndex Settings<br/>llm (OpenAI-like) / embed (bge-m3)"]
     subgraph Storage["存储层"]
@@ -101,11 +123,40 @@ flowchart TB
     Client -->|"HTTP / SSE / WebSocket"| MW
     MW --> RT --> Routers
     Routers --> HD --> Handlers
+    WC --> PR
+    FS --> PR
+    PR --> FM --> CK --> IP
+    Routers --> TR --> AG --> TL
+    TL --> HR
     Handlers --> LI
+    AG --> LI
     LI --> CD
     Handlers --> DS
     Routers --> DB
 ```
+### 两条问答链路：为什么不是全都走 Agent
+
+项目里同时存在 `QAWorkflow` 和 Agent 两条问答链路，**这是刻意的**，不是历史遗留：
+
+| | QAWorkflow（`/graph/query`、`/chat_stream`…） | Agent（`/graph/agent_chat`…） |
+|---|---|---|
+| 控制流 | 开发者写死：condense → retrieve → synthesize | 模型自己决定调哪个工具、调几次 |
+| 单轮问答的 LLM 调用 | **1 次**（无历史时 condense 直接透传，零额外开销） | 至少 2 次（决策 + 生成），多跳更多 |
+| 适合 | 事实类问题，占绝大多数流量 | 需要多跳、需要先探查再检索的问题 |
+| 代价 | 无法多跳 | 延迟与成本显著更高 |
+
+把所有查询都塞给 Agent，等于为了少数复杂问题让绝大多数简单问题多付一倍延迟和
+token。所以 Agent 是**新增端点**而不是替换——调用方按问题复杂度选链路。
+
+Agent 的护栏（面试常问，实现在 `backend/app/agents/agent_workflow.py`）：
+
+- **最大工具调用轮数**用 `FunctionAgent.run(max_iterations=..., early_stopping_method="generate")`：
+  撞上限时让模型用已有信息生成一个回答并标记 `truncated`，而不是硬抛异常炸穿请求
+- **超时**走 `Workflow` 原生 `timeout`，超时降级到与 QAWorkflow **同一个**兜底文案
+  （`_FALLBACK_ANSWER`，直接复用常量而不是抄一份字符串）
+- **检索为空不编造**：工具描述里显式写明"results 为空表示没查到，这种情况不要编造答案"
+- **不造假工具**：日期工具的描述明确声明它不知道校历，避免模型拿日期推断开学第几周
+
 ### QAWorkflow 时序图
 
 ```mermaid
@@ -150,16 +201,20 @@ flowchart LR
     B --> C["safe_filename<br/>去除路径分隔符（防穿越）"]
     C --> D["SAVE_PATH/index_id/<br/>永久存储（失败回滚）"]
     C --> E["LOAD_PATH/uuid_name<br/>临时文件"]
-    E --> F["insert_into_index<br/>SimpleDirectoryReader 解析"]
-    F --> G["SentenceSplitter 切块"]
+    E --> F["parsers.parse_path<br/>按扩展名分派解析器"]
+    F --> F2["front_matter<br/>溯源字段 -> metadata"]
+    F2 --> G["TableAwareSplitter 切块<br/>表格不被切断"]
     G --> H["Settings.embed_model 嵌入"]
     H --> I[("ChromaDB collection")]
     H --> J[("docstore（线上路径）")]
     K["invalidate_hybrid_retriever_cache<br/>清空 BM25 缓存"] -.-> I
     E -.->|"finally 删除临时文件"| L["清理"]
+    F -.->|"失败 / 能力不可用"| M["IngestResult.parse_failures<br/>显式报告，绝不静默跳过"]
 ```
 
-详细的模块职责、设计决策与数据流分析见 [架构文档](docs/architecture.md)。
+详细的模块职责、设计决策与数据流分析见 [架构文档](docs/architecture.md)；
+数据来源、采集方式与合规声明见 [数据来源文档](docs/data-sources.md)；
+用本项目面试的讲解脚本与面试官追问的标准答案见 [面试讲稿指南](docs/interview-guide.md)。
 
 ---
 
@@ -197,6 +252,27 @@ make dev
 - ReDoc：`http://localhost:8522/redoc`
 
 > 服务默认监听 `0.0.0.0:8522`，可由 `HOST` / `PORT` 环境变量覆盖。
+
+### 准备知识库数据
+
+仓库**不包含**采集来的语料（`/data/` 已 gitignore——爬取内容的著作权属学校，
+公开仓库中重新分发存在风险）。仓库提供的是采集**能力**，数据自行生成：
+
+```bash
+# 方式一：导入仓库自带的静态语料（信息搜集汇总/，257 个文件）
+uv run python scripts/ingest_cori_online.py --index-name campus
+
+# 方式二：从 CUIT 官网站群采集（配置驱动，礼貌抓取）
+uv run python scripts/crawl_cuit.py --dry-run --max-pages 2   # 先试跑看看会抓多少
+uv run python scripts/crawl_cuit.py --max-pages 10            # 正式采集
+uv run python scripts/ingest_cori_online.py \
+    --source-dir data/corpus/web --index-name campus-web      # 导入知识库
+
+# 可选：启用图片 OCR（约 100MB 模型，语料里的流程图截图需要）
+uv sync --extra ocr
+```
+
+采集范围、站点覆盖、增量策略与合规声明见 [数据来源文档](docs/data-sources.md)。
 
 ### 前端开发（可选）
 
@@ -313,6 +389,12 @@ backend.bat        # Windows
 `POST /graph/workflow_query` · `POST /graph/workflow_query_stream` ·
 `POST /graph/query_sources` · `POST /graph/query_history` · `POST /graph/create` ·
 `POST /graph/agent` · `POST /graph/query_router` · `WS /graph/query`（需 API Key）
+
+**Agent 端点**：`POST /graph/agent_chat` · `POST /graph/agent_chat_stream`
+
+后者用 **NDJSON**（`application/x-ndjson`，每行一个 JSON 事件）而不是纯 token 流——
+Agent 的回答要经过不确定次数的工具调用，只吐 token 看不到"中间发生了什么"，
+把工具调用过程也作为独立事件暴露出来才有可观测性。
 
 ### `/manage` — 管理接口（严格鉴权）
 
@@ -441,8 +523,14 @@ uv run pytest tests/ -m "not eval"                 # 跳过评测类测试
 uv run pytest tests/test_hybrid_retriever.py -v    # 单文件
 ```
 
-- 测试规模：**300+ 用例，覆盖率 94%+**（CI 强制 `fail_under=90`）
-- 覆盖索引 CRUD、混合检索、QAWorkflow、增量摄取、认证中间件、上传校验、可观测性等
+- 测试规模：**450+ 用例**（CI 强制覆盖率 `fail_under=90`）
+- 覆盖索引 CRUD、混合检索、QAWorkflow、Agent 工具编排、增量摄取、
+  多格式解析（含旧版 Office / OCR 降级路径）、表格感知分块、front-matter metadata 提升、
+  Web 连接器（限速 / 退避重试 / robots / 增量 hash，全程 mock 不联网）、
+  认证中间件、上传校验、可观测性
+
+> 注：并发的 `uv sync` 偶尔会清掉 `.venv/bin` 里的 console scripts，
+> 导致 `uv run pytest` 报找不到命令。用 `uv run python -m pytest` 可绕开。
 
 ### 前端测试
 
@@ -464,23 +552,70 @@ CI 中 E2E 流水线（`.github/workflows/e2e.yml`）会在配置了 `OPENAI_API
 ---
 ## 评测
 
-检索质量评测框架位于 `evals/`，golden 集 + hit_rate/MRR + A/B/C 对比。完整说明见 [evals/README.md](evals/README.md)。
+评测框架位于 `evals/`，分**检索质量**和**拒答行为**两套，衡量的是不同的失败模式。完整说明见 [evals/README.md](evals/README.md)。
 
 ```bash
 uv run python evals/ingest_corpus.py                  # 导入评测语料
-uv run python evals/run_retrieval_eval.py             # 检索基线
+uv run python evals/run_retrieval_eval.py             # 检索基线（hit_rate/MRR）
+uv run python evals/run_refusal_eval.py               # 拒答与知识边界（幻觉率）
+uv run python evals/run_answer_eval.py                # 回答质量（LLM-as-judge 忠实度/相关性/匹配）
 uv run python evals/run_hybrid_eval.py                # 混合检索 A/B/C
 uv run python evals/run_rerank_eval.py                # Rerank A/B
 uv run python evals/run_workflow_retrieval_eval.py    # Workflow 检索
 ```
 
-关键结论（`campus-corpus`，详见 evals/README.md）：
+### 检索质量：架构选型的依据
 
 | 指标 | 纯向量基线 | + 混合检索 | + 混合 + rerank |
 |------|-----------|-----------|----------------|
 | hit_rate@1 | 75% | 85% | **90%** |
 | MRR@5 | 0.852 | 0.896 | **0.910** |
 | 平均延迟 | 13ms | +2ms | +660ms（仅低置信度触发） |
+
+混合检索与 rerank 的默认开启不是拍脑袋，是这组数据支撑的。
+
+### 检索质量：76 题 golden 集分档结果
+
+```
+overall                  hit_rate= 97.37%  mrr=0.858
+comprehension            hit_rate= 89.47%  mrr=0.765  (n=19)
+contact_lookup           hit_rate=100.00%  mrr=1.000  (n=2)
+multi_hop                hit_rate=100.00%  mrr=0.933  (n=10)
+procedural               hit_rate=100.00%  mrr=0.917  (n=6)
+simple_fact              hit_rate=100.00%  mrr=0.851  (n=31)
+table_lookup             hit_rate=100.00%  mrr=0.938  (n=8)
+```
+
+`table_lookup` 这一档专门度量"表格内容能不能被检索到"——语料里大量内容（借阅规则、
+校车时刻表、历任领导表）本质是表格，而表格最容易在解析或分块阶段被压平丢掉结构。
+100% / MRR 0.938 说明这条链路是通的。
+
+**两条已知未命中**（`q038` 转专业工作小组、`q069` 人才培养模式）保留在案未做修饰：
+它们指向同一类问题——同主题文档冗余时，标题关键词强匹配的文档会挤掉真正含答案的
+文档。这是 metadata 过滤或文档级去重的改进方向。
+
+### 拒答行为：幻觉抑制
+
+`golden.refusal.jsonl` 20 题，覆盖知识库未覆盖 / 超出范围 / 前提错误 / 部分可答 /
+个人数据 / 提示注入六类。判据用预标注的 `forbidden_signals`——比如问某位老师的电话，
+输出里只要出现 `028-` 就几乎可确定是编的。零 LLM 成本、可复现，作为 LLM-as-judge
+之前的第一道闸。
+
+### 回答质量：LLM-as-judge 生成评测
+
+`run_answer_eval.py` 消费同一个 golden 集（76 题都有人工核对的
+`expected_answer`），真实跑一遍问答链路后，用**独立的 judge LLM** 给回答打
+三个维度的分：
+
+- **忠实度**：把回答拆成独立陈述，逐个判断是否被检索上下文支持——回答可以
+  简短，但不能编，每个字都要有出处。
+- **回答相关性**：是否切题地回答了问题（1-5 分）。
+- **答案匹配**：与人工核对的 `expected_answer` 语义是否一致（1-5 分，>=4
+  算通过），这是"答案对不对"的参考答案式判据。
+
+与检索评测（召回）/ 拒答评测（幻觉抑制）互补：检索都对了，回答生成对了吗？
+judge 的每条打分理由都会输出，供人工复核"judge 为什么这么判"，而不是盲信
+一个数字。**检索-拒答-生成三套评测覆盖了 RAG 三类不同的失败模式。**
 
 ---
 
@@ -516,13 +651,24 @@ uv run python scripts/take_screenshots.py
 - 前端组件化重构（当前为原生 TS，无框架）
 - 官方 Docker 镜像与 docker-compose 一键部署
 - 多语言界面（i18n）
-- Agent 工具调用（接入 MCP 工具，替换 QAWorkflow `synthesize` step 中的工具选择钩子）
+- MCP 工具接入（`llama-index-tools-mcp`，把校园系统能力挂进 Agent 工具注册表）
 - 前端 vitest 单元测试接入
+
+### 已知短板（如实记录，不粉饰）
+
+- **本科招生网抓不到**：`zjc.cuit.edu.cn` 在当前网络环境 TLS 握手失败，而招生
+  是校园助手最高频的问题域。静态语料只能部分弥补。
+- **网上办事大厅是 SPA**：静态抓取拿不到内容，需要无头浏览器。
+- **通知公告的附件未跟进下载**：很多实质内容在 PDF/Word 附件里，目前只抓正文页。
+- **同主题文档冗余会挤掉正确答案**：见评测里 `q038`/`q069` 两条未命中，
+  metadata 过滤或文档级去重是改进方向。
+- **跨页表格**：PDF 里跨页的大表格被当成两张独立表，第二段没有表头。
+- **父子分块（small-to-big）未做**：当前只做到"表格不被切断"，尚无证据支撑
+  更复杂的分块层级能带来收益。
 
 ### v1.0 目标
 
 - 检索质量稳定达标（hit_rate@1 >= 95%）
-- 多模态文档支持（图片 / 扫描件 OCR）
 - 完整管理员后台（统计可视化、反馈看板）
 - 生产级可观测性仪表盘
 
