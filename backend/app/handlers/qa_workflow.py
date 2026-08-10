@@ -85,9 +85,14 @@ q038/q069 的"标题关键词强匹配挤掉正确答案"就是这类），reran
 成功后携带改写后的查询（和 condense 后的问题同时驱动 retrieve/synthesize
 是同一个逻辑），改写失败或未触发时保持原值。
 
-这个功能默认开启（``QUERY_REWRITE_ENABLED=True``），阈值 0.6 是保守取值
-（评测语料里正确命中的 top1 分数普遍在 0.5-0.7 区间，0.6 只对"明显不自信"
-的检索触发，不会把每个查询都拖进第二次检索）。
+这个功能默认开启（``QUERY_REWRITE_ENABLED=True``），阈值
+``QUERY_REWRITE_SCORE_THRESHOLD``（默认 0.45）是拿真实评测数据校准过的：
+campus-corpus 76 题里 top1 命中的分数范围 0.407~0.748、均值 0.546，阈值
+设太高会把大部分正常查询拖进第二次检索。0.45 只对"检索确实没把握"的查询
+触发（约 7%），高置信度查询零额外开销。注意分数阈值抓不住"分数不低但召回
+了错误文档"的失败（比如 q038 的 0.55）——那是标题强匹配挤掉正确文档，需要
+文档级去重或 metadata 过滤，不是查询改写能解决的，见 ``load_env.py`` 里同一
+段注释。
 
 ## 多轮对话：加了问题压缩，跟 CondenseQuestionChatEngine 对齐
 
@@ -340,7 +345,7 @@ class QAWorkflow(Workflow):
         nodes = await retriever.aretrieve(QueryBundle(query_str=query_str))
         # 条件触发查询改写：top1 置信度低时用 LLM 改写问题再检索一次。见模块
         # docstring"条件触发查询改写"一节。
-        query_str, nodes = await self._maybe_rewrite_and_retrieve(ctx, retriever, query_str, nodes)
+        query_str, nodes = await self._maybe_rewrite_and_retrieve(retriever, query_str, nodes)
         # 生产环境的条件触发式 rerank 钩子：见模块 docstring"rerank：挂钩，不
         # 重新实现"一节。ConditionalRerankPostprocessor 内部已经处理好
         # RERANK_ENABLED=False 时的直通截断逻辑，这里不需要再判断一次开关。
@@ -352,7 +357,6 @@ class QAWorkflow(Workflow):
 
     async def _maybe_rewrite_and_retrieve(
         self,
-        ctx: Context,
         retriever: BaseRetriever,
         query_str: str,
         nodes: list[NodeWithScore],

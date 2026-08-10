@@ -225,7 +225,7 @@ function addToolTraceItem(traceEl: HTMLElement, toolName: string, args: Record<s
 
     traceEl.appendChild(item);
     traceEl.classList.remove('is-hidden');
-    return { item, status };
+    return { item, status, toolName, done: false };
 }
 
 function finishToolTraceItem(statusEl: HTMLElement, itemEl: HTMLElement, ok: boolean) {
@@ -244,7 +244,34 @@ async function streamAgentAnswer(
     let fullText = '';
     let firstChunk = true;
     const traceEl = createToolTraceContainer(messageEl.querySelector('.content_bot') as HTMLElement);
-    const runningTraces: Array<{ status: HTMLElement; item: HTMLElement }> = [];
+    const runningTraces: Array<{ status: HTMLElement; item: HTMLElement; toolName: string; done: boolean }> = [];
+
+    // rAF 节流（与标准问答的 streamAnswer 同一模式）：避免每个 NDJSON 事件都
+    // 触发一次 Markdown 解析 + DOM 重绘——Agent 模式的 token 事件同样密集。
+    let rafId: number | null = null;
+    let pendingText: string | null = null;
+    const flushRender = () => {
+        if (pendingText !== null) {
+            answerEl.innerHTML = renderMarkdown(pendingText);
+            scrollToBottom();
+            pendingText = null;
+        }
+    };
+    const cancelPendingRaf = () => {
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+    };
+    const scheduleRender = (text: string) => {
+        pendingText = text;
+        if (rafId === null) {
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                flushRender();
+            });
+        }
+    };
 
     try {
         const response = await apiFetch('/graph/agent_chat_stream', {
@@ -286,15 +313,17 @@ async function streamAgentAnswer(
                         firstChunk = false;
                     }
                     fullText += String(event.content || '');
-                    answerEl.innerHTML = renderMarkdown(fullText);
-                    scrollToBottom();
+                    scheduleRender(fullText);
                 } else if (event.type === 'tool_call') {
                     const trace = addToolTraceItem(traceEl, String(event.tool_name), event.tool_kwargs as Record<string, unknown> | null);
                     runningTraces.push(trace);
                     scrollToBottom();
                 } else if (event.type === 'tool_result') {
-                    const trace = runningTraces.shift();
+                    // 按 tool_name 匹配而不是 shift()：llama_index 支持并行工具
+                    // 调用，结果返回顺序不一定等于调用顺序，shift 会配错对。
+                    const trace = runningTraces.find(t => !t.done && t.toolName === String(event.tool_name));
                     if (trace) {
+                        trace.done = true;
                         finishToolTraceItem(trace.status, trace.item, event.is_error !== true);
                     }
                 } else if (event.type === 'error') {
@@ -304,11 +333,25 @@ async function streamAgentAnswer(
                     }
                     const msg = String(event.message || '出错了，请稍后再试一下');
                     fullText += msg;
-                    answerEl.innerHTML = renderMarkdown(fullText);
+                    scheduleRender(fullText);
+                } else if (event.type === 'done') {
+                    // done 是最后一个事件，带 final response 和 truncated 标记。
+                    // response 已在 token 事件里流式展示；truncated=true 表示撞到
+                    // 工具轮数上限、模型用已有信息收尾，回答可能不完整——前端
+                    // 明确提示而不是假装回答完整（后端专门提供了这个信号）。
+                    if (event.truncated === true) {
+                        const note = document.createElement('div');
+                        note.className = 'agent-tooltrace-note';
+                        note.textContent = '⚠ 本轮回答因工具调用轮数上限而收尾，可能不完整';
+                        traceEl.appendChild(note);
+                        traceEl.classList.remove('is-hidden');
+                    }
                 }
-                // done 事件：response 字段已在 token 事件里流式展示，这里只收尾
             }
         }
+
+        cancelPendingRaf();
+        flushRender();
 
         if (!fullText.trim()) {
             fullText = '我还不知道，请反馈给我吧';
@@ -318,7 +361,9 @@ async function streamAgentAnswer(
         appendHistory('bot', fullText);
         await loadCitations(citationsEl);
     } catch (error) {
+        cancelPendingRaf();
         if (error instanceof Error && error.name === 'AbortError') {
+            flushRender();
             if (fullText) {
                 appendHistory('bot', fullText);
             } else {

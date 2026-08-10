@@ -33,8 +33,15 @@ HYBRID_RETRIEVAL_ENABLED = True
 # 解决的是另一类问题——rerank 只能在"已经召回的内容里"排序，如果正确文档
 # 因为措辞/术语不匹配压根没进召回（比如评测里 q038/q069 的"标题关键词强匹配
 # 挤掉正确答案"），rerank 帮不上忙，改写查询让第二次检索有机会召回它。
+#
+# 阈值 0.45 是拿真实评测数据校准过的：campus-corpus 76 题里 59 道 top1 命中的
+# 分数范围 0.407~0.748、均值 0.546，如果用 0.6 会把 76% 的正常查询也拖进第二次
+# 检索（违背"高置信度零额外开销"的承诺）；降到 0.45 后只有 ~7%（4/59）的命中
+# 查询会触发。注意分数阈值只能抓住"检索确实没把握"这一类失败（比如 q069 的
+# 0.42），抓不住"分数不低但召回了错误文档"（比如 q038 的 0.55）——后者是标题
+# 强匹配挤掉正确文档，需要的是文档级去重或 metadata 过滤，不是查询改写。
 QUERY_REWRITE_ENABLED = True
-QUERY_REWRITE_SCORE_THRESHOLD = 0.6
+QUERY_REWRITE_SCORE_THRESHOLD = 0.45
 
 # 检索 top_k 集中配置（Phase 2）。三处调用点历史上各自硬编码了不同的值，
 # 业务含义并不相同，这里只是把"数字定义在哪"集中到一处、可通过环境变量覆盖，
@@ -117,9 +124,9 @@ def reload_env_variables():
 
     # 条件触发查询改写。默认开启：只在检索 top1 置信度低时付出一次 LLM 改写
     # 调用的成本，高置信度（>= 阈值）时零额外开销，不影响单轮问答主路径的
-    # 低延迟承诺。
+    # 低延迟承诺。阈值取值依据见上方模块级常量注释（0.45 由真实评测数据校准）。
     QUERY_REWRITE_ENABLED = os.environ.get('QUERY_REWRITE_ENABLED', 'True').lower() in ('true', '1', 't')
-    QUERY_REWRITE_SCORE_THRESHOLD = float(os.environ.get('QUERY_REWRITE_SCORE_THRESHOLD', '0.6'))
+    QUERY_REWRITE_SCORE_THRESHOLD = float(os.environ.get('QUERY_REWRITE_SCORE_THRESHOLD', '0.45'))
 
     # 启动时校验必需的 env 变量
     if not openai_api_key:
