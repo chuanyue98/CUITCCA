@@ -389,6 +389,7 @@ body, html {
     .chat_container { flex-direction: column; height: auto; }
     .clear { margin: 0 0 10px 0; }
     .chat_talk_container { margin-right: 0; }
+    .chat_talk_submit { margin-right: 0; }
 }
 
 /* ===== 聊天页面样式 (index.html) ===== */
@@ -447,7 +448,6 @@ body, html {
     margin-right: 10px;
     padding-top: 8px;
     border-radius: 30px;
-    margin-bottom: 10px;
     cursor: pointer;
     background-color: white;
 }
