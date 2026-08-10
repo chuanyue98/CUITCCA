@@ -70,6 +70,8 @@ class RecordingLLM(MockLLM):
     _received_prompts: list[str] = PrivateAttr(default_factory=list)
     _condense_response: str | None = PrivateAttr(default=None)
     _condense_error: Exception | None = PrivateAttr(default=None)
+    _rewrite_response: str | None = PrivateAttr(default=None)
+    _rewrite_error: Exception | None = PrivateAttr(default=None)
 
     @property
     def received_messages(self) -> list[list[ChatMessage]]:
@@ -85,6 +87,12 @@ class RecordingLLM(MockLLM):
     def set_condense_error(self, exc: Exception) -> None:
         self._condense_error = exc
 
+    def set_rewrite_response(self, text: str) -> None:
+        self._rewrite_response = text
+
+    def set_rewrite_error(self, exc: Exception) -> None:
+        self._rewrite_error = exc
+
     async def achat(self, messages, **kwargs):
         self._received_messages.append(list(messages))
         return await super().achat(messages, **kwargs)
@@ -99,6 +107,10 @@ class RecordingLLM(MockLLM):
             raise self._condense_error
         if self._condense_response is not None:
             return CompletionResponse(text=self._condense_response)
+        if self._rewrite_error is not None:
+            raise self._rewrite_error
+        if self._rewrite_response is not None:
+            return CompletionResponse(text=self._rewrite_response)
         return await super().acomplete(prompt, **kwargs)
 
 
@@ -491,3 +503,136 @@ async def test_condense_event_carries_query_and_context():
     assert ev.query_str == "压缩后的问题"
     assert ev.chat_history == history
     assert ev.streaming is True
+
+
+# ── 条件触发查询改写（retrieve step 内）────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_query_rewrite_triggers_on_low_confidence_top1():
+    """top1 分数低于 QUERY_REWRITE_SCORE_THRESHOLD 时：LLM 被调用一次改写
+    查询，retriever 被调用两次（原始查询 + 改写查询），最终发给 synthesize
+    的查询是改写后的，两次检索结果按 node_id 合并（改写结果在前）。"""
+    import configs.load_env as load_env
+    from handlers.qa_workflow import QAWorkflow
+
+    original_nodes = [_make_node("低置信度的原始内容", file_name="原文档.txt", score=0.3)]
+    rewritten_nodes = [_make_node("改写后检索到的正确内容", file_name="正确文档.txt", score=0.7)]
+
+    class RewritingRetriever(BaseRetriever):
+        def __init__(self):
+            self.calls: list[str] = []
+            super().__init__()
+
+        def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+            self.calls.append(query_bundle.query_str)
+            if query_bundle.query_str == "改写后的查询":
+                return rewritten_nodes
+            return original_nodes
+
+        async def _aretrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+            return self._retrieve(query_bundle)
+
+    retriever = RewritingRetriever()
+    llm = RecordingLLM()
+    llm.set_rewrite_response("改写后的查询")
+
+    with patch.object(load_env, "QUERY_REWRITE_ENABLED", True), \
+         patch.object(load_env, "QUERY_REWRITE_SCORE_THRESHOLD", 0.6):
+        workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+        result = await workflow.run(query="学校有什么政策", streaming=False)
+
+    # 检索被调用两次：一次原始查询、一次改写后的查询
+    assert retriever.calls == ["学校有什么政策", "改写后的查询"]
+    # 改写确实走了一次 LLM 调用（received_prompts 里能看到改写模板）
+    assert len(llm.received_prompts) == 1
+    assert "改写" in llm.received_prompts[0]
+    # 合并结果：改写结果在前，原始结果补在后（node_id 不同所以都在）
+    assert result.source_nodes[0].node.metadata["file_name"] == "正确文档.txt"
+    assert len(result.source_nodes) == 2
+    assert result.response.strip() != ""
+
+
+@pytest.mark.asyncio
+async def test_query_rewrite_skipped_when_top1_confident():
+    """top1 分数 >= 阈值时不触发改写：retriever 只被调用一次、LLM 不被额外
+    调用——单轮问答主路径低置信度才付出额外成本。"""
+    import configs.load_env as load_env
+    from handlers.qa_workflow import QAWorkflow
+
+    nodes = [_make_node("高置信度内容", file_name="高置信文档.txt", score=0.9)]
+    retriever = FakeRetriever(nodes)
+    llm = RecordingLLM()
+
+    with patch.object(load_env, "QUERY_REWRITE_ENABLED", True), \
+         patch.object(load_env, "QUERY_REWRITE_SCORE_THRESHOLD", 0.6):
+        workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+        result = await workflow.run(query="学校的校训是什么？", streaming=False)
+
+    assert retriever.calls == ["学校的校训是什么？"]
+    assert llm.received_prompts == [], "高置信度时改写 LLM 不应该被调用"
+    assert result.source_nodes == nodes
+
+
+@pytest.mark.asyncio
+async def test_query_rewrite_skipped_when_disabled():
+    """QUERY_REWRITE_ENABLED=False 时即使 top1 低置信度也不改写。"""
+    import configs.load_env as load_env
+    from handlers.qa_workflow import QAWorkflow
+
+    nodes = [_make_node("低置信度内容", score=0.2)]
+    retriever = FakeRetriever(nodes)
+    llm = RecordingLLM()
+
+    with patch.object(load_env, "QUERY_REWRITE_ENABLED", False):
+        workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+        result = await workflow.run(query="学校有什么政策", streaming=False)
+
+    assert retriever.calls == ["学校有什么政策"]
+    assert llm.received_prompts == []
+    assert result.source_nodes == nodes
+
+
+@pytest.mark.asyncio
+async def test_query_rewrite_falls_back_to_original_query_on_llm_error():
+    """改写 LLM 调用失败时降级用原始查询，整个 workflow 不中断——改写是加分项，
+    不是回答问题的必要条件（和 condense 压缩失败降级是同一个模式）。"""
+    import configs.load_env as load_env
+    from handlers.qa_workflow import QAWorkflow
+
+    nodes = [_make_node("低置信度内容", score=0.2)]
+    retriever = FakeRetriever(nodes)
+    llm = RecordingLLM()
+    llm.set_rewrite_error(RuntimeError("rewrite boom"))
+
+    with patch.object(load_env, "QUERY_REWRITE_ENABLED", True), \
+         patch.object(load_env, "QUERY_REWRITE_SCORE_THRESHOLD", 0.6):
+        workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+        result = await workflow.run(query="学校有什么政策", streaming=False)
+
+    # 改写被尝试调用过（不是被跳过），只是失败了
+    assert len(llm.received_prompts) == 1
+    # 降级：retriever 只被原始查询调用一次
+    assert retriever.calls == ["学校有什么政策"]
+    assert result.response.strip() != ""
+    assert result.source_nodes == nodes
+
+
+@pytest.mark.asyncio
+async def test_query_rewrite_ignored_when_llm_returns_empty_or_same():
+    """改写 LLM 返回空串或与原始查询完全相同时不触发第二次检索。"""
+    import configs.load_env as load_env
+    from handlers.qa_workflow import QAWorkflow
+
+    nodes = [_make_node("低置信度内容", score=0.2)]
+    retriever = FakeRetriever(nodes)
+    llm = RecordingLLM()
+    llm.set_rewrite_response("学校有什么政策")  # 和原始查询相同
+
+    with patch.object(load_env, "QUERY_REWRITE_ENABLED", True), \
+         patch.object(load_env, "QUERY_REWRITE_SCORE_THRESHOLD", 0.6):
+        workflow = QAWorkflow(retriever=retriever, llm=llm, timeout=30)
+        result = await workflow.run(query="学校有什么政策", streaming=False)
+
+    assert retriever.calls == ["学校有什么政策"], "改写结果与原始相同不应重复检索"
+    assert result.source_nodes == nodes

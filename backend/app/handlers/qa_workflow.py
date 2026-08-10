@@ -42,13 +42,19 @@ response_synthesizer/chat_engine 那套 response_gen 属性——``synthesize`` 
 超过 3 轮（收益递减、延迟线性增加），所以把参数留出来但不在这一版实现自适应
 重新检索逻辑，避免为了凑功能牺牲质量。
 
-## 工具选择：这一版故意不做
+## 工具选择：另开路径，不塞进这个 workflow
 
-``synthesize`` step 之前特意没有搭一个"模型自己决定要不要调用某个工具"的
-Agent 决策循环——现在除了检索之外没有其它真实工具可选（MCP 工具要等
-Phase 4），做一个只有单一选项的"决策"纯粹空转、没有意义。见
-``synthesize`` 方法开头的注释：未来要接入工具选择时，在 ``RetrieveEvent``
-之后、生成回答之前，把这一段换成 ``AgentWorkflow``/``FunctionAgent`` 来做。
+``synthesize`` step 之前一直没有搭一个"模型自己决定要不要调用某个工具"的
+Agent 决策循环——现在 ``agents/`` 包已经把工具选择做出来了（知识库检索/目录/
+按来源取原文，见 ``agents/tools.py``），但**没有把它接进这个 workflow**，
+而是在 ``agents/agent_workflow.py`` 里用独立的 ``FunctionAgent`` 编排、挂在
+新端点 ``/graph/agent_chat``（不是这里、也不是被 ``/graph/agent`` 复用的
+``QAWorkflow``）。原因是 QAWorkflow 是零额外决策开销的低延迟主路径（单轮
+问答不多付一次 LLM 往返），而工具选择天然需要至少一次"要不要调用/调用
+哪个"的决策 LLM 调用——把它硬塞进 ``synthesize`` 会让所有走这条 workflow
+的请求都被迫多付这次延迟，即使绝大多数问题一次检索就够。两条路径并存，
+低延迟和多跳能力都不用互相牺牲，详见 ``agents/agent_workflow.py`` 模块
+docstring。
 
 ## rerank：挂钩，不重新实现
 
@@ -61,6 +67,27 @@ aretrieve()`` 的结果之后、构造 ``RetrieveEvent`` 之前，会再调用�
 类，不是重新写一遍触发条件/阈值判断逻辑。该类内部已经处理好
 ``RERANK_ENABLED=False`` 时的直通截断（返回 ``nodes[:RERANK_TOP_N]``），
 ``retrieve`` step 这边不需要也不应该再判断一次开关。
+
+## 条件触发查询改写：低置信度时先改写问题再检索一次
+
+``retrieve`` step 在第一次检索后、rerank 前，检查 top1 分数是否低于
+``load_env.QUERY_REWRITE_SCORE_THRESHOLD``（默认 0.6）。低于说明"检索结果
+不自信"——常见场景是正确文档因为措辞/术语不匹配根本没进召回（评测里
+q038/q069 的"标题关键词强匹配挤掉正确答案"就是这类），rerank 在已经召回的
+内容里排序帮不上忙。这时用 ``Prompts.QUERY_REWRITE_PROMPT`` 让 LLM 把问题
+改写得更适合检索（补同义词、全称、常见表述变体），拿改写后的查询再检索一次，
+两次结果按 node_id 合并去重（改写结果在前）。
+
+跟 rerank 的触发哲学一致：**只有低置信度才付出额外成本**。top1 >= 阈值时
+零额外 LLM 调用、零第二次检索，保持单轮问答主路径的低延迟承诺；改写 LLM
+调用失败时降级用原始查询（和 ``condense_question`` 压缩失败降级是同一个
+模式），绝不因为改写这一步让请求挂掉。``RetrieveEvent.query_str`` 在改写
+成功后携带改写后的查询（和 condense 后的问题同时驱动 retrieve/synthesize
+是同一个逻辑），改写失败或未触发时保持原值。
+
+这个功能默认开启（``QUERY_REWRITE_ENABLED=True``），阈值 0.6 是保守取值
+（评测语料里正确命中的 top1 分数普遍在 0.5-0.7 区间，0.6 只对"明显不自信"
+的检索触发，不会把每个查询都拖进第二次检索）。
 
 ## 多轮对话：加了问题压缩，跟 CondenseQuestionChatEngine 对齐
 
@@ -188,26 +215,37 @@ class _EmptyRetriever(BaseRetriever):
         return []
 
 
+def resolve_effective_top_k(top_k: int | None) -> int:
+    """``top_k`` 缺省值解析，从 ``_build_retriever`` 里抽出来单独复用。
+
+    不传时，``RERANK_ENABLED`` 打开则用 ``load_env.RERANK_RECALL_K``、否则用
+    ``load_env.DEFAULT_SIMILARITY_TOP_K``——这个分支不能省：``retrieve`` step
+    里 ``ConditionalRerankPostprocessor`` 在 ``len(nodes) <= RERANK_TOP_N`` 时
+    会直接跳过 rerank（候选数不够、没什么好排的），如果这里永远只取
+    ``DEFAULT_SIMILARITY_TOP_K``（等于 ``RERANK_TOP_N``），rerank 就永远拿不到
+    比 ``RERANK_TOP_N`` 更多的候选，条件触发形同虚设，等于 ``RERANK_ENABLED``
+    打开也白打开。评测脚本 ``evals/run_workflow_retrieval_eval.py`` 需要按
+    CLI 的 ``--top-k`` 显式覆盖——传参时优先用传入值，不套用这条 rerank
+    相关的默认值逻辑。
+
+    单独抽出来是因为 ``agents/tools.py`` 的知识库检索工具在指定了具体
+    ``index_name``（走 ``build_retriever_for_index`` 单索引分支，不经过下面
+    ``_build_retriever`` 的索引选择逻辑）时也需要同一套 top_k 缺省值解析——
+    不这么做的话，Agent 工具这条路径的 rerank 条件触发会重蹈上面同一个坑，
+    而且两处各写一份容易在改 rerank 参数时漏改一处。
+    """
+    if top_k is not None:
+        return top_k
+    return load_env.RERANK_RECALL_K if load_env.RERANK_ENABLED else load_env.DEFAULT_SIMILARITY_TOP_K
+
+
 def _build_retriever(top_k: int | None = None) -> BaseRetriever:
     """复用 graph_builder._build_query_engine 的索引选择逻辑，只取 retriever。
 
-    见模块 docstring"索引选择逻辑：复用，不重新发明"一节。
-
-    ``top_k`` 默认 None：不传时，``RERANK_ENABLED`` 打开则用
-    ``load_env.RERANK_RECALL_K``、否则用 ``load_env.DEFAULT_SIMILARITY_TOP_K``
-    ——这个分支不能省：下面 ``retrieve`` step 里 ``ConditionalRerankPostprocessor``
-    在 ``len(nodes) <= RERANK_TOP_N`` 时会直接跳过 rerank（候选数不够、没什么
-    好排的），如果这里永远只取 ``DEFAULT_SIMILARITY_TOP_K``（等于
-    ``RERANK_TOP_N``），rerank 就永远拿不到比 ``RERANK_TOP_N`` 更多的候选，
-    条件触发形同虚设，等于 ``RERANK_ENABLED`` 打开也白打开。评测脚本
-    ``evals/run_workflow_retrieval_eval.py`` 需要按 CLI 的 ``--top-k`` 显式覆盖
-    ——传参时优先用传入值，不套用这条 rerank 相关的默认值逻辑。``QAWorkflow``
-    本身不新增这个旋钮，`retrieve` step 仍然零参数调用 ``_build_retriever()``。
+    见模块 docstring"索引选择逻辑：复用，不重新发明"一节。``QAWorkflow`` 本身
+    不新增 top_k 旋钮，`retrieve` step 仍然零参数调用 ``_build_retriever()``。
     """
-    if top_k is not None:
-        effective_top_k = top_k
-    else:
-        effective_top_k = load_env.RERANK_RECALL_K if load_env.RERANK_ENABLED else load_env.DEFAULT_SIMILARITY_TOP_K
+    effective_top_k = resolve_effective_top_k(top_k)
     indexes_snapshot = list(indexes)
     if not indexes_snapshot:
         return _EmptyRetriever()
@@ -300,6 +338,9 @@ class QAWorkflow(Workflow):
 
         retriever = self._retriever if self._retriever is not None else _build_retriever()
         nodes = await retriever.aretrieve(QueryBundle(query_str=query_str))
+        # 条件触发查询改写：top1 置信度低时用 LLM 改写问题再检索一次。见模块
+        # docstring"条件触发查询改写"一节。
+        query_str, nodes = await self._maybe_rewrite_and_retrieve(ctx, retriever, query_str, nodes)
         # 生产环境的条件触发式 rerank 钩子：见模块 docstring"rerank：挂钩，不
         # 重新实现"一节。ConditionalRerankPostprocessor 内部已经处理好
         # RERANK_ENABLED=False 时的直通截断逻辑，这里不需要再判断一次开关。
@@ -309,12 +350,63 @@ class QAWorkflow(Workflow):
 
         return RetrieveEvent(nodes=nodes, query_str=query_str, chat_history=chat_history, streaming=streaming)
 
+    async def _maybe_rewrite_and_retrieve(
+        self,
+        ctx: Context,
+        retriever: BaseRetriever,
+        query_str: str,
+        nodes: list[NodeWithScore],
+    ) -> tuple[str, list[NodeWithScore]]:
+        """条件触发查询改写：top1 分数低于阈值时改写查询、再检索一次并合并。
+
+        返回 (最终用于后续阶段的查询, 合并后的 nodes)。任何一步失败都降级为
+        ``(query_str, nodes)`` 原样返回——改写是提升检索质量的加分项，不是回答
+        问题的必要条件。见模块 docstring"条件触发查询改写"一节。
+        """
+        if not load_env.QUERY_REWRITE_ENABLED:
+            return query_str, nodes
+        if not nodes or nodes[0].score is None:
+            return query_str, nodes
+        if nodes[0].score >= load_env.QUERY_REWRITE_SCORE_THRESHOLD:
+            return query_str, nodes
+
+        llm = self._llm if self._llm is not None else Settings.llm
+        prompt_str = safe_format(
+            Prompts.QUERY_REWRITE_PROMPT.value.template,
+            query_str=query_str,
+        )
+        try:
+            completion = await llm.acomplete(prompt_str)
+            rewritten = str(completion).strip()
+        except Exception:
+            logger.warning("查询改写（query rewrite）调用 LLM 失败，降级使用原始查询。", exc_info=True)
+            return query_str, nodes
+
+        if not rewritten or rewritten == query_str:
+            return query_str, nodes
+
+        logger.info("查询改写: %r -> %r（top1=%.3f < %.2f）",
+                    query_str, rewritten, nodes[0].score, load_env.QUERY_REWRITE_SCORE_THRESHOLD)
+        rewritten_nodes = await retriever.aretrieve(QueryBundle(query_str=rewritten))
+        if not rewritten_nodes:
+            return query_str, nodes
+
+        # 合并去重：改写结果在前（它是针对"没检索对"这个诊断的修正），原始
+        # 结果里没被改写结果覆盖的补在后面，避免丢失第一次检索独有的信息。
+        seen_ids = {n.node.id_ for n in rewritten_nodes}
+        merged = list(rewritten_nodes)
+        for n in nodes:
+            if n.node.id_ not in seen_ids:
+                merged.append(n)
+                seen_ids.add(n.node.id_)
+        return rewritten, merged
+
     @step
     async def synthesize(self, ctx: Context, ev: RetrieveEvent) -> StopEvent:
-        # --- 未来的工具选择钩子在这里 ---
-        # 现在：检索到的 nodes 直接喂给 LLM 生成回答，没有"要不要调用工具"的
-        # 决策。以后接入 MCP 工具后，这里可以换成 AgentWorkflow/FunctionAgent，
-        # 让模型判断"这些 nodes 够不够回答，还是该先调用某个工具"。
+        # 检索到的 nodes 直接喂给 LLM 生成回答，没有"要不要调用工具"的决策——
+        # 这条低延迟主路径故意不做工具选择，需要多跳/工具选择的请求走
+        # agents/agent_workflow.py 的独立 FunctionAgent 编排（/graph/agent_chat）。
+        # 见模块 docstring"工具选择：另开路径，不塞进这个 workflow"一节。
         if not ev.nodes:
             if ev.streaming:
                 ctx.write_event_to_stream(TokenEvent(token=_FALLBACK_ANSWER))
