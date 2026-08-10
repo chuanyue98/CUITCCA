@@ -1,0 +1,3012 @@
+{
+  "collection": "campus-corpus",
+  "top_k": 5,
+  "golden_path": "/home/cy/github/chuanyue98/CUITCCA/evals/golden.seed.jsonl",
+  "num_questions": 76,
+  "overall": {
+    "hit_rate": 0.9736842105263158,
+    "mrr": 0.8583333333333334
+  },
+  "by_category": {
+    "comprehension": {
+      "count": 19,
+      "hit_rate": 0.8947368421052632,
+      "mrr": 0.7649122807017544
+    },
+    "contact_lookup": {
+      "count": 2,
+      "hit_rate": 1.0,
+      "mrr": 1.0
+    },
+    "multi_hop": {
+      "count": 10,
+      "hit_rate": 1.0,
+      "mrr": 0.9333333333333332
+    },
+    "procedural": {
+      "count": 6,
+      "hit_rate": 1.0,
+      "mrr": 0.9166666666666666
+    },
+    "simple_fact": {
+      "count": 31,
+      "hit_rate": 1.0,
+      "mrr": 0.8505376344086021
+    },
+    "table_lookup": {
+      "count": 8,
+      "hit_rate": 1.0,
+      "mrr": 0.9375
+    }
+  },
+  "details": [
+    {
+      "id": "q001",
+      "question": "成都信息工程大学的校训是什么？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "大学精神.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "大学精神.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.5742603808068859
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.5706255617262397
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.5385537390743782
+        },
+        {
+          "rank": 4,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.5328847947175065
+        },
+        {
+          "rank": 5,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.5255552286493294
+        }
+      ]
+    },
+    {
+      "id": "q002",
+      "question": "成都信息工程大学的前身是什么，创建于哪一年？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校历史.txt",
+        "学校简介.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "学校简介.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.5901440775287508
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.589455957149908
+        },
+        {
+          "rank": 3,
+          "file_name": "data/upload_files/学校信息/学校历史.txt",
+          "score": 0.5838087101181347
+        },
+        {
+          "rank": 4,
+          "file_name": "计算机学院.txt",
+          "score": 0.5834663662603313
+        },
+        {
+          "rank": 5,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+          "score": 0.5831127187276003
+        }
+      ]
+    },
+    {
+      "id": "q003",
+      "question": "学校是哪一年更名为“成都信息工程大学”的？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "hit": true,
+      "rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "matched_source": "学校历史.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.6287191164396284
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.6283480028257347
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+          "score": 0.6180230565521388
+        },
+        {
+          "rank": 4,
+          "file_name": "计算机学院.txt",
+          "score": 0.6107836416203449
+        },
+        {
+          "rank": 5,
+          "file_name": "data/upload_files/学校信息/学校历史.txt",
+          "score": 0.6102967660294187
+        }
+      ]
+    },
+    {
+      "id": "q004",
+      "question": "高考成绩排名在各省文理科前200名报考成都信息工程大学的新生，可以获得多少一等新生奖学金？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "奖学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "资助政策.docx",
+          "score": 0.5719577292101992
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.5507729157785145
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.5458534236036081
+        },
+        {
+          "rank": 4,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.5369925609339755
+        },
+        {
+          "rank": 5,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.5086632543234657
+        }
+      ]
+    },
+    {
+      "id": "q005",
+      "question": "国家奖学金和国家励志奖学金的奖励标准分别是多少，两者的资助对象有什么区别？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "奖学措施.txt",
+        "助学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "奖学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.47012863018941814
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.46757289201858815
+        },
+        {
+          "rank": 3,
+          "file_name": "资助政策.docx",
+          "score": 0.45487566065889024
+        },
+        {
+          "rank": 4,
+          "file_name": "助学措施.txt",
+          "score": 0.4268942058030686
+        },
+        {
+          "rank": 5,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.4057838124182675
+        }
+      ]
+    },
+    {
+      "id": "q006",
+      "question": "学校勤工助学的工资标准是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "助学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "助学措施.txt",
+          "score": 0.49602029448478885
+        },
+        {
+          "rank": 2,
+          "file_name": "资助政策.docx",
+          "score": 0.4685640613852993
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.4525203715770932
+        },
+        {
+          "rank": 4,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4518792626441135
+        },
+        {
+          "rank": 5,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.4506372634708837
+        }
+      ]
+    },
+    {
+      "id": "q007",
+      "question": "学校现有专任教师和博士的数量分别大约是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "师资队伍.txt",
+        "学校简介.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "师资队伍.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "师资队伍.txt",
+          "score": 0.4490468712132166
+        },
+        {
+          "rank": 2,
+          "file_name": "外国语学院.txt",
+          "score": 0.42231990629536736
+        },
+        {
+          "rank": 3,
+          "file_name": "自动化学院.txt",
+          "score": 0.414012816110869
+        },
+        {
+          "rank": 4,
+          "file_name": "软件工程学院.txt",
+          "score": 0.4056390089001369
+        },
+        {
+          "rank": 5,
+          "file_name": "大气科学学院.txt",
+          "score": 0.4017705296654031
+        }
+      ]
+    },
+    {
+      "id": "q008",
+      "question": "在成信大申请转专业，负责组织、指导和审核转专业工作的“领导小组”办公室设在哪个部门？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "转专业政策.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.571502790883787
+        },
+        {
+          "rank": 2,
+          "file_name": "转专业政策.txt",
+          "score": 0.563419626707948
+        },
+        {
+          "rank": 3,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.5605718714914062
+        },
+        {
+          "rank": 4,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.5576129290463953
+        },
+        {
+          "rank": 5,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.5568122432404009
+        }
+      ]
+    },
+    {
+      "id": "q009",
+      "question": "学生可以通过哪两种方式申请转专业？",
+      "category": "comprehension",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "转专业政策.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "关于做好2022年本科学生校内转专业工作的通知.pdf",
+          "score": 0.6070794970784029
+        },
+        {
+          "rank": 2,
+          "file_name": "转专业政策.txt",
+          "score": 0.6037833440054707
+        },
+        {
+          "rank": 3,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.5935657192524021
+        },
+        {
+          "rank": 4,
+          "file_name": "附件3.转专业网上申请操作流程.pdf",
+          "score": 0.5683191924104877
+        },
+        {
+          "rank": 5,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.566187111950163
+        }
+      ]
+    },
+    {
+      "id": "q010",
+      "question": "校园卡丢失了应该去哪里办理挂失？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "挂失流程.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "挂失流程.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "挂失流程.txt",
+          "score": 0.6502515696049801
+        },
+        {
+          "rank": 2,
+          "file_name": "校园一卡通.txt",
+          "score": 0.5202955410622364
+        },
+        {
+          "rank": 3,
+          "file_name": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+          "score": 0.49905886428878277
+        },
+        {
+          "rank": 4,
+          "file_name": "学生公寓服务.txt",
+          "score": 0.46687530939674265
+        },
+        {
+          "rank": 5,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.46561759757196725
+        }
+      ]
+    },
+    {
+      "id": "q011",
+      "question": "学校招生就业处主要负责哪些工作？",
+      "category": "comprehension",
+      "expected_sources": [
+        "学校招生就业处概况.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "学校招生就业处概况.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "学校招生就业处概况.txt",
+          "score": 0.6547506478761657
+        },
+        {
+          "rank": 2,
+          "file_name": "就业指导协会.txt",
+          "score": 0.46444930572638526
+        },
+        {
+          "rank": 3,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.4430869108056202
+        },
+        {
+          "rank": 4,
+          "file_name": "关于做好2022年本科学生校内转专业工作的通知.pdf",
+          "score": 0.4399952545246032
+        },
+        {
+          "rank": 5,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.4269106689562491
+        }
+      ]
+    },
+    {
+      "id": "q012",
+      "question": "就业指导协会是什么类型的社团，主要开展哪些工作？",
+      "category": "comprehension",
+      "expected_sources": [
+        "就业指导协会.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "就业指导协会.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "就业指导协会.txt",
+          "score": 0.6049793382620692
+        },
+        {
+          "rank": 2,
+          "file_name": "“一路同行”职业生涯工作室.docx",
+          "score": 0.4057188765935351
+        },
+        {
+          "rank": 3,
+          "file_name": "“导航圆梦”职业生涯工作室.docx",
+          "score": 0.40438953389586535
+        },
+        {
+          "rank": 4,
+          "file_name": "“导航圆梦”职业生涯工作室.docx",
+          "score": 0.39993256964358387
+        },
+        {
+          "rank": 5,
+          "file_name": "“I want you”职业生涯工作室.docx",
+          "score": 0.3972299975396746
+        }
+      ]
+    },
+    {
+      "id": "q013",
+      "question": "举报就业签约、统计造假问题的电话号码是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "就业签约、统计造假举报电话.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "就业签约、统计造假举报电话.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "就业签约、统计造假举报电话.txt",
+          "score": 0.6462134825538463
+        },
+        {
+          "rank": 2,
+          "file_name": "全国高校毕业生毕业去向登记与网上签约平台操作指南.pdf",
+          "score": 0.4659329503178958
+        },
+        {
+          "rank": 3,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.45357886846521567
+        },
+        {
+          "rank": 4,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.45195172118971794
+        },
+        {
+          "rank": 5,
+          "file_name": "“I want you”职业生涯工作室.docx",
+          "score": 0.4465099711314921
+        }
+      ]
+    },
+    {
+      "id": "q014",
+      "question": "怎样关注并绑定“成信就业”微信公众号？",
+      "category": "comprehension",
+      "expected_sources": [
+        "成信就业公众号使用说明.pdf"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "成信就业公众号使用说明.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "成信就业公众号使用说明.pdf",
+          "score": 0.6019388521133349
+        },
+        {
+          "rank": 2,
+          "file_name": "成信就业公众号使用说明.pdf",
+          "score": 0.5708674037985626
+        },
+        {
+          "rank": 3,
+          "file_name": "成信就业公众号使用说明.pdf",
+          "score": 0.5597392448662346
+        },
+        {
+          "rank": 4,
+          "file_name": "成信就业公众号使用说明.pdf",
+          "score": 0.5179595784170419
+        },
+        {
+          "rank": 5,
+          "file_name": "成信就业公众号使用说明.pdf",
+          "score": 0.5140983028090084
+        }
+      ]
+    },
+    {
+      "id": "q015",
+      "question": "《四川省大学生就业创业扶持政策清单》是哪一年的版本，由谁发布？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "四川省大学生就业创业扶持清单.pdf"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "四川省大学生就业创业扶持清单.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.6512927448821327
+        },
+        {
+          "rank": 2,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.6337835772926574
+        },
+        {
+          "rank": 3,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.5921658227138314
+        },
+        {
+          "rank": 4,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.5857759302960163
+        },
+        {
+          "rank": 5,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.5849673694205411
+        }
+      ]
+    },
+    {
+      "id": "q016",
+      "question": "1978年学校升格为本科院校时校名是什么，办学定位口号是什么？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "学校历史.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/学校信息/学校历史.txt",
+          "score": 0.4321684201885925
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+          "score": 0.43149690948486713
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.3923569629306193
+        },
+        {
+          "rank": 4,
+          "file_name": "统计学院.txt",
+          "score": 0.3907714038001259
+        },
+        {
+          "rank": 5,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.3869384689688729
+        }
+      ]
+    },
+    {
+      "id": "q017",
+      "question": "从建校至今，学校经历过哪些主要的更名和隶属关系变化？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "学校历史.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "学校历史.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+          "score": 0.4068949880582616
+        },
+        {
+          "rank": 2,
+          "file_name": "统计学院.txt",
+          "score": 0.40528389335641174
+        },
+        {
+          "rank": 3,
+          "file_name": "data/upload_files/学校信息/学校历史.txt",
+          "score": 0.40415242504991744
+        },
+        {
+          "rank": 4,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.3730419369893242
+        },
+        {
+          "rank": 5,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.3729554749707711
+        }
+      ]
+    },
+    {
+      "id": "q018",
+      "question": "成都信息工程大学的校风、教风、学风分别是什么？",
+      "category": "comprehension",
+      "expected_sources": [
+        "大学精神.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "大学精神.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.5901947321750559
+        },
+        {
+          "rank": 2,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.5889986507446272
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.5562143731943471
+        },
+        {
+          "rank": 4,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.5327502978917746
+        },
+        {
+          "rank": 5,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.531040722905613
+        }
+      ]
+    },
+    {
+      "id": "q019",
+      "question": "学校现有多少个学院（部、中心）、多少个本科专业、在校生规模大约是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校简介.txt"
+      ],
+      "hit": true,
+      "rank": 5,
+      "reciprocal_rank": 0.2,
+      "matched_source": "学校简介.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "软件工程学院.txt",
+          "score": 0.4510510985135861
+        },
+        {
+          "rank": 2,
+          "file_name": "光电工程学院.txt",
+          "score": 0.4496613670836271
+        },
+        {
+          "rank": 3,
+          "file_name": "通信工程学院.txt",
+          "score": 0.44926540934855336
+        },
+        {
+          "rank": 4,
+          "file_name": "统计学院.txt",
+          "score": 0.4490101775146578
+        },
+        {
+          "rank": 5,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.44879845110109384
+        }
+      ]
+    },
+    {
+      "id": "q020",
+      "question": "学校助学措施中，除了国家助学金和国家助学贷款，还有哪些帮助经济困难学生的方式？",
+      "category": "comprehension",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "助学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "助学措施.txt",
+          "score": 0.5708288532470664
+        },
+        {
+          "rank": 2,
+          "file_name": "资助政策.docx",
+          "score": 0.4802412845596406
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.47412006993901074
+        },
+        {
+          "rank": 4,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.47258697522139576
+        },
+        {
+          "rank": 5,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.4361868053566618
+        }
+      ]
+    },
+    {
+      "id": "q021",
+      "question": "成都信息工程大学现有专任教师多少人，其中博士有多少人？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "师资队伍.txt",
+        "学校简介.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "学校简介.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "软件工程学院.txt",
+          "score": 0.5166497917409917
+        },
+        {
+          "rank": 2,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.5128828916474437
+        },
+        {
+          "rank": 3,
+          "file_name": "文化艺术学院.txt",
+          "score": 0.5119626075122455
+        },
+        {
+          "rank": 4,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.511897339340716
+        },
+        {
+          "rank": 5,
+          "file_name": "通信工程学院.txt",
+          "score": 0.5056368163432404
+        }
+      ]
+    },
+    {
+      "id": "q022",
+      "question": "学校聘请了多少名院士、长江学者、杰青等高层次专家担任兼职教授？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "师资队伍.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "师资队伍.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "师资队伍.txt",
+          "score": 0.46821527932983853
+        },
+        {
+          "rank": 2,
+          "file_name": "外国语学院.txt",
+          "score": 0.4184540867493542
+        },
+        {
+          "rank": 3,
+          "file_name": "外国语学院.txt",
+          "score": 0.40578802090849014
+        },
+        {
+          "rank": 4,
+          "file_name": "大气科学学院.txt",
+          "score": 0.4055998666569152
+        },
+        {
+          "rank": 5,
+          "file_name": "网络空间安全学院.txt",
+          "score": 0.398236775567758
+        }
+      ]
+    },
+    {
+      "id": "q023",
+      "question": "本校教师在校外担任兼职博士生导师的有多少人？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "师资队伍.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "师资队伍.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "师资队伍.txt",
+          "score": 0.4534745237968664
+        },
+        {
+          "rank": 2,
+          "file_name": "外国语学院.txt",
+          "score": 0.42700284380609344
+        },
+        {
+          "rank": 3,
+          "file_name": "外国语学院.txt",
+          "score": 0.41406424635400224
+        },
+        {
+          "rank": 4,
+          "file_name": "外国语学院.txt",
+          "score": 0.40091534587008926
+        },
+        {
+          "rank": 5,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.39031377865406747
+        }
+      ]
+    },
+    {
+      "id": "q024",
+      "question": "学校师资队伍建设坚持的理念是什么？",
+      "category": "comprehension",
+      "expected_sources": [
+        "师资队伍.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "师资队伍.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "师资队伍.txt",
+          "score": 0.5008447135560508
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.42535647281917144
+        },
+        {
+          "rank": 3,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.4149534384295446
+        },
+        {
+          "rank": 4,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.38881579697526897
+        },
+        {
+          "rank": 5,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.38389301143731436
+        }
+      ]
+    },
+    {
+      "id": "q025",
+      "question": "国家助学金的资助标准是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "助学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "助学措施.txt",
+          "score": 0.5722965610609613
+        },
+        {
+          "rank": 2,
+          "file_name": "资助政策.docx",
+          "score": 0.5656235750801122
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.4864605198057858
+        },
+        {
+          "rank": 4,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.48497946607037695
+        },
+        {
+          "rank": 5,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.46700366948412175
+        }
+      ]
+    },
+    {
+      "id": "q026",
+      "question": "学校勤工助学的工资标准是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "助学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "助学措施.txt",
+          "score": 0.49602029448478885
+        },
+        {
+          "rank": 2,
+          "file_name": "资助政策.docx",
+          "score": 0.4685640613852993
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.4525203715770932
+        },
+        {
+          "rank": 4,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4518792626441135
+        },
+        {
+          "rank": 5,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.4506372634708837
+        }
+      ]
+    },
+    {
+      "id": "q027",
+      "question": "目前已经开展生源地助学贷款的省市有哪些？",
+      "category": "comprehension",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "助学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "助学措施.txt",
+          "score": 0.47670525844059514
+        },
+        {
+          "rank": 2,
+          "file_name": "资助政策.docx",
+          "score": 0.4119397195828101
+        },
+        {
+          "rank": 3,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.4053025911528429
+        },
+        {
+          "rank": 4,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4052276602217337
+        },
+        {
+          "rank": 5,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.40182307367399234
+        }
+      ]
+    },
+    {
+      "id": "q028",
+      "question": "学校设有哪些社会资助项目帮助家庭经济困难的优秀学生？",
+      "category": "comprehension",
+      "expected_sources": [
+        "助学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "助学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "助学措施.txt",
+          "score": 0.48791585018425637
+        },
+        {
+          "rank": 2,
+          "file_name": "资助政策.docx",
+          "score": 0.45413172774654287
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.445394852518686
+        },
+        {
+          "rank": 4,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.43677735060425993
+        },
+        {
+          "rank": 5,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.4200698856967044
+        }
+      ]
+    },
+    {
+      "id": "q029",
+      "question": "什么条件的新生可以获得新生一等奖学金，金额是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "奖学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.6219129909628648
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.6155346721412679
+        },
+        {
+          "rank": 3,
+          "file_name": "资助政策.docx",
+          "score": 0.4909474069572538
+        },
+        {
+          "rank": 4,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4902282462307894
+        },
+        {
+          "rank": 5,
+          "file_name": "助学措施.txt",
+          "score": 0.4698284999309217
+        }
+      ]
+    },
+    {
+      "id": "q030",
+      "question": "新生二等奖学金的评定条件和金额是什么？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "奖学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.5987404649211763
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.596060303082497
+        },
+        {
+          "rank": 3,
+          "file_name": "助学措施.txt",
+          "score": 0.4704019787068274
+        },
+        {
+          "rank": 4,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.4667551360058945
+        },
+        {
+          "rank": 5,
+          "file_name": "资助政策.docx",
+          "score": 0.46326726678853153
+        }
+      ]
+    },
+    {
+      "id": "q031",
+      "question": "高中参加过学科奥林匹克竞赛获奖的新生能拿到什么奖励？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "奖学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.5175564748864852
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.5120989377262559
+        },
+        {
+          "rank": 3,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.3995558709317678
+        },
+        {
+          "rank": 4,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.3987301171690885
+        },
+        {
+          "rank": 5,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.39382767034314503
+        }
+      ]
+    },
+    {
+      "id": "q032",
+      "question": "国家奖学金和国家励志奖学金的奖励标准分别是多少，面向哪些学生？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "奖学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.5147526636253114
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.5147318312067535
+        },
+        {
+          "rank": 3,
+          "file_name": "资助政策.docx",
+          "score": 0.4847325761871566
+        },
+        {
+          "rank": 4,
+          "file_name": "助学措施.txt",
+          "score": 0.45613119000683205
+        },
+        {
+          "rank": 5,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.4216414812931466
+        }
+      ]
+    },
+    {
+      "id": "q033",
+      "question": "学校的等级奖学金分几个等级，最高金额是多少，覆盖比例是多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "奖学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.512322326704291
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.5052450497018643
+        },
+        {
+          "rank": 3,
+          "file_name": "资助政策.docx",
+          "score": 0.44838564053069885
+        },
+        {
+          "rank": 4,
+          "file_name": "助学措施.txt",
+          "score": 0.427152167545072
+        },
+        {
+          "rank": 5,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.4219615052440966
+        }
+      ]
+    },
+    {
+      "id": "q034",
+      "question": "新生奖学金办法从哪一级新生开始实施，由哪个部门负责解释？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "奖学措施.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "奖学措施.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "信息搜集汇总/招生信息/奖学措施.txt",
+          "score": 0.5719553087303743
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.569432651375269
+        },
+        {
+          "rank": 3,
+          "file_name": "资助政策.docx",
+          "score": 0.4575462897163693
+        },
+        {
+          "rank": 4,
+          "file_name": "助学措施.txt",
+          "score": 0.441774246609057
+        },
+        {
+          "rank": 5,
+          "file_name": "四川省大学生就业创业扶持清单.pdf",
+          "score": 0.4284853822396898
+        }
+      ]
+    },
+    {
+      "id": "q035",
+      "question": "学校转专业工作对学生转出有没有设置门槛？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "转专业政策.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.5722560379942288
+        },
+        {
+          "rank": 2,
+          "file_name": "转专业政策.txt",
+          "score": 0.5693361318331802
+        },
+        {
+          "rank": 3,
+          "file_name": "关于做好2022年本科学生校内转专业工作的通知.pdf",
+          "score": 0.5690025120626664
+        },
+        {
+          "rank": 4,
+          "file_name": "转专业政策.txt",
+          "score": 0.5673184405432937
+        },
+        {
+          "rank": 5,
+          "file_name": "转专业政策.txt",
+          "score": 0.5502125865856202
+        }
+      ]
+    },
+    {
+      "id": "q036",
+      "question": "转专业工作应遵循什么原则？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": true,
+      "rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "matched_source": "转专业政策.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.5630785325434509
+        },
+        {
+          "rank": 2,
+          "file_name": "关于做好2022年本科学生校内转专业工作的通知.pdf",
+          "score": 0.5437396675519133
+        },
+        {
+          "rank": 3,
+          "file_name": "转专业政策.txt",
+          "score": 0.5391791590676868
+        },
+        {
+          "rank": 4,
+          "file_name": "转专业政策.txt",
+          "score": 0.5372527468744153
+        },
+        {
+          "rank": 5,
+          "file_name": "关于做好2022年本科学生校内转专业工作的通知.pdf",
+          "score": 0.5310404696857242
+        }
+      ]
+    },
+    {
+      "id": "q037",
+      "question": "学校转专业工作分为几级管理，领导小组组长由谁担任，办公室设在哪里？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": true,
+      "rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "matched_source": "转专业政策.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.5466614520848005
+        },
+        {
+          "rank": 2,
+          "file_name": "关于做好2022年本科学生校内转专业工作的通知.pdf",
+          "score": 0.531442481643678
+        },
+        {
+          "rank": 3,
+          "file_name": "转专业政策.txt",
+          "score": 0.49352388130408753
+        },
+        {
+          "rank": 4,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.48928762679908305
+        },
+        {
+          "rank": 5,
+          "file_name": "转专业政策.txt",
+          "score": 0.4888912761877189
+        }
+      ]
+    },
+    {
+      "id": "q038",
+      "question": "学院转专业工作小组由哪些人组成？",
+      "category": "comprehension",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "关于做好2022年本科学生校内转专业工作的通知.pdf",
+          "score": 0.5469074155421707
+        },
+        {
+          "rank": 2,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.5335811000968861
+        },
+        {
+          "rank": 3,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.514707379502407
+        },
+        {
+          "rank": 4,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.5106303654251033
+        },
+        {
+          "rank": 5,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.5070585061671989
+        }
+      ]
+    },
+    {
+      "id": "q039",
+      "question": "转专业管理办法的制定依据是哪些文件？",
+      "category": "comprehension",
+      "expected_sources": [
+        "转专业政策.txt"
+      ],
+      "hit": true,
+      "rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "matched_source": "转专业政策.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "关于做好2022年本科学生校内转专业工作的通知.pdf",
+          "score": 0.5045136657961627
+        },
+        {
+          "rank": 2,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.5011341292336652
+        },
+        {
+          "rank": 3,
+          "file_name": "转专业政策.txt",
+          "score": 0.49418189189379574
+        },
+        {
+          "rank": 4,
+          "file_name": "转专业政策.txt",
+          "score": 0.49175290959407963
+        },
+        {
+          "rank": 5,
+          "file_name": "附件1：2022年学院转专业实施细则汇编.pdf",
+          "score": 0.4863883268500616
+        }
+      ]
+    },
+    {
+      "id": "q040",
+      "question": "图书馆每天的开馆时间是几点到几点？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "图书馆.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "图书馆.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "图书馆.txt",
+          "score": 0.5264099509220715
+        },
+        {
+          "rank": 2,
+          "file_name": "xueke.txt",
+          "score": 0.5189941697957192
+        },
+        {
+          "rank": 3,
+          "file_name": "xueke.txt",
+          "score": 0.48801878241842367
+        },
+        {
+          "rank": 4,
+          "file_name": "图书馆.txt",
+          "score": 0.4680033954125483
+        },
+        {
+          "rank": 5,
+          "file_name": "xueke.txt",
+          "score": 0.46530689575428624
+        }
+      ]
+    },
+    {
+      "id": "q041",
+      "question": "本科生在图书馆最多能借几本书，借期多长？",
+      "category": "table_lookup",
+      "expected_sources": [
+        "图书馆.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "图书馆.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "图书馆.txt",
+          "score": 0.5372024094553669
+        },
+        {
+          "rank": 2,
+          "file_name": "xueke.txt",
+          "score": 0.4913234015694866
+        },
+        {
+          "rank": 3,
+          "file_name": "xueke.txt",
+          "score": 0.48031061837237987
+        },
+        {
+          "rank": 4,
+          "file_name": "图书馆.txt",
+          "score": 0.47472951561389753
+        },
+        {
+          "rank": 5,
+          "file_name": "xueke.txt",
+          "score": 0.47363315016865287
+        }
+      ]
+    },
+    {
+      "id": "q042",
+      "question": "硕士研究生和教师的图书借阅册数与借期分别是多少？",
+      "category": "table_lookup",
+      "expected_sources": [
+        "图书馆.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "图书馆.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "图书馆.txt",
+          "score": 0.43991813132188745
+        },
+        {
+          "rank": 2,
+          "file_name": "xueke.txt",
+          "score": 0.4177716623053026
+        },
+        {
+          "rank": 3,
+          "file_name": "资助政策.docx",
+          "score": 0.40122126497225935
+        },
+        {
+          "rank": 4,
+          "file_name": "xueke.txt",
+          "score": 0.39983682450800956
+        },
+        {
+          "rank": 5,
+          "file_name": "xueke.txt",
+          "score": 0.3990665265007157
+        }
+      ]
+    },
+    {
+      "id": "q043",
+      "question": "图书馆哪些类型的书刊资料不外借？",
+      "category": "comprehension",
+      "expected_sources": [
+        "图书馆.txt"
+      ],
+      "hit": true,
+      "rank": 5,
+      "reciprocal_rank": 0.2,
+      "matched_source": "图书馆.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "xueke.txt",
+          "score": 0.5120409158870057
+        },
+        {
+          "rank": 2,
+          "file_name": "xueke.txt",
+          "score": 0.47779560627395423
+        },
+        {
+          "rank": 3,
+          "file_name": "xueke.txt",
+          "score": 0.47085414270870996
+        },
+        {
+          "rank": 4,
+          "file_name": "xueke.txt",
+          "score": 0.4643934994742326
+        },
+        {
+          "rank": 5,
+          "file_name": "图书馆.txt",
+          "score": 0.46346719956336857
+        }
+      ]
+    },
+    {
+      "id": "q044",
+      "question": "在图书馆借的书还没还，一卡通丢了应该去哪里办理挂失？",
+      "category": "procedural",
+      "expected_sources": [
+        "图书馆.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "图书馆.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "挂失流程.txt",
+          "score": 0.5730741495708682
+        },
+        {
+          "rank": 2,
+          "file_name": "图书馆.txt",
+          "score": 0.5160148869499624
+        },
+        {
+          "rank": 3,
+          "file_name": "xueke.txt",
+          "score": 0.506707677625197
+        },
+        {
+          "rank": 4,
+          "file_name": "校园一卡通.txt",
+          "score": 0.4887865866925159
+        },
+        {
+          "rank": 5,
+          "file_name": "xueke.txt",
+          "score": 0.4747335619711744
+        }
+      ]
+    },
+    {
+      "id": "q045",
+      "question": "已经超期的图书还能续借吗？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "图书馆.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "图书馆.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "图书馆.txt",
+          "score": 0.5385575911246714
+        },
+        {
+          "rank": 2,
+          "file_name": "xueke.txt",
+          "score": 0.5319642268258574
+        },
+        {
+          "rank": 3,
+          "file_name": "xueke.txt",
+          "score": 0.49055000422072187
+        },
+        {
+          "rank": 4,
+          "file_name": "图书馆.txt",
+          "score": 0.4770171455727087
+        },
+        {
+          "rank": 5,
+          "file_name": "xueke.txt",
+          "score": 0.4672284124098723
+        }
+      ]
+    },
+    {
+      "id": "q046",
+      "question": "学生的校园一卡通有哪些功能？",
+      "category": "comprehension",
+      "expected_sources": [
+        "校园一卡通.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "校园一卡通.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "校园一卡通.txt",
+          "score": 0.6641182340078269
+        },
+        {
+          "rank": 2,
+          "file_name": "挂失流程.txt",
+          "score": 0.45115897299018654
+        },
+        {
+          "rank": 3,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.4120559723502457
+        },
+        {
+          "rank": 4,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.4046321842356812
+        },
+        {
+          "rank": 5,
+          "file_name": "图书馆.txt",
+          "score": 0.40027929819552055
+        }
+      ]
+    },
+    {
+      "id": "q047",
+      "question": "教工卡比学生卡多了什么功能？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "校园一卡通.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "校园一卡通.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "校园一卡通.txt",
+          "score": 0.46941567898796216
+        },
+        {
+          "rank": 2,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.3898807407401166
+        },
+        {
+          "rank": 3,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.3896924365399748
+        },
+        {
+          "rank": 4,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.3849538334410775
+        },
+        {
+          "rank": 5,
+          "file_name": "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+          "score": 0.3840167761935036
+        }
+      ]
+    },
+    {
+      "id": "q048",
+      "question": "校园一卡通怎么充值？",
+      "category": "procedural",
+      "expected_sources": [
+        "校园一卡通.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "校园一卡通.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "校园一卡通.txt",
+          "score": 0.6191610046155125
+        },
+        {
+          "rank": 2,
+          "file_name": "公寓热水.txt",
+          "score": 0.4588609615185992
+        },
+        {
+          "rank": 3,
+          "file_name": "挂失流程.txt",
+          "score": 0.4552645687415811
+        },
+        {
+          "rank": 4,
+          "file_name": "成都信息工程大学新版教务管理系统学生选课操作指南.pdf",
+          "score": 0.40945066779538014
+        },
+        {
+          "rank": 5,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.406922200644825
+        }
+      ]
+    },
+    {
+      "id": "q049",
+      "question": "电子校园卡怎么申领？",
+      "category": "procedural",
+      "expected_sources": [
+        "校园一卡通.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "校园一卡通.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "校园一卡通.txt",
+          "score": 0.5444579776142661
+        },
+        {
+          "rank": 2,
+          "file_name": "挂失流程.txt",
+          "score": 0.47240464831760914
+        },
+        {
+          "rank": 3,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（毕业生）.pdf",
+          "score": 0.4579194120581274
+        },
+        {
+          "rank": 4,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（毕业生）.pdf",
+          "score": 0.45210031100678494
+        },
+        {
+          "rank": 5,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.447736485250668
+        }
+      ]
+    },
+    {
+      "id": "q050",
+      "question": "学生公寓的热水怎么收费？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "公寓热水.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "公寓热水.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "公寓热水.txt",
+          "score": 0.6515506776864505
+        },
+        {
+          "rank": 2,
+          "file_name": "学生公寓服务中心指南.txt",
+          "score": 0.4547161303877349
+        },
+        {
+          "rank": 3,
+          "file_name": "学生公寓服务.txt",
+          "score": 0.45381640966218767
+        },
+        {
+          "rank": 4,
+          "file_name": "校园一卡通.txt",
+          "score": 0.41133933287853164
+        },
+        {
+          "rank": 5,
+          "file_name": "学生公寓服务中心值班电话.txt",
+          "score": 0.4103662000535716
+        }
+      ]
+    },
+    {
+      "id": "q051",
+      "question": "热水卡在哪里充值，充值时间是什么时候？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "公寓热水.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "公寓热水.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "公寓热水.txt",
+          "score": 0.5522967579681218
+        },
+        {
+          "rank": 2,
+          "file_name": "校园一卡通.txt",
+          "score": 0.4084605292469351
+        },
+        {
+          "rank": 3,
+          "file_name": "学生公寓服务中心工作时间.txt",
+          "score": 0.39633196052898834
+        },
+        {
+          "rank": 4,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.3865804381344276
+        },
+        {
+          "rank": 5,
+          "file_name": "校医院服务时间.txt",
+          "score": 0.3861302526094798
+        }
+      ]
+    },
+    {
+      "id": "q052",
+      "question": "学生公寓热水每天的供水时段是怎么安排的？",
+      "category": "table_lookup",
+      "expected_sources": [
+        "公寓热水.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "公寓热水.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "公寓热水.txt",
+          "score": 0.5324400843223505
+        },
+        {
+          "rank": 2,
+          "file_name": "学生公寓服务中心工作时间.txt",
+          "score": 0.4791493539120699
+        },
+        {
+          "rank": 3,
+          "file_name": "学生公寓服务.txt",
+          "score": 0.43595763451719166
+        },
+        {
+          "rank": 4,
+          "file_name": "学生公寓服务中心指南.txt",
+          "score": 0.4253740429645208
+        },
+        {
+          "rank": 5,
+          "file_name": "校医院服务时间.txt",
+          "score": 0.4153485654099824
+        }
+      ]
+    },
+    {
+      "id": "q053",
+      "question": "热水设施出故障了报修电话是多少？",
+      "category": "contact_lookup",
+      "expected_sources": [
+        "公寓热水.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "公寓热水.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "公寓热水.txt",
+          "score": 0.47033449573795744
+        },
+        {
+          "rank": 2,
+          "file_name": "接待中心服务电话.txt",
+          "score": 0.45837397551127224
+        },
+        {
+          "rank": 3,
+          "file_name": "场管部服务电话.txt",
+          "score": 0.4549478132812049
+        },
+        {
+          "rank": 4,
+          "file_name": "食堂投诉电话及投诉程序.txt",
+          "score": 0.4516456966185562
+        },
+        {
+          "rank": 5,
+          "file_name": "多媒体教学服务部服务电话.txt",
+          "score": 0.4428734898846444
+        }
+      ]
+    },
+    {
+      "id": "q054",
+      "question": "热水卡丢了余额还能找回吗？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "公寓热水.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "公寓热水.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "公寓热水.txt",
+          "score": 0.47618729986930053
+        },
+        {
+          "rank": 2,
+          "file_name": "挂失流程.txt",
+          "score": 0.4332258407714009
+        },
+        {
+          "rank": 3,
+          "file_name": "xueke.txt",
+          "score": 0.4216848609952827
+        },
+        {
+          "rank": 4,
+          "file_name": "xueke.txt",
+          "score": 0.4112624524476165
+        },
+        {
+          "rank": 5,
+          "file_name": "校园一卡通.txt",
+          "score": 0.40590541667382807
+        }
+      ]
+    },
+    {
+      "id": "q055",
+      "question": "学校的快递点都在哪里？",
+      "category": "comprehension",
+      "expected_sources": [
+        "快递.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "快递.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "快递.txt",
+          "score": 0.5425984675209518
+        },
+        {
+          "rank": 2,
+          "file_name": "食堂服务及办公地址分布.txt",
+          "score": 0.4443568580472136
+        },
+        {
+          "rank": 3,
+          "file_name": "成都信息工程大学学校基本概况.txt",
+          "score": 0.4418789015647548
+        },
+        {
+          "rank": 4,
+          "file_name": "学生公寓服务.txt",
+          "score": 0.4410629660234623
+        },
+        {
+          "rank": 5,
+          "file_name": "校医院办公地址.txt",
+          "score": 0.43128362128624836
+        }
+      ]
+    },
+    {
+      "id": "q056",
+      "question": "寄快递到航空港校区应该填什么地址和邮编？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "快递.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "快递.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "快递.txt",
+          "score": 0.4758492367825098
+        },
+        {
+          "rank": 2,
+          "file_name": "学生公寓服务.txt",
+          "score": 0.46745875241412177
+        },
+        {
+          "rank": 3,
+          "file_name": "校医院办公地址.txt",
+          "score": 0.46743490254032666
+        },
+        {
+          "rank": 4,
+          "file_name": "各学生公寓联系方式.txt",
+          "score": 0.465483431288259
+        },
+        {
+          "rank": 5,
+          "file_name": "物业电话.txt",
+          "score": 0.4621027238165356
+        }
+      ]
+    },
+    {
+      "id": "q057",
+      "question": "龙泉校区的快递地址和邮编是什么？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "快递.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "快递.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "快递.txt",
+          "score": 0.5227217936717792
+        },
+        {
+          "rank": 2,
+          "file_name": "成都信息工程大学学校基本概况.txt",
+          "score": 0.4714509038030829
+        },
+        {
+          "rank": 3,
+          "file_name": "物业电话.txt",
+          "score": 0.45703274855885034
+        },
+        {
+          "rank": 4,
+          "file_name": "学生公寓服务.txt",
+          "score": 0.4487072412603069
+        },
+        {
+          "rank": 5,
+          "file_name": "学生公寓服务中心电话.txt",
+          "score": 0.4453515820294948
+        }
+      ]
+    },
+    {
+      "id": "q058",
+      "question": "取菜鸟驿站的快递需要准备什么？",
+      "category": "procedural",
+      "expected_sources": [
+        "快递.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "快递.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "快递.txt",
+          "score": 0.5415424505226955
+        },
+        {
+          "rank": 2,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.45055024523379567
+        },
+        {
+          "rank": 3,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.42187456765881115
+        },
+        {
+          "rank": 4,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.4158571812095162
+        },
+        {
+          "rank": 5,
+          "file_name": "成都信息工程大学防疫物资申领流程.docx",
+          "score": 0.3982493799876023
+        }
+      ]
+    },
+    {
+      "id": "q059",
+      "question": "从人南校区到航空港校区的交通车有哪几个班次？",
+      "category": "table_lookup",
+      "expected_sources": [
+        "校车时刻表.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "校车时刻表.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/生活服务/校车时刻表.txt",
+          "score": 0.5224593025375952
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/后勤服务大厅（dyc）/后勤服务大厅/校车时刻表.txt",
+          "score": 0.475696045467267
+        },
+        {
+          "rank": 3,
+          "file_name": "校医院.txt",
+          "score": 0.4532978954320316
+        },
+        {
+          "rank": 4,
+          "file_name": "物业电话.txt",
+          "score": 0.4285110759673231
+        },
+        {
+          "rank": 5,
+          "file_name": "校医院服务时间.txt",
+          "score": 0.4270442551650739
+        }
+      ]
+    },
+    {
+      "id": "q060",
+      "question": "航空港校区回人南的交通车什么时候发车？",
+      "category": "table_lookup",
+      "expected_sources": [
+        "校车时刻表.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "校车时刻表.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/生活服务/校车时刻表.txt",
+          "score": 0.5433773862757498
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/后勤服务大厅（dyc）/后勤服务大厅/校车时刻表.txt",
+          "score": 0.5161560495957279
+        },
+        {
+          "rank": 3,
+          "file_name": "校医院服务时间.txt",
+          "score": 0.4507544960801706
+        },
+        {
+          "rank": 4,
+          "file_name": "校医院.txt",
+          "score": 0.4412144189727377
+        },
+        {
+          "rank": 5,
+          "file_name": "学生公寓服务.txt",
+          "score": 0.416746870145363
+        }
+      ]
+    },
+    {
+      "id": "q061",
+      "question": "人南到龙泉校区的交通车经停哪里？",
+      "category": "table_lookup",
+      "expected_sources": [
+        "校车时刻表.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "校车时刻表.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/生活服务/校车时刻表.txt",
+          "score": 0.4851147987508458
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/后勤服务大厅（dyc）/后勤服务大厅/校车时刻表.txt",
+          "score": 0.4304864803069424
+        },
+        {
+          "rank": 3,
+          "file_name": "校医院联系方式.txt",
+          "score": 0.3881191950190594
+        },
+        {
+          "rank": 4,
+          "file_name": "校医院.txt",
+          "score": 0.38576356523623184
+        },
+        {
+          "rank": 5,
+          "file_name": "物业电话.txt",
+          "score": 0.369626623851938
+        }
+      ]
+    },
+    {
+      "id": "q062",
+      "question": "毕业证或学位证遗失了要补办证明书，需要准备哪些材料？",
+      "category": "procedural",
+      "expected_sources": [
+        "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+          "score": 0.6382780438948098
+        },
+        {
+          "rank": 2,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（毕业生）.pdf",
+          "score": 0.5313681739100866
+        },
+        {
+          "rank": 3,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.5244681055653524
+        },
+        {
+          "rank": 4,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.5236033657867093
+        },
+        {
+          "rank": 5,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.5157127890295803
+        }
+      ]
+    },
+    {
+      "id": "q063",
+      "question": "补办毕业证明书要多久，在哪里办理？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+          "score": 0.5565256007658136
+        },
+        {
+          "rank": 2,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.5205791613353644
+        },
+        {
+          "rank": 3,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.5045582936649003
+        },
+        {
+          "rank": 4,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（毕业生）.pdf",
+          "score": 0.49950778790440253
+        },
+        {
+          "rank": 5,
+          "file_name": "论坛搜集（李俊卓）.docx",
+          "score": 0.48686247374006286
+        }
+      ]
+    },
+    {
+      "id": "q064",
+      "question": "办理毕业证遗失补办的联系电话是多少，找哪位老师？",
+      "category": "contact_lookup",
+      "expected_sources": [
+        "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+          "score": 0.5601912631881952
+        },
+        {
+          "rank": 2,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.495562128696289
+        },
+        {
+          "rank": 3,
+          "file_name": "多媒体教学服务部服务电话.txt",
+          "score": 0.49540527824343955
+        },
+        {
+          "rank": 4,
+          "file_name": "绿化部联系电话.txt",
+          "score": 0.49022319121752983
+        },
+        {
+          "rank": 5,
+          "file_name": "接待中心服务电话.txt",
+          "score": 0.4881344216570211
+        }
+      ]
+    },
+    {
+      "id": "q065",
+      "question": "毕业证遗失补办的受理范围是哪些人？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+          "score": 0.549880209020043
+        },
+        {
+          "rank": 2,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.4814726310077937
+        },
+        {
+          "rank": 3,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.47242027599483954
+        },
+        {
+          "rank": 4,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.4703118727467764
+        },
+        {
+          "rank": 5,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.4682521749021985
+        }
+      ]
+    },
+    {
+      "id": "q066",
+      "question": "毕业设计（论文）管理系统有哪几种登录方式？",
+      "category": "comprehension",
+      "expected_sources": [
+        "毕业设计（论文）管理系统登录.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "毕业设计（论文）管理系统登录.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "毕业设计（论文）管理系统登录.txt",
+          "score": 0.7478774376223902
+        },
+        {
+          "rank": 2,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.5135310834941107
+        },
+        {
+          "rank": 3,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.508123504342176
+        },
+        {
+          "rank": 4,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.5010305510506445
+        },
+        {
+          "rank": 5,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.50074928365876
+        }
+      ]
+    },
+    {
+      "id": "q067",
+      "question": "在校外访问毕业设计管理系统，用统一身份认证登录需要什么条件？",
+      "category": "multi_hop",
+      "expected_sources": [
+        "毕业设计（论文）管理系统登录.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "毕业设计（论文）管理系统登录.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "毕业设计（论文）管理系统登录.txt",
+          "score": 0.6342585295270818
+        },
+        {
+          "rank": 2,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.5352534206579977
+        },
+        {
+          "rank": 3,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.5235995894880198
+        },
+        {
+          "rank": 4,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+          "score": 0.5180141335216344
+        },
+        {
+          "rank": 5,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.5143389958405232
+        }
+      ]
+    },
+    {
+      "id": "q068",
+      "question": "学校现有几个校区，占地面积多少？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校简介.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "学校简介.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "食堂简介.txt",
+          "score": 0.45274551154187864
+        },
+        {
+          "rank": 2,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.4143796306696677
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.4139619350846363
+        },
+        {
+          "rank": 4,
+          "file_name": "资源环境学院.txt",
+          "score": 0.4093547423434896
+        },
+        {
+          "rank": 5,
+          "file_name": "食堂.txt",
+          "score": 0.39988275166367077
+        }
+      ]
+    },
+    {
+      "id": "q069",
+      "question": "学校的人才培养模式是什么？",
+      "category": "comprehension",
+      "expected_sources": [
+        "学校简介.txt"
+      ],
+      "hit": false,
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "matched_source": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.4201312586027043
+        },
+        {
+          "rank": 2,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.40893333700540696
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.40819650763490356
+        },
+        {
+          "rank": 4,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.40565385444477425
+        },
+        {
+          "rank": 5,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.4054225771253748
+        }
+      ]
+    },
+    {
+      "id": "q070",
+      "question": "成都信息工程大学是由哪些单位共建的？",
+      "category": "simple_fact",
+      "expected_sources": [
+        "学校简介.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "学校简介.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.5798466813827999
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.5762338244203169
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.5678733084782652
+        },
+        {
+          "rank": 4,
+          "file_name": "通信工程学院.txt",
+          "score": 0.54066051535685
+        },
+        {
+          "rank": 5,
+          "file_name": "计算机学院.txt",
+          "score": 0.5375839963024879
+        }
+      ]
+    },
+    {
+      "id": "q071",
+      "question": "学校加入了哪些高校联盟或国际组织？",
+      "category": "comprehension",
+      "expected_sources": [
+        "学校简介.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "学校简介.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "管理学院.txt",
+          "score": 0.41814001272849105
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+          "score": 0.3995024327799655
+        },
+        {
+          "rank": 3,
+          "file_name": "data/upload_files/学校信息/学校简介.txt",
+          "score": 0.39898456760894746
+        },
+        {
+          "rank": 4,
+          "file_name": "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+          "score": 0.39836761034783436
+        },
+        {
+          "rank": 5,
+          "file_name": "data/upload_files/学校信息/社团信息.txt",
+          "score": 0.39621301181751056
+        }
+      ]
+    },
+    {
+      "id": "q072",
+      "question": "校训“成于大气”具体是什么含义？",
+      "category": "comprehension",
+      "expected_sources": [
+        "大学精神.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "大学精神.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.5560809153903123
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.5503131131348481
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.4015999886139037
+        },
+        {
+          "rank": 4,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+          "score": 0.39300459569046614
+        },
+        {
+          "rank": 5,
+          "file_name": "data/upload_files/学校信息/学校历史.txt",
+          "score": 0.3888993294667419
+        }
+      ]
+    },
+    {
+      "id": "q073",
+      "question": "校训“信达天下”是什么意思？",
+      "category": "comprehension",
+      "expected_sources": [
+        "大学精神.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "大学精神.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.49251877993739507
+        },
+        {
+          "rank": 2,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.48693935184160864
+        },
+        {
+          "rank": 3,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.4080062881805042
+        },
+        {
+          "rank": 4,
+          "file_name": "data/upload_files/学校信息/大学精神.txt",
+          "score": 0.3988909277080803
+        },
+        {
+          "rank": 5,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+          "score": 0.3897436797280583
+        }
+      ]
+    },
+    {
+      "id": "q074",
+      "question": "学校中等专业学校时期的第一任教学主任是谁，任职时间是什么时候？",
+      "category": "table_lookup",
+      "expected_sources": [
+        "历任领导.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "历任领导.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "历任领导.txt",
+          "score": 0.45282752861972775
+        },
+        {
+          "rank": 2,
+          "file_name": "统计学院.txt",
+          "score": 0.4241522294016976
+        },
+        {
+          "rank": 3,
+          "file_name": "历任领导.txt",
+          "score": 0.38512896684067244
+        },
+        {
+          "rank": 4,
+          "file_name": "历任领导.txt",
+          "score": 0.3695223636417039
+        },
+        {
+          "rank": 5,
+          "file_name": "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+          "score": 0.3581467593750431
+        }
+      ]
+    },
+    {
+      "id": "q075",
+      "question": "四川统计学校时期担任过校长的有哪些人？",
+      "category": "table_lookup",
+      "expected_sources": [
+        "历任领导.txt"
+      ],
+      "hit": true,
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "matched_source": "历任领导.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "统计学院.txt",
+          "score": 0.5448852164272654
+        },
+        {
+          "rank": 2,
+          "file_name": "历任领导.txt",
+          "score": 0.5092372682613765
+        },
+        {
+          "rank": 3,
+          "file_name": "统计学院.txt",
+          "score": 0.4843030800974424
+        },
+        {
+          "rank": 4,
+          "file_name": "统计学院.txt",
+          "score": 0.4518513328425534
+        },
+        {
+          "rank": 5,
+          "file_name": "历任领导.txt",
+          "score": 0.438860436942787
+        }
+      ]
+    },
+    {
+      "id": "q076",
+      "question": "校园卡丢了去哪里挂失？",
+      "category": "procedural",
+      "expected_sources": [
+        "挂失流程.txt"
+      ],
+      "hit": true,
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "matched_source": "挂失流程.txt",
+      "retrieved": [
+        {
+          "rank": 1,
+          "file_name": "挂失流程.txt",
+          "score": 0.6285751930550313
+        },
+        {
+          "rank": 2,
+          "file_name": "校园一卡通.txt",
+          "score": 0.4969118028631297
+        },
+        {
+          "rank": 3,
+          "file_name": "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+          "score": 0.46357138438418
+        },
+        {
+          "rank": 4,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+          "score": 0.4374974962179981
+        },
+        {
+          "rank": 5,
+          "file_name": "全国高校毕业生毕业去向登记系统操作指南（毕业生）.pdf",
+          "score": 0.4363966398036666
+        }
+      ]
+    }
+  ]
+}
