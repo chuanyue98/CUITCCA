@@ -60,13 +60,37 @@ def _ingest_and_persist(index: VectorStoreIndex, doc_file_path: str) -> None:
     ``index.insert_nodes``：内容不变的重复上传会被跳过、内容变化的重传会
     原地更新，而不是无限堆积重复 chunk。docstore 是每个索引持久化到磁盘的
     "doc_id -> 内容 hash" 记录，不落盘的话这个去重记忆每次进程重启就丢了。
+
+    **单文件上传路径必须把解析失败抛出来**：``ingest_files`` 是为"批量摄取
+    一批文件"设计的，单个文件解析失败会被收进 ``IngestResult.parse_failures``
+    然后继续处理下一个——这对批量场景是对的（不能让一个坏文件中断整批），
+    但这里每次只处理一个文件，把结果丢掉就意味着"这个文件根本没进知识库"
+    这件事完全没人知道，接口还照样返回 ``{"status": "inserted"}``。
+
+    这不是假想的场景：``ALLOWED_EXTENSIONS`` 放开图片格式之后，一台没装
+    OCR 可选依赖（``uv sync --extra ocr``，默认不装）的机器上传 .jpg 会走到
+    ``ParserUnavailableError`` -> 被 ingest_files 吞掉 -> 用户看到上传成功、
+    实际零节点写入。损坏的 .doc/.pdf 同理。改造前这些格式在白名单那一步就被
+    400 拒掉，反而不会骗人——放开白名单如果不同时把失败抛上去，就是用一个
+    静默失败换掉了一个明确失败。
     """
     from handlers.ingestion_pipeline import build_pipeline, ingest_files
+    from handlers.parsers.types import DocumentParseError
     from handlers.vector_store import load_or_create_docstore, persist_docstore
 
     docstore = load_or_create_docstore(index.index_id)
     pipeline = build_pipeline(vector_store=index.vector_store, docstore=docstore)
-    ingest_files([Path(doc_file_path)], pipeline)
+    result = ingest_files([Path(doc_file_path)], pipeline)
+
+    if result.documents_loaded == 0:
+        if result.parse_failures:
+            raise DocumentParseError(result.parse_failures[0][1])
+        if result.unreadable_files:
+            raise DocumentParseError(result.unreadable_files[0][1])
+        if result.empty_files:
+            raise DocumentParseError("文件解析成功但没有任何文本内容，未写入任何节点")
+        raise DocumentParseError("摄取没有产出任何文档")
+
     persist_docstore(index.index_id, docstore)
 
 

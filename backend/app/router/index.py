@@ -31,6 +31,7 @@ from handlers.index_crud import (
     saveIndex,
     updateNodeById,
 )
+from handlers.parsers.types import DocumentParseError, ParserUnavailableError
 from llama_index.core import Document
 from llama_index.core.query_engine import RetrieverQueryEngine
 from models.response import IndexListResponse, QueryResponse, UploadResponse
@@ -217,7 +218,21 @@ async def upload_qa(index=Depends(get_index), prompt: str = Form(None, max_lengt
     except (FileTooLargeError, InvalidFileTypeError) as e:
         return JSONResponse(content={"status": "detail", "message": str(e)},
                             status_code=status.HTTP_400_BAD_REQUEST)
-    contents = await read_file_contents(file)
+    try:
+        contents = await read_file_contents(file)
+    except ParserUnavailableError as e:
+        # 缺可选依赖（目前只有 OCR）是部署环境问题，不是用户传错了文件——
+        # 503 + 明确的安装提示，比笼统的 400「文件格式有问题」有用得多。
+        error_logger.error(f"upload_file_by_QA 解析能力不可用: {e}")
+        return JSONResponse(content={"status": "detail", "message": str(e)},
+                            status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except DocumentParseError as e:
+        # read_file_contents 现在解析失败会抛异常（改造前是返回空串继续往下走，
+        # 那会拿一份空内容去让 LLM 生成问答对，凭空捏造一堆 QA 塞进知识库）。
+        # 这里必须接住转成 400，否则会变成未处理异常 -> 500。
+        error_logger.error(f"upload_file_by_QA 解析失败: {e}")
+        return JSONResponse(content={"status": "detail", "message": "文件解析失败，请检查文件是否完整或格式是否受支持"},
+                            status_code=status.HTTP_400_BAD_REQUEST)
     safe_prompt = build_qa_generation_prompt(prompt)
     qa_pairs = await generate_qa_batched(contents, safe_prompt)
     qa_data = formatted_pairs(qa_pairs)

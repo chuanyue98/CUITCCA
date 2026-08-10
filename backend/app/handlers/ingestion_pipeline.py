@@ -65,10 +65,13 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from llama_index.core import Settings, SimpleDirectoryReader
+from handlers.chunking import TableAwareSentenceSplitter
+from handlers.parsers import ParseStatus, parse_path
+from handlers.parsers.front_matter import promoted_metadata, split_front_matter
+from handlers.parsers.types import DocumentParseError, ParserUnavailableError
+from llama_index.core import Settings
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core.ingestion import DocstoreStrategy, IngestionPipeline
-from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.schema import Document
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.storage.docstore.types import BaseDocumentStore
@@ -266,24 +269,54 @@ def documents_from_file(file_path: Path, logical_name: str | None = None) -> lis
     ``file_name``（逻辑文件名，见下）和 ``last_updated``（文件 mtime 的
     ISO 日期，见模块 docstring 里为什么不用摄取时间）。
 
+    实际解析委托给 ``handlers/parsers`` 注册表（按扩展名分派，覆盖
+    docx/pdf/xlsx/doc/xls/pptx/html/图片等格式，见该包的模块 docstring）。
+    这里只负责"解析结果 -> Document 列表"这一层薄封装：把
+    ``ParseResult.FAILURE``/``UNAVAILABLE`` 转成异常抛出，复用调用方
+    ``ingest_files`` 里已有的 ``try/except`` 把失败收进 ``parse_failures``，
+    不用为解析器的三态结局另起一套错误处理路径。
+
     :param logical_name: 显式指定 metadata 里的 file_name。不传则用默认的
         ``strip_uuid_prefix(file_path.name)``——只有 ``resolve_authoritative_files``
         判定为"跨目录同名冲突"的文件才需要传这个参数（用带目录信息的相对
         路径，避免撞车）。
     """
-    docs = SimpleDirectoryReader(input_files=[str(file_path)]).load_data()
+    result = parse_path(file_path)
+    if result.status is ParseStatus.UNAVAILABLE:
+        raise ParserUnavailableError(result.reason)
+    if result.status is ParseStatus.FAILURE:
+        raise DocumentParseError(result.reason)
+
     mtime = file_path.stat().st_mtime
-    last_updated = datetime.fromtimestamp(mtime, tz=UTC).date().isoformat()
+    file_last_updated = datetime.fromtimestamp(mtime, tz=UTC).date().isoformat()
     resolved_logical_name = logical_name if logical_name is not None else strip_uuid_prefix(file_path.name)
 
     out = []
-    for doc in docs:
-        text = doc.get_content()
-        doc_id = content_hash(text)
-        doc.doc_id = doc_id
-        doc.id_ = doc_id
+    for text in result.texts:
+        # Web 连接器抓回来的语料是"YAML front-matter + Markdown 正文"，
+        # front-matter 里是溯源信息（source_url/publish_date/category…）。
+        # 不在这里拆开的话会有两个问题：那段 YAML 会混进正文被 embedding
+        # （纯噪音），而真正该用于检索过滤和引用溯源的字段一个都进不了
+        # metadata。见 handlers/parsers/front_matter.py 的模块说明。
+        # 没有 front-matter 的普通文件走这里等同于原样透传，行为不变。
+        front_matter, body = split_front_matter(text)
+        promoted = promoted_metadata(front_matter)
+
+        doc_id = content_hash(body)
+        doc = Document(text=body, doc_id=doc_id)
         doc.metadata["file_name"] = resolved_logical_name
-        doc.metadata["last_updated"] = last_updated
+        # 有页面发布日期时优先用它：对抓回来的语料，"这篇通知是哪天发的"
+        # 远比"文件是哪天落盘的"有意义（后者全都是抓取当天，完全没有区分
+        # 度，做不了时效性过滤）。两者都是稳定值，不会像"摄取时间"那样每次
+        # 运行都变、进而污染 TextNode.hash 让 UPSERTS 去重失效。
+        doc.metadata["last_updated"] = promoted.get("publish_date") or file_last_updated
+        doc.metadata.update(promoted)
+        if result.degraded:
+            # 尽力而为的启发式解析（目前只有 .doc）：把降级说明也写进
+            # metadata，下游（比如人工审核、检索结果展示）能看到"这份文本
+            # 可信度打了折扣"，不假装它和其它格式解析出来的一样可靠。
+            doc.metadata["parse_degraded"] = True
+            doc.metadata["parse_note"] = result.reason
         out.append(doc)
     return out
 
@@ -304,16 +337,25 @@ def build_pipeline(
         调用方应传入持久化的 docstore，比如
         ``SimpleDocumentStore.from_persist_path(path)`` 加载、结束后
         ``docstore.persist(path)``）。
-    :param chunk_size: 切块大小。不传则用 ``SentenceSplitter.from_defaults()``
-        的默认值（1024），与现有 ``utils/llama.py:get_nodes_from_file``（线上
-        插入路径）保持一致，避免引入不一致的分块粒度。
+    :param chunk_size: 切块大小。不传则用 ``from_defaults()`` 的默认值（1024），
+        与现有 ``utils/llama.py:get_nodes_from_file``（线上插入路径）保持一致，
+        避免引入不一致的分块粒度。
+
+    分块用 ``TableAwareSentenceSplitter``（``handlers/chunking.py``）而不是裸的
+    ``SentenceSplitter``：后者会把 Markdown 表格从中间切断，续接部分丢掉表头，
+    变成一堆没有列名的裸数据行——实测全语料 6.8% 的 chunk 有这个问题，等于把
+    解析阶段做的表格结构化又丢掉了。没有表格的文本走下来行为与父类完全一致。
     :param embed_model: 显式传入 embedding 模型（比如测试里传 MockEmbedding，
         避免测试触碰全局 ``Settings.embed_model`` 单例、在没配置的进程里触发
         它去尝试解析 OpenAI embedding 报错）。不传则在调用时读取
         ``Settings.embed_model``（线上/评测脚本走这条路，与
         ``configs/llm_predictor.py:init_settings`` 配置的 bge-m3 一致）。
     """
-    splitter = SentenceSplitter.from_defaults(chunk_size=chunk_size) if chunk_size else SentenceSplitter.from_defaults()
+    splitter = (
+        TableAwareSentenceSplitter.from_defaults(chunk_size=chunk_size)
+        if chunk_size
+        else TableAwareSentenceSplitter.from_defaults()
+    )
     resolved_embed_model = embed_model if embed_model is not None else Settings.embed_model
     return IngestionPipeline(
         transformations=[splitter, resolved_embed_model],

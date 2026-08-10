@@ -27,6 +27,15 @@ RERANK_SCORE_THRESHOLD = 0.75
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
 HYBRID_RETRIEVAL_ENABLED = True
 
+# 条件触发查询改写（handlers/qa_workflow.py 的 retrieve step）：检索结果 top1
+# 分数低于 QUERY_REWRITE_SCORE_THRESHOLD 时，用 LLM 把原始问题改写得更适合
+# 检索再查一次。跟 RERANK 的触发思路一样（低置信度才付出额外成本），但改写
+# 解决的是另一类问题——rerank 只能在"已经召回的内容里"排序，如果正确文档
+# 因为措辞/术语不匹配压根没进召回（比如评测里 q038/q069 的"标题关键词强匹配
+# 挤掉正确答案"），rerank 帮不上忙，改写查询让第二次检索有机会召回它。
+QUERY_REWRITE_ENABLED = True
+QUERY_REWRITE_SCORE_THRESHOLD = 0.6
+
 # 检索 top_k 集中配置（Phase 2）。三处调用点历史上各自硬编码了不同的值，
 # 业务含义并不相同，这里只是把"数字定义在哪"集中到一处、可通过环境变量覆盖，
 # 默认值和改造前完全一致，不改变现有线上行为：
@@ -61,7 +70,7 @@ def reload_env_variables():
         openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE, chroma_db_path, \
         db_path, DEFAULT_SIMILARITY_TOP_K, QUERY_ENDPOINT_TOP_K, MULTI_INDEX_FALLBACK_TOP_K, \
         RERANK_ENABLED, RERANK_RECALL_K, RERANK_TOP_N, RERANK_SCORE_THRESHOLD, RERANKER_MODEL, \
-        HYBRID_RETRIEVAL_ENABLED
+        HYBRID_RETRIEVAL_ENABLED, QUERY_REWRITE_ENABLED, QUERY_REWRITE_SCORE_THRESHOLD
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_base = os.environ.get('OPENAI_API_BASE') or 'https://api.openai.com/v1'
@@ -106,12 +115,45 @@ def reload_env_variables():
     # hit@1 75%->85%、MRR 0.852->0.896，延迟只多约 2ms），默认开启。
     HYBRID_RETRIEVAL_ENABLED = os.environ.get('HYBRID_RETRIEVAL_ENABLED', 'True').lower() in ('true', '1', 't')
 
+    # 条件触发查询改写。默认开启：只在检索 top1 置信度低时付出一次 LLM 改写
+    # 调用的成本，高置信度（>= 阈值）时零额外开销，不影响单轮问答主路径的
+    # 低延迟承诺。
+    QUERY_REWRITE_ENABLED = os.environ.get('QUERY_REWRITE_ENABLED', 'True').lower() in ('true', '1', 't')
+    QUERY_REWRITE_SCORE_THRESHOLD = float(os.environ.get('QUERY_REWRITE_SCORE_THRESHOLD', '0.6'))
+
     # 启动时校验必需的 env 变量
     if not openai_api_key:
         logging.warning("OPENAI_API_KEY is not set. LLM queries will fail until configured.")
 
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.md', '.csv', '.xlsx'}
+
+# 上传白名单。原来只有 6 种格式（pdf/docx/txt/md/csv/xlsx），实测语料目录
+# 257 个文件里有 54 个（21%）因此被挡在门外且**毫无提示**——17 个 .doc、
+# 2 个 .xls、2 个 .pptx、4 个流程图 .jpg，其中不少是"休学/复学流程""就业
+# 负责人联系方式"这类高频问题的唯一来源。handlers/parsers 注册表补齐了这些
+# 格式的解析能力后，白名单同步放开。
+#
+# 这里刻意**显式列举**而不是直接写成 parsers.supported_extensions()：白名单是
+# 一道安全控制（决定服务器愿意接收什么文件），应当能一眼看清、单独审计，而
+# 不是跟着解析器注册表的增减自动漂移——将来给注册表加一种格式，不应该顺带
+# 就把它变成"任何人都能上传"。两者的一致性由 tests/test_upload_validation.py
+# 的约束测试保证：白名单必须是注册表支持格式的子集（能收就必须能解析）。
+#
+# .json 刻意不加：语料目录里的 29 个 json 是旧版 llama_index 的持久化产物
+# （docstore.json / vector_store.json 之类），不是知识内容。
+ALLOWED_EXTENSIONS = {
+    # 原有
+    '.pdf', '.docx', '.txt', '.md', '.csv', '.xlsx',
+    # 旧版 Office 二进制格式（OLE2）
+    '.doc', '.xls',
+    # 演示文稿
+    '.pptx',
+    # 网页（Web 连接器抓回来的页面走同一套解析）
+    '.html', '.htm',
+    # 图片走 OCR；OCR 是可选依赖（uv sync --extra ocr），未安装时解析器会
+    # 明确返回"能力不可用"并提示安装方式，而不是静默产出空内容
+    '.jpg', '.jpeg', '.png',
+}
 
 reload_env_variables()
