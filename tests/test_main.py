@@ -158,3 +158,51 @@ class TestSessionAndStatsMiddleware(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LlmEndpointDetectionTest(unittest.TestCase):
+    """限流覆盖范围。
+
+    原实现是一份硬编码的精确路径列表，只覆盖 4 个 /graph 端点，漏掉了：
+    /graph/query_router、/graph/workflow_query(_stream)、Agent 端点，以及带路径
+    参数、精确匹配根本覆盖不了的 /index/{name}/query 等。其中 Agent 端点一次
+    请求要跑多轮"决策+工具调用+生成"，upload_file_by_QA 一次请求几十次 LLM
+    调用——最贵的路径反而不受保护。
+    """
+
+    def test_graph_llm_endpoints_are_limited(self):
+        from main import is_llm_endpoint
+        for path in (
+            "/graph/query", "/graph/query_stream", "/graph/chat_stream", "/graph/agent",
+            "/graph/query_router", "/graph/workflow_query", "/graph/workflow_query_stream",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(is_llm_endpoint(path))
+
+    def test_agent_endpoints_are_limited(self):
+        """Agent 一次请求多轮 LLM 调用，是最该限流的路径。"""
+        from main import is_llm_endpoint
+        self.assertTrue(is_llm_endpoint("/graph/agent_chat"))
+        self.assertTrue(is_llm_endpoint("/graph/agent_chat_stream"))
+
+    def test_parameterised_paths_are_limited(self):
+        from main import is_llm_endpoint
+        for path in (
+            "/index/campus/query",
+            "/index/campus-web/upload_file_by_QA",
+            "/index/campus/generate_summary",
+            "/response/campus/query",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(is_llm_endpoint(path))
+
+    def test_non_llm_endpoints_are_not_limited(self):
+        """纯读写元数据的端点不该被 LLM 限流拖累。"""
+        from main import is_llm_endpoint
+        for path in (
+            "/graph/create", "/graph/query_sources", "/graph/query_history",
+            "/index/list", "/index/campus/info", "/index/campus/deleteDoc",
+            "/manage/stats", "/manage/feedback", "/",
+        ):
+            with self.subTest(path=path):
+                self.assertFalse(is_llm_endpoint(path))

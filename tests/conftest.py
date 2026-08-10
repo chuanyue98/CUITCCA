@@ -57,3 +57,23 @@ def _reset_hybrid_retriever_cache():
     invalidate_hybrid_retriever_cache()
     yield
     invalidate_hybrid_retriever_cache()
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limit_store():
+    """``main._rate_limit_store`` 同样是模块级全局状态，按 IP 累计请求时间戳。
+
+    TestClient 发出的所有请求共用同一个 client host（``testclient``），所以整
+    个测试会话里的请求会累加到同一个 IP 桶里。限流覆盖范围扩大到全部 LLM 端点
+    （``main.is_llm_endpoint``）之后，多个测试文件加起来很容易突破 30 次/60 秒
+    的阈值，于是后面的用例开始收到 429——失败信息指向被测端点，和真正的原因
+    （前面的用例把配额用光了）毫无关系，极难排查。
+
+    和上面的 retriever 缓存是同一类问题、同一种解法：autouse 清空，让每个用例
+    从干净状态开始。
+    """
+    from main import _rate_limit_store
+
+    _rate_limit_store.clear()
+    yield
+    _rate_limit_store.clear()
