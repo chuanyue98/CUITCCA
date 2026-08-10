@@ -44,6 +44,26 @@ dependencies = [
     # 可选的 rerank 依赖组，evals/run_rerank_eval.py 和 run_hybrid_eval.py 的
     # C 组都验证过收益后提为主依赖，RERANK_ENABLED 默认打开。
     "sentence-transformers>=3.0",
+    # 文档解析扩展（多格式摄取）。原 ALLOWED_EXTENSIONS 只有 6 种格式，语料库
+    # 里 21% 的文件（.doc/.pptx/.xls/图片）被静默跳过，这几个包补齐解析能力：
+    # - olefile   : .doc/.xls 等 OLE2 复合文档的容器读取（旧版 Office 二进制格式）
+    # - python-pptx: .pptx 幻灯片文本与表格抽取
+    # - beautifulsoup4 / lxml: HTML 正文抽取（Web 连接器抓回来的页面）
+    "olefile>=0.47",
+    "python-pptx>=1.0",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    # Web 数据连接器：抓取校园站群公开页面（带并发与重试）
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+# OCR（可选）：扫描件 PDF 与流程图图片的文字识别。模型约 100MB，只有 4 个图片
+# 语料文件需要，因此不进主依赖——未安装时 image 解析器降级为"显式报告不可用"，
+# 而不是静默跳过（见 backend/app/handlers/parsers/）。
+# 安装：uv sync --extra ocr
+ocr = [
+    "rapidocr-onnxruntime>=1.3",
 ]
 
 [dependency-groups]

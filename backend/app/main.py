@@ -113,6 +113,38 @@ async def _periodic_rate_limit_cleanup():
             _evict_expired_rate_limits()
 
 
+# 会触发 LLM 调用的端点——这些才需要限流。
+#
+# 原来这里是一份硬编码的精确路径列表，只覆盖了 4 个 /graph 端点，漏掉了同样
+# 会烧 LLM 的一大批：/graph/query_router、/graph/workflow_query(_stream)、
+# 新增的 Agent 端点，以及带路径参数因而**根本没法用精确匹配覆盖**的
+# /index/{name}/query、/index/{name}/upload_file_by_QA、/response/{name}/query。
+# 其中 Agent 端点一次请求要跑多轮"决策+工具调用+生成"，是全项目最贵的路径；
+# upload_file_by_QA 会把整份文档切块后并发生成问答对，一次请求几十次 LLM 调用。
+# 这些恰恰是最需要保护的，却全都不在限流范围内。
+#
+# 改成按"路径形状"判断而不是列举字面量：带 {index_name} 这种路径参数的端点
+# 用后缀匹配，新增同类端点不容易再漏。
+_LLM_GRAPH_PATHS = frozenset({
+    "/graph/query", "/graph/query_stream", "/graph/chat_stream", "/graph/agent",
+    "/graph/query_router", "/graph/workflow_query", "/graph/workflow_query_stream",
+    "/graph/agent_chat", "/graph/agent_chat_stream",
+})
+# 形如 /index/{index_name}/query、/response/{index_name}/query 的端点，
+# index_name 是任意值，只能按前缀+后缀判断。
+_LLM_PATH_SUFFIXES = ("/query", "/upload_file_by_QA", "/generate_summary", "/evaluator")
+_LLM_PREFIXES = ("/index/", "/response/")
+
+
+def is_llm_endpoint(path: str) -> bool:
+    """这个请求会不会触发 LLM 调用（因而需要限流）。"""
+    if path in _LLM_GRAPH_PATHS:
+        return True
+    if path.startswith(_LLM_PREFIXES):
+        return path.endswith(_LLM_PATH_SUFFIXES)
+    return False
+
+
 async def check_rate_limit(client_ip: str) -> None:
     """检查客户端 IP 是否超过速率限制"""
     now = time.time()
@@ -139,11 +171,8 @@ async def session_and_stats_middleware(request, call_next):
         session_id = str(uuid.uuid4())
     request.state.session_id = session_id
 
-    # 速率限制检查（仅对 LLM 查询端点）
-    if not is_static and request.url.path in (
-        "/graph/query", "/graph/query_stream",
-        "/graph/chat_stream", "/graph/agent",
-    ):
+    # 速率限制检查（仅对会触发 LLM 调用的端点）
+    if not is_static and is_llm_endpoint(request.url.path):
         try:
             await check_rate_limit(client_ip)
         except HTTPException:

@@ -1,0 +1,35 @@
+# 统一行尾符为 LF。
+#
+# 起因：仓库里曾同时存在 CRLF 和 LF 两种行尾（185 个文本文件是 CRLF），后果是
+# 只改了几行的文件在 diff 里会整篇显示为"全部重写"——比如 qa_workflow.py 实际
+# 只动了 44 增/27 删，diff 里却是 370 增/353 删，code review 时几乎没法看清真正
+# 改了什么。
+#
+# text=auto 让 git 自行判断哪些是文本文件；eol=lf 强制工作区和仓库里都用 LF，
+# 这样无论开发者在 Windows / WSL / Linux 上、用什么编辑器，签出和提交的行尾
+# 都一致，不会再因为换台机器编辑就产生一次纯格式的巨大 diff。
+* text=auto eol=lf
+
+# 二进制文件显式标注，避免 git 误判成文本去做行尾转换而损坏内容。
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.docx  binary
+*.doc   binary
+*.xlsx  binary
+*.xls   binary
+*.pptx  binary
+*.zip   binary
+*.onnx  binary
+
+# 锁文件很大且由工具生成，标记为 generated 让 GitHub 在 PR 里默认折叠。
+#
+# 刻意**不加** `-diff`：那会让 git 把锁文件当二进制处理、diff 里只显示
+# "Bin xxx bytes"，等于把依赖变更藏起来。这个项目 CI 里跑 pip-audit 扫 CVE，
+# 锁文件的每一次改动都属于供应链变更，必须在 review 时看得见——默认折叠是
+# 为了不淹没其它改动，不是为了不让人看。
+uv.lock                    linguist-generated=true
+frontend/package-lock.json linguist-generated=true
