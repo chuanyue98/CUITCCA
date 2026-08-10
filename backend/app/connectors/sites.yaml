@@ -1,0 +1,199 @@
+# CUIT 站群连接器配置：站点 -> 栏目 -> 抓取规则。
+#
+# 设计原则：新增一个栏目或站点只改这个文件，不碰 backend/app/connectors/*.py
+# 里的代码——URL 模板、分页规律、正文选择器全部数据化。
+#
+# 已实测确认的站点结构（2026-08，见 docs/data-sources.md 的复现记录）：
+# CUIT 官网 www.cuit.edu.cn 及共用同一套"网站群"CMS 模板的二级站点
+# （jwc/gjjl/xyw.cuit.edu.cn）结构一致：
+#   - 详情页固定形如 base_url/info/<栏目ID>/<文章ID>.htm
+#   - 正文容器：div.v_news_content（外层套 div#vsb_content，再外层 div.article）
+#   - 标题：h2.tit
+#   - 来源/作者/日期：p.conttime，形如 "日期：2026-08-05"
+#   - 列表页条目：ul.list > li > a[href]，标题在 <a title="...">，
+#     发布日期在 <a> 内的 <span>2026-08-05</span>
+#   - 分页是"倒序编号"：第 1 页是不带编号的 <index>.htm，第 2 页开始是
+#     <index>/<N-1>.htm、<index>/<N-2>.htm ... 一直到 <index>/1.htm
+#     （N 为总页数）。总页数会在运行时从第 1 页的翻页控件自动解析
+#     （见 extract.discover_total_pages），这里配的 total_pages 只是
+#     "已知值优先"的显式声明/性能优化，留空（不写这个字段）也能正常工作。
+#
+# 不适配这套模板的站点（zjc.cuit.edu.cn 网络不可达、ywtb.cuit.edu.cn 是纯前
+# 端 SPA 无法静态抓取）在文末以 enabled: false 占位记录，见字段说明。
+
+defaults:
+  # 必须是纯 ASCII：HTTP header 值不允许非 ASCII 字符，httpx 会在
+  # build_request 阶段直接抛 UnicodeEncodeError（这里原本写的是中文说明，
+  # 一发请求就崩）。声明内容用英文表达等价含义：非商业教育用途、附联系方式。
+  user_agent: "CUITCCA-EduBot/0.1 (+https://github.com/chuanyue98/CUITCCA; non-commercial campus knowledge-base demo; respects robots.txt and rate limits)"
+  request_interval_seconds: 1.2
+  max_concurrency: 2
+  timeout_seconds: 15
+  max_retries: 3
+  retry_backoff_seconds: 1.5
+  detail_content_selector: "div.v_news_content, div#vsb_content, div.article, div.wp_articlecontent"
+  detail_title_selector: "h2.tit, h1.tit, h1"
+  detail_date_selector: "p.conttime, span.conttime"
+  list_item_selector: "ul.list li a[href]"
+  default_max_pages: 5
+
+sites:
+  - name: main
+    display_name: "成都信息工程大学官网"
+    base_url: "https://www.cuit.edu.cn"
+    sections:
+      - name: xxjj
+        category: "学校概况"
+        type: static
+        title: "学校简介"
+        urls: ["/xygk/xxjj.htm"]
+      - name: dxjs
+        category: "学校概况"
+        type: static
+        title: "大学精神"
+        urls: ["/xygk/dxjs.htm"]
+      - name: xxls
+        category: "学校概况"
+        type: static
+        title: "学校历史"
+        urls: ["/xygk/xxls.htm"]
+      - name: xrld
+        category: "学校概况"
+        type: static
+        title: "现任领导"
+        urls: ["/xygk/xrld.htm"]
+      - name: zzjg
+        category: "组织机构"
+        type: static
+        title: "组织机构"
+        urls: ["/zzjg.htm"]
+      - name: szgk
+        category: "师资队伍"
+        type: static
+        title: "师资概况"
+        urls: ["/szdw/szgk.htm"]
+      - name: zdsys
+        category: "科学研究"
+        type: static
+        title: "重点实验室"
+        urls: ["/kxyj/zdsys.htm"]
+      - name: cxyw
+        category: "成信要闻"
+        type: listing
+        list_first_page: "/index/cxyw.htm"
+        list_page_pattern: "/index/cxyw/{n}.htm"
+      - name: zhxw
+        category: "综合新闻"
+        type: listing
+        list_first_page: "/index/zhxw.htm"
+        list_page_pattern: "/index/zhxw/{n}.htm"
+      - name: tzgg
+        category: "通知公告"
+        type: listing
+        list_first_page: "/index/tzgg.htm"
+        list_page_pattern: "/index/tzgg/{n}.htm"
+        total_pages: 193
+      - name: cxxs
+        category: "成信学术"
+        type: listing
+        list_first_page: "/index/cxxs.htm"
+        list_page_pattern: "/index/cxxs/{n}.htm"
+
+  - name: jwc
+    display_name: "教务处"
+    base_url: "https://jwc.cuit.edu.cn"
+    sections:
+      - name: cxcy
+        category: "创新创业"
+        type: static
+        title: "创新创业"
+        urls:
+          - "/cxcy.htm"
+          - "/cxcy/cxcyxljh.htm"
+          - "/cxcy/xkjs.htm"
+      - name: tmgdyjs
+        category: "通知公告"
+        type: listing
+        list_first_page: "/tzgg/tmgdyjs.htm"
+        list_page_pattern: "/tzgg/tmgdyjs/{n}.htm"
+
+  - name: gjjl
+    display_name: "国际合作与交流处"
+    base_url: "https://gjjl.cuit.edu.cn"
+    sections:
+      - name: gywm
+        category: "关于我们"
+        type: static
+        title: "关于我们"
+        urls:
+          - "/gywm.htm"
+          - "/gywm/bmjs_About_Us.htm"
+          - "/gywm/bmzz_Our_Work.htm"
+      - name: gjjy
+        category: "国际教育"
+        type: static
+        title: "留学生教育"
+        urls:
+          - "/gjjy.htm"
+          - "/gjjy/zwhzbx_Sino_foreign_Cooperative_Education.htm"
+      - name: hwjl
+        category: "海外交流"
+        type: static
+        title: "海外交流"
+        urls: ["/hwjl.htm"]
+      - name: gatsw
+        category: "港澳台事务"
+        type: static
+        title: "港澳台事务"
+        urls: ["/gatsw.htm"]
+
+  - name: xyw
+    display_name: "国内合作处（校友办公室）"
+    base_url: "https://xyw.cuit.edu.cn"
+    sections:
+      - name: bmgk
+        category: "部门概况"
+        type: static
+        title: "部门概况"
+        urls:
+          - "/bmgk.htm"
+          - "/bmgk/bmzz.htm"
+          - "/bmgk/lsjg.htm"
+      - name: gnhz
+        category: "国内合作"
+        type: static
+        title: "国内合作"
+        urls:
+          - "/gnhz.htm"
+          - "/gnhz/hzqk.htm"
+      - name: bmdt_tzgg
+        category: "通知公告"
+        type: listing
+        list_first_page: "/bmdt/tzgg.htm"
+        list_page_pattern: "/bmdt/tzgg/{n}.htm"
+
+  # 本科招生网。2026-08 从当前开发/CI 网络环境实测：TLS 握手阶段即失败
+  # （SSL_ERROR_SYSCALL / ConnectError），main 站点与其余二级站点均可正常
+  # 访问，问题定位在这一个域名的出站连通性（具体原因未知：可能是该域名的
+  # 服务端 TLS 配置问题，也可能是运行环境对这个特定主机的网络限制）。
+  # 站点结构因此未探测、sections 留空。换一个能连通该域名的网络环境后，
+  # 参考本文件其它站点的写法实测 HTML 结构、补充 sections，再把 enabled
+  # 改成 true 即可加入抓取范围，代码不需要改动。
+  - name: zjc
+    display_name: "本科招生网"
+    base_url: "https://zjc.cuit.edu.cn"
+    enabled: false
+    disabled_reason: "TLS 握手失败（SSL_ERROR_SYSCALL），当前网络环境无法连通，站点结构未探测"
+    sections: []
+
+  # 一网通办。2026-08 实测：HTTP 200 但返回的是纯前端 Vue SPA 骨架（index.html
+  # 里只有一个空的 #app 挂载点，实际内容由浏览器执行 JS 后异步渲染），本连接器
+  # 基于 httpx+BeautifulSoup 的静态 HTML 抓取方式拿不到任何正文，需要无头浏览器
+  # （比如 Playwright）才能渲染出内容——这类站点超出当前连接器的设计范围
+  # （见 docs/data-sources.md 的"已知限制"一节），先占位记录，不纳入抓取。
+  - name: ywtb
+    display_name: "一网通办"
+    base_url: "https://ywtb.cuit.edu.cn"
+    enabled: false
+    disabled_reason: "纯前端 SPA，静态 HTML 抓取拿不到内容，需要无头浏览器渲染，超出当前连接器范围"
+    sections: []
