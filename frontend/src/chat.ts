@@ -6,6 +6,32 @@ import { apiFetch } from './utils/api';
 const HISTORY_KEY = 'cuitcca_chat_history_v1';
 const HISTORY_MAX = 50;
 
+// ===== 问答模式：标准问答（QAWorkflow）vs Agent 模式（FunctionAgent） =====
+// 后端两条链路并存（见 backend/app/agents/agent_workflow.py 模块 docstring）：
+// 标准问答零额外 LLM 调用、低延迟；Agent 模式让模型自己决定调哪个工具、调几次，
+// 适合需要多跳检索的复杂问题。这里用一个切换器让用户在两种体验间切换。
+type ChatMode = 'standard' | 'agent';
+let currentMode: ChatMode = 'standard';
+
+const TOOL_NAME_LABELS: Record<string, string> = {
+    search_knowledge_base: '知识库检索',
+    list_knowledge_bases: '列出知识库',
+    get_document_chunks_by_source: '按来源取原文',
+    get_current_datetime: '当前日期',
+};
+
+function initModeSwitcher() {
+    const switcher = document.querySelector('.mode_switcher');
+    if (!switcher) return;
+    switcher.addEventListener('click', (e: Event) => {
+        const btn = (e.target as HTMLElement).closest('.mode_btn') as HTMLButtonElement | null;
+        if (!btn) return;
+        currentMode = btn.dataset.mode as ChatMode;
+        switcher.querySelectorAll('.mode_btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    });
+}
+
 // ===== 输入框事件 =====
 const inputEl = document.getElementById('input') as HTMLInputElement;
 inputEl.addEventListener('keydown', function (event: KeyboardEvent) {
@@ -150,7 +176,163 @@ function sendMessage() {
     message.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
     setGeneratingUI(true);
-    streamAnswer(question, answerEl, citations).finally(() => setGeneratingUI(false));
+    const task = currentMode === 'agent'
+        ? streamAgentAnswer(question, answerEl, citations, message)
+        : streamAnswer(question, answerEl, citations);
+    task.finally(() => setGeneratingUI(false));
+}
+
+// ===== Agent 模式：NDJSON 流式解析 + 工具调用轨迹 =====
+// /graph/agent_chat_stream 用 NDJSON（每行一个 JSON 事件），事件类型：
+// token（答案增量）、tool_call（模型决定调某个工具）、tool_result（工具返回）、
+// done（结束）、error（出错兜底）。见 backend/app/agents/agent_workflow.py 的
+// stream_agent_events docstring。
+
+function createToolTraceContainer(contentEl: HTMLElement): HTMLElement {
+    const trace = document.createElement('div');
+    trace.className = 'agent-tooltrace is-hidden';
+    const title = document.createElement('div');
+    title.className = 'agent-tooltrace-title';
+    title.textContent = '工具调用过程';
+    trace.appendChild(title);
+    contentEl.appendChild(trace);
+    return trace;
+}
+
+function addToolTraceItem(traceEl: HTMLElement, toolName: string, args: Record<string, unknown> | null) {
+    const label = TOOL_NAME_LABELS[toolName] || toolName;
+    const item = document.createElement('div');
+    item.className = 'agent-tool-item';
+
+    const badge = document.createElement('span');
+    badge.className = 'tool-badge';
+    badge.textContent = label;
+    item.appendChild(badge);
+
+    const status = document.createElement('span');
+    status.className = 'tool-status running';
+    status.textContent = '运行中…';
+    item.appendChild(status);
+
+    const argsDiv = document.createElement('div');
+    argsDiv.className = 'tool-args';
+    try {
+        argsDiv.textContent = args ? JSON.stringify(args) : '';
+    } catch {
+        argsDiv.textContent = '';
+    }
+    item.appendChild(argsDiv);
+
+    traceEl.appendChild(item);
+    traceEl.classList.remove('is-hidden');
+    return { item, status };
+}
+
+function finishToolTraceItem(statusEl: HTMLElement, itemEl: HTMLElement, ok: boolean) {
+    statusEl.textContent = ok ? '✓ 完成' : '✗ 失败';
+    statusEl.className = 'tool-status ' + (ok ? 'ok' : 'fail');
+    if (!ok) itemEl.classList.add('is-error');
+}
+
+async function streamAgentAnswer(
+    query: string,
+    answerEl: HTMLElement,
+    citationsEl: HTMLElement,
+    messageEl: HTMLElement,
+) {
+    activeAbortController = new AbortController();
+    let fullText = '';
+    let firstChunk = true;
+    const traceEl = createToolTraceContainer(messageEl.querySelector('.content_bot') as HTMLElement);
+    const runningTraces: Array<{ status: HTMLElement; item: HTMLElement }> = [];
+
+    try {
+        const response = await apiFetch('/graph/agent_chat_stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'query=' + encodeURIComponent(query),
+            signal: activeAbortController.signal,
+        });
+
+        if (!response.ok || !response.body) {
+            throw new Error('HTTP ' + response.status);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            // NDJSON：按行切分，每行一个完整 JSON 事件；跨 chunk 的半行留在 buffer
+            let newlineIdx: number;
+            while ((newlineIdx = buffer.indexOf('\n')) !== -1) {
+                const line = buffer.slice(0, newlineIdx).trim();
+                buffer = buffer.slice(newlineIdx + 1);
+                if (!line) continue;
+                let event: Record<string, unknown>;
+                try {
+                    event = JSON.parse(line);
+                } catch {
+                    continue;
+                }
+
+                if (event.type === 'token') {
+                    if (firstChunk) {
+                        answerEl.innerHTML = '';
+                        firstChunk = false;
+                    }
+                    fullText += String(event.content || '');
+                    answerEl.innerHTML = renderMarkdown(fullText);
+                    scrollToBottom();
+                } else if (event.type === 'tool_call') {
+                    const trace = addToolTraceItem(traceEl, String(event.tool_name), event.tool_kwargs as Record<string, unknown> | null);
+                    runningTraces.push(trace);
+                    scrollToBottom();
+                } else if (event.type === 'tool_result') {
+                    const trace = runningTraces.shift();
+                    if (trace) {
+                        finishToolTraceItem(trace.status, trace.item, event.is_error !== true);
+                    }
+                } else if (event.type === 'error') {
+                    if (firstChunk) {
+                        answerEl.innerHTML = '';
+                        firstChunk = false;
+                    }
+                    const msg = String(event.message || '出错了，请稍后再试一下');
+                    fullText += msg;
+                    answerEl.innerHTML = renderMarkdown(fullText);
+                }
+                // done 事件：response 字段已在 token 事件里流式展示，这里只收尾
+            }
+        }
+
+        if (!fullText.trim()) {
+            fullText = '我还不知道，请反馈给我吧';
+            answerEl.innerHTML = renderMarkdown(fullText);
+        }
+
+        appendHistory('bot', fullText);
+        await loadCitations(citationsEl);
+    } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+            if (fullText) {
+                appendHistory('bot', fullText);
+            } else {
+                answerEl.innerHTML = renderMarkdown('*已停止生成*');
+            }
+            return;
+        }
+        console.error('Agent 请求失败:', error);
+        fullText = fullText || ('请求失败: ' + (error instanceof Error ? error.message : String(error)));
+        answerEl.innerHTML = renderMarkdown(fullText);
+        appendHistory('bot', fullText);
+    } finally {
+        activeAbortController = null;
+    }
 }
 
 function stopGenerating() {
@@ -302,4 +484,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.clear')?.addEventListener('click', clearAllMessage);
   document.getElementById('stop-generating')?.addEventListener('click', stopGenerating);
   document.getElementById('submit')?.addEventListener('click', sendMessage);
+  initModeSwitcher();
 });

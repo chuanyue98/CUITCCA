@@ -32,6 +32,13 @@
                     </div>
                     <div class="chat_bottom"></div>
                     <footer class="foot_fix">
+                        <div class="chat_mode_bar">
+                            <div class="mode_switcher" role="group" aria-label="问答模式">
+                                <button type="button" class="mode_btn active" data-mode="standard">标准问答</button>
+                                <button type="button" class="mode_btn" data-mode="agent">Agent 模式</button>
+                            </div>
+                            <span class="mode_hint">Agent 模式可自主调用工具、多轮检索，适合复杂问题</span>
+                        </div>
                         <div class="chat_container">
                             <button class="clear" title="清空对话" aria-label="清空对话">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16" aria-hidden="true" focusable="false">

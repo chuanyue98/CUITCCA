@@ -1228,3 +1228,112 @@ textarea::-webkit-scrollbar-thumb { background-color: rgb(186, 186, 186); }
     flex-shrink: 0;
 }
 .is-hidden { display: none !important; }
+
+/* ===== Agent 模式（问答模式切换 + 工具调用轨迹） ===== */
+.chat_mode_bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    flex-shrink: 0;
+}
+.mode_switcher {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid rgba(25, 84, 142, 0.2);
+    border-radius: 30px;
+    padding: 3px;
+    gap: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.mode_btn {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 5px 16px;
+    border-radius: 26px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.mode_btn:hover {
+    color: var(--primary);
+}
+.mode_btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(25, 84, 142, 0.25);
+}
+.mode_hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+}
+@media (max-width: 640px) {
+    .mode_hint { display: none; }
+}
+
+/* 工具调用轨迹：Agent 模式下显示"模型调了哪些工具、结果如何" */
+.agent-tooltrace {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px dashed rgba(25, 84, 142, 0.2);
+    padding-top: 8px;
+}
+.agent-tooltrace-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    letter-spacing: 0.5px;
+}
+.agent-tool-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    background: rgba(25, 84, 142, 0.04);
+    border-left: 2px solid var(--primary);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-secondary);
+}
+.agent-tool-item.is-error {
+    border-left-color: var(--danger);
+    background: rgba(255, 77, 79, 0.05);
+}
+.agent-tool-item .tool-badge {
+    flex-shrink: 0;
+    font-family: monospace;
+    font-size: 11px;
+    background: var(--primary-bg);
+    color: var(--primary);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-weight: 600;
+}
+.agent-tool-item .tool-status {
+    flex-shrink: 0;
+    margin-left: auto;
+    font-weight: 600;
+}
+.agent-tool-item .tool-status.running { color: var(--warning); }
+.agent-tool-item .tool-status.ok { color: var(--success); }
+.agent-tool-item .tool-status.fail { color: var(--danger); }
+.agent-tool-item .tool-args {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    word-break: break-all;
+}
+.agent-tooltrace-note {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
