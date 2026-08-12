@@ -129,6 +129,11 @@ _LLM_GRAPH_PATHS = frozenset({
     "/graph/query", "/graph/query_stream", "/graph/chat_stream", "/graph/agent",
     "/graph/query_router", "/graph/workflow_query", "/graph/workflow_query_stream",
     "/graph/agent_chat", "/graph/agent_chat_stream",
+    # 聊天前端现在的主入口（/web/ 所有提问都走它）：路由判定 + 标准生成或
+    # Agent 多跳工具调用 + 追问建议，一次请求最多好几轮 LLM 调用，是全项目
+    # 最贵的路径。曾漏掉它——只有旧端点受保护、主入口反而裸奔（被刷会直接
+    # 烧光 LLM 配额，且没有自己的 429 兜底，全靠服务商限流）。
+    "/graph/ask_stream",
 })
 # 形如 /index/{index_name}/query、/response/{index_name}/query 的端点，
 # index_name 是任意值，只能按前缀+后缀判断。

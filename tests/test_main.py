@@ -185,6 +185,13 @@ class LlmEndpointDetectionTest(unittest.TestCase):
         self.assertTrue(is_llm_endpoint("/graph/agent_chat"))
         self.assertTrue(is_llm_endpoint("/graph/agent_chat_stream"))
 
+    def test_ask_stream_is_limited(self):
+        """回归：/graph/ask_stream 是聊天前端主入口（路由判定 + 标准生成或
+        Agent 多跳工具调用 + 追问建议，一次请求最多好几轮 LLM 调用），曾
+        漏出限流清单——旧端点都受保护、主入口反而裸奔。"""
+        from main import is_llm_endpoint
+        self.assertTrue(is_llm_endpoint("/graph/ask_stream"))
+
     def test_parameterised_paths_are_limited(self):
         from main import is_llm_endpoint
         for path in (

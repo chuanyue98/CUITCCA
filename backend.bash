@@ -9,10 +9,17 @@ check_port() {
   fi
 }
 
-# 激活 uv venv
+# 激活 uv venv。uv 创建的 venv 的 bin/ 里可能没有 activate 脚本（实测过），
+# 但启动用的是 .venv/bin/python 直连（见 start_application），activate 只是
+# 让后续 shell 命令能解析到 venv 里的工具——有则 source，没有就静默跳过，
+# 不报 "No such file or directory" 噪音。
 activate_venv() {
-  echo "Activating uv virtual environment..."
-  source .venv/bin/activate
+  if [ -f ".venv/bin/activate" ]; then
+    echo "Activating uv virtual environment..."
+    source .venv/bin/activate
+  else
+    echo "No activate script in .venv/bin (uv venv layout); using direct .venv/bin/python."
+  fi
 }
 
 # 启动应用程序并守护进程
