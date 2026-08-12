@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="成信大校园助手 - 基于校园知识库的智能问答助手">
+    <meta name="theme-color" content="#19548e">
     <link rel="icon" href="./icon.png" type="image/x-icon">
     <link rel="stylesheet" href="./style.css">
     <title>成信大校园助手</title>
@@ -27,28 +29,59 @@
                     <div class="talk_content" id="chatbox" aria-live="polite" aria-label="对话记录">
                         <div class="message bot">
                             <div class="content_bot_img"></div>
-                            <div class="content_bot">你好！我是成信大校园助手，你可以问我关于学校的任何问题，比如：学校有哪些社团？图书馆怎么借书？</div>
+                            <div class="content_bot">
+                                <p>你好！我是成信大校园助手，关于学校的问题都可以问我。</p>
+                                <p>不确定问什么的话，试试下面这些：</p>
+                            </div>
+                        </div>
+                        <!-- 空状态引导：原来首屏只有一句欢迎语 + 一大片空白，
+                             新用户既不知道知识库覆盖了什么，也不知道该怎么提问。
+                             这几个入口直接取自评测集里真实覆盖到的主题，点了一定
+                             有答案，不会让第一次使用就撞上"我不知道"。 -->
+                        <div class="starter" id="starter">
+                            <button type="button" class="starter_chip" data-q="图书馆开馆时间是几点？本科生能借几本书？">
+                                <span class="starter_chip_icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/></svg></span>图书馆借阅规则
+                            </button>
+                            <button type="button" class="starter_chip" data-q="学生公寓的热水怎么收费？供水时间是什么时候？">
+                                <span class="starter_chip_icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M9.5 0a.5.5 0 0 1 .5.5v.514C12.625 1.238 15 3.867 15 7.5v.5H0v-.5C0 3.867 2.375 1.238 5 1.014V.5a.5.5 0 0 1 .5-.5h4zM3 10a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM3 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg></span>公寓热水与生活服务
+                            </button>
+                            <button type="button" class="starter_chip" data-q="转专业需要满足什么条件？流程是怎样的？">
+                                <span class="starter_chip_icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg></span>转专业政策
+                            </button>
+                            <button type="button" class="starter_chip" data-q="学校有哪些奖学金和助学措施？金额分别是多少？">
+                                <span class="starter_chip_icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917l-7.5-3.5Z"/><path d="M4.176 9.032a.5.5 0 0 0-.656.327l-.5 1.7a.5.5 0 0 0 .294.605l4.5 1.8a.5.5 0 0 0 .372 0l4.5-1.8a.5.5 0 0 0 .294-.605l-.5-1.7a.5.5 0 0 0-.656-.327L8 10.466 4.176 9.032Z"/></svg></span>奖助学金
+                            </button>
+                            <button type="button" class="starter_chip" data-q="毕业证或学位证遗失了怎么补办？需要哪些材料？">
+                                <span class="starter_chip_icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/></svg></span>证件补办流程
+                            </button>
+                            <button type="button" class="starter_chip" data-q="各校区之间的交通车怎么坐？发车时间是什么时候？">
+                                <span class="starter_chip_icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M4 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm8 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/><path d="M3 0a2 2 0 0 0-2 2v9.5A1.5 1.5 0 0 0 2.5 13h.041a3 3 0 0 0 5.918 0h.083a3 3 0 0 0 5.918 0h.04A1.5 1.5 0 0 0 16 11.5V2a2 2 0 0 0-2-2H3zm10 1a1 1 0 0 1 1 1v3H2V2a1 1 0 0 1 1-1h10zM2 6h12v5.5a.5.5 0 0 1-.5.5h-.041a3 3 0 0 0-5.918 0h-.083a3 3 0 0 0-5.918 0H2.5a.5.5 0 0 1-.5-.5V6z"/></svg></span>校车时刻
+                            </button>
                         </div>
                     </div>
                     <div class="chat_bottom"></div>
                     <footer class="foot_fix">
+                        <!-- 原来这里还有一个"标准问答/Agent 模式"切换器：把"这个问题
+                             复不复杂"的架构决策甩给了用户，学生没有依据判断该点哪个
+                             按钮。现在后端（handlers/auto_router.py）按检索置信度自动
+                             判定走哪条链路，前端不再需要暴露这个选择——.chat_mode_bar
+                             现在只剩清空对话一个操作，靠 CSS justify-content 靠右。 -->
                         <div class="chat_mode_bar">
-                            <div class="mode_switcher" role="group" aria-label="问答模式">
-                                <button type="button" class="mode_btn active" data-mode="standard">标准问答</button>
-                                <button type="button" class="mode_btn" data-mode="agent">Agent 模式</button>
-                            </div>
-                            <span class="mode_hint">Agent 模式可自主调用工具、多轮检索，适合复杂问题</span>
-                        </div>
-                        <div class="chat_container">
-                            <button class="clear" title="清空对话" aria-label="清空对话">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                            <!-- 清空对话：破坏性操作，不该紧挨着发送按钮（误触代价太
+                                 大），而且原来只有 hover tooltip 说明用途——移动端没有
+                                 hover，等于完全没有说明。现在带可见文字标签。 -->
+                            <button class="clear" type="button" title="清空当前对话，包括服务端的上下文记忆" aria-label="清空对话">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                                     <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
                                 </svg>
+                                <span class="clear_label">清空对话</span>
                             </button>
+                        </div>
+                        <div class="chat_container">
                             <div class="chat_talk_container" id="changeborder_div">
                                 <div class="chat_textarea">
                                     <div class="textarea">
-                                        <textarea name="" id="input" cols="10" rows="1" aria-label="输入问题" placeholder="输入你的问题..."></textarea>
+                                        <textarea name="" id="input" cols="10" rows="1" aria-label="输入问题" placeholder="输入你的问题...（Enter 发送，Shift+Enter 换行）"></textarea>
                                     </div>
                                 </div>
                                 <button class="chat_talk_stop is-hidden" id="stop-generating" title="停止生成" aria-label="停止生成">■</button>
@@ -60,6 +93,8 @@
             </div>
         </main>
     </div>
+
+    <div id="toast-container"></div>
 
     <script src="./marked.min.js"></script>
     <script src="./purify.min.js"></script>
