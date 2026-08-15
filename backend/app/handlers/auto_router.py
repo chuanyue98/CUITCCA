@@ -94,11 +94,20 @@ FOLLOWUP_SUGGESTION_MAX_COUNT = 3
 """追问建议条数上限。用户反馈"提问本身就费劲"，2-3 条够给用户一个"往下点"
 的抓手，太多反而增加选择负担，也拉长生成 prompt/解析成本。"""
 
-FOLLOWUP_SUGGESTION_TIMEOUT_SECONDS = 8.0
+FOLLOWUP_SUGGESTION_TIMEOUT_SECONDS = 15.0
 """追问建议生成的超时上限。这次 LLM 调用被刻意放在答案已经流式吐完之后才
 发起（见 ``generate_followup_suggestions`` docstring），不能反过来拖慢或
 卡住主回答，所以给一个比较紧的超时——超时同样走"静默返回空数组"的降级
-路径，不重试、不阻塞。"""
+路径，不重试、不阻塞。
+
+15s 是实测定的，不是拍的：原值 8.0 是按 deepseek-v4-flash 那种"flash"档模型
+的速度定的，换到 z-ai/glm-5.2 后实测这一次调用要 10.96s / 11.43s（六题里真正
+走到 LLM 的两题），**两题都会被 8s 砍掉**，表现是追问建议恒为空、日志里一串
+TimeoutError。取最大观测值 11.43s 上浮约 30% 作为余量。
+
+换模型时这个值要重新量——它跟着生成模型的吞吐走，是本项目里少数几个真的
+与 LLM 选型绑定的常量之一（阈值类常量比的都是本地 embedding/cross-encoder
+分数，与 LLM 无关）。量法见 git 历史里这次改动的说明。"""
 
 
 @dataclass
