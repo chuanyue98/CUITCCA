@@ -43,6 +43,9 @@
 - 🕸️ **Web 数据连接器** — 配置驱动的校园站群增量爬虫，礼貌抓取（robots / 限速 / 退避重试），产出带完整溯源 metadata 的语料
 - ✂️ **表格感知分块** — 表格作为原子单位不被切断，超长表按行切且每片重复表头
 - 🤖 **Agent 工具编排** — 工具注册表 + FunctionAgent，模型自主决定调哪个工具、调几次；护栏含最大轮数、超时、优雅收尾与降级
+- 🛣️ **自动路由** — 一次提问该走低延迟 QAWorkflow 还是多跳 Agent，由后端按**重排后 top1 置信度**自动判定（`handlers/auto_router.py`），用户不再需要理解架构选按钮
+- ⚡ **语义缓存** — 相同/相似问题直接复用历史答案，跳过检索与 LLM 生成（`handlers/qa_cache.py`）；auto 条目（0.92 阈值）与人工沉淀条目（0.82 阈值，允许同义改写）双轨
+- 🔁 **反馈闭环** — 回答底部 👍/👎：👍 把问答沉淀进缓存（Dify annotation reply 同款机制，后续相似问题免检索直答），👎 删缓存条目并进反馈表
 - 🔍 **混合检索** — BM25（jieba 分词）+ Dense 向量，RRF 融合，默认开启
 - ✍️ **条件查询改写** — 检索 top1 置信度低时 LLM 改写问题再查一次（解决"正确文档没进召回"），高置信度零额外开销
 - 🎯 **条件重排** — cross-encoder（bge-reranker-v2-m3），仅低置信度时触发，性能与质量兼顾
@@ -148,6 +151,21 @@ flowchart TB
 把所有查询都塞给 Agent，等于为了少数复杂问题让绝大多数简单问题多付一倍延迟和
 token。所以 Agent 是**新增端点**而不是替换——调用方按问题复杂度选链路。
 
+聊天前端现在更进一步，把这个选择也收回了后端：`/graph/ask_stream` 统一入口先
+按标准路径做一次"压缩问题 -> 检索 -> 重排"，拿**重排后的 top1 cross-encoder
+分数**跟 `AUTO_ROUTE_SCORE_THRESHOLD`（默认 0.6）比较——高置信度直接走
+QAWorkflow（并复用已算好的 nodes/query_str，不重复计算），低置信度或检索为空
+才升级到 FunctionAgent。路由判定依据、阈值校准数据和降级规则见
+`handlers/auto_router.py` 模块 docstring（关键点：RRF 融合分数对"覆盖 vs 未
+覆盖"没有区分度，不能拿来做路由信号，必须用重排后分数）。
+
+再往前一步是**语义缓存**（`handlers/qa_cache.py`）：`/ask_stream` 在路由判定
+**之前**先查缓存，命中（`route.mode="cache"`）直接复用历史答案，连检索和 LLM
+生成都省了。缓存分 auto（每次成功问答自动写入，0.92 阈值，只复用几乎逐字相同
+的问题）和 curated（👍 人工沉淀，0.82 阈值，允许同义改写）两种，阈值依据是
+"自动条目的答案没被人背过书，宁可 miss 也不给错"。回答底部的 👍/👎 按钮就是
+这个闭环的入口，见 [反馈闭环](#功能列表) 功能。
+
 Agent 的护栏（面试常问，实现在 `backend/app/agents/agent_workflow.py`）：
 
 - **最大工具调用轮数**用 `FunctionAgent.run(max_iterations=..., early_stopping_method="generate")`：
@@ -214,7 +232,9 @@ flowchart LR
 
 详细的模块职责、设计决策与数据流分析见 [架构文档](docs/architecture.md)；
 数据来源、采集方式与合规声明见 [数据来源文档](docs/data-sources.md)；
-用本项目面试的讲解脚本与面试官追问的标准答案见 [面试讲稿指南](docs/interview-guide.md)。
+用本项目面试的讲解脚本与面试官追问的标准答案见 [面试讲稿指南](docs/interview-guide.md)；
+"为什么不用 GraphRAG"的完整论证（校园场景 Agent 多跳 vs 图索引）见
+[GraphRAG 调研评估](docs/graphrag-assessment.md)。
 
 ---
 
@@ -241,8 +261,9 @@ uv sync
 cp backend/.env.example backend/.env
 #   编辑 backend/.env，至少填入 OPENAI_API_KEY
 
-# 4. 启动后端（开发模式，热重载）
-make dev
+# 4. 启动后端
+./backend.bash          # 一键启动（推荐，Linux / macOS）
+# backend.bat           # Windows 对应脚本
 ```
 
 启动后访问：
@@ -252,6 +273,45 @@ make dev
 - ReDoc：`http://localhost:8522/redoc`
 
 > 服务默认监听 `0.0.0.0:8522`，可由 `HOST` / `PORT` 环境变量覆盖。
+
+### 一键启动脚本做了什么事
+
+`backend.bash`（Windows 用 `backend.bat`）依次完成四件事：
+
+1. **清理 8522 端口**：端口已被占用时先终止占用进程再启动，避免重复实例
+2. **准备虚拟环境**：`.venv` 目录不存在时自动执行 `uv sync` 安装全部依赖
+3. **准备环境变量**：`backend/.env` 不存在时自动从 `.env.example` 复制
+4. **后台守护启动**：`nohup` 常驻运行，进程崩溃 1 秒后自动重启，日志写入项目根目录 `fastapi.log`
+
+验证是否启动成功：
+
+```bash
+curl http://localhost:8522/          # 期望返回 {"Hello":"CUITCCA"}
+tail -f fastapi.log                  # 出现 "Application startup complete" 即就绪
+```
+
+停止 / 重启：**再跑一次脚本即可**（会自动清掉旧进程）；手动停止用
+`pkill -f backend/app/main.py`。
+
+> **首次启动较慢**：会下载嵌入模型（BAAI/bge-m3）与重排模型
+> （bge-reranker-v2-m3，约 2.2GB），耗时取决于网络；期间 CPU 占用高、
+> 日志停在模型加载属于正常现象。模型缓存后每次启动约 10~30 秒。
+>
+> **常见坑：`.venv` 存在但依赖没装**。脚本只在 `.venv` **目录不存在**时才
+> 触发 `uv sync`，若目录被提前建过（空壳），脚本会跳过安装直接启动导致报错。
+> 遇到这种情况手动执行一次 `uv sync`（可选加 `--extra ocr` 启用图片 OCR）
+> 即可。
+
+不想用守护脚本时，也可以前台直接跑（Ctrl+C 即停）：
+
+```bash
+uv run python backend/app/main.py     # 推荐，等价于脚本的启动方式
+# 或
+make dev                              # 开发模式（热重载）
+# 注意：make dev 内部调用 `python`，要求当前 shell 能解析到 venv 里的
+# python（先 `source .venv/bin/activate` 或把 .venv/bin 加进 PATH），
+# 裸 shell 直接 make dev 会报 command not found / ModuleNotFoundError。
+```
 
 ### 准备知识库数据
 
@@ -291,7 +351,7 @@ make frontend-build     # 构建生产产物到 backend/app/static/
 
 ### 启动脚本
 
-仓库附带便捷脚本：
+仓库附带守护进程式启动脚本（行为、验证与排障见 [快速开始-一键启动脚本](#一键启动脚本做了什么事)）：
 
 ```bash
 ./backend.bash     # Linux / macOS
@@ -336,6 +396,10 @@ backend.bat        # Windows
 | `RERANK_TOP_N` | `5` | Rerank 后保留 top N |
 | `RERANK_SCORE_THRESHOLD` | `0.75` | top1 分数 >= 此值时跳过 rerank |
 | `RERANKER_MODEL` | `BAAI/bge-reranker-v2-m3` | cross-encoder 模型 |
+| `QA_CACHE_ENABLED` | `True` | 语义缓存开关（相同/相似问题免检索直答） |
+| `QA_CACHE_AUTO_THRESHOLD` | `0.92` | 自动缓存条目的命中阈值（几乎逐字相同才复用） |
+| `QA_CACHE_CURATED_THRESHOLD` | `0.82` | 人工沉淀（👍）条目的命中阈值（允许同义改写） |
+| `QA_CACHE_MAX_AUTO_ENTRIES` | `500` | auto 条目容量上限，超出按命中次数驱逐最不常用的 |
 
 ### 存储路径配置
 
@@ -395,6 +459,17 @@ backend.bat        # Windows
 后者用 **NDJSON**（`application/x-ndjson`，每行一个 JSON 事件）而不是纯 token 流——
 Agent 的回答要经过不确定次数的工具调用，只吐 token 看不到"中间发生了什么"，
 把工具调用过程也作为独立事件暴露出来才有可观测性。
+
+**自动路由端点**：`POST /graph/ask_stream` —— 聊天前端统一入口，NDJSON 事件流
+（`route` 路由判定 → `token` 增量 → 可选 `tool_call`/`tool_result`（仅升级到
+Agent 时）→ `done` → `suggestions` 追问建议）。`route.mode` 取值：`standard`
+（零决策开销 QAWorkflow）/ `agent`（低置信度升级多跳查证）/ `cache`（语义缓存
+命中，跳过检索与生成）。前端不需要选模式，路由由后端自动判定，见
+[两条问答链路](#两条问答链路为什么不是全都走-agent) 一节。
+
+**反馈闭环端点**：`POST /graph/qa_feedback`（`query` + `response` + `vote`，
+`vote=up` 👍 沉淀进语义缓存、`vote=down` 👎 删缓存条目并记入反馈表）·
+`POST /graph/cache_stats`（缓存规模统计：total / auto / curated）
 
 ### `/manage` — 管理接口（严格鉴权）
 

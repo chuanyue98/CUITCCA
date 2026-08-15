@@ -17,16 +17,56 @@ cp backend/.env.example backend/.env
 
 ## Run Backend
 
+### 一键启动（推荐）
+
 ```bash
-make dev
-# or
-cd backend && uv run python app/main.py
+./backend.bash     # Linux / macOS
+# backend.bat      # Windows
 ```
 
-Server runs at `http://localhost:8522`.
+脚本依次完成：清理 8522 端口占用 → `.venv` 不存在时 `uv sync` 装依赖 →
+`backend/.env` 不存在时从 `.env.example` 复制 → `nohup` 守护启动（崩溃自动
+重启），日志写项目根目录 `fastapi.log`。**停止 / 重启 = 再跑一次脚本**
+（会自动清掉旧进程）。
+
+验证：
+
+```bash
+curl http://localhost:8522/   # 期望 {"Hello":"CUITCCA"}
+tail -f fastapi.log           # "Application startup complete" 即就绪
+```
+
+### 前台运行（调试用）
+
+```bash
+uv run python backend/app/main.py   # Ctrl+C 停止
+# 开发模式（热重载）：
+make dev
+```
+
+> **`make dev` 的坑**：它内部执行 `cd backend && python -m uvicorn ...`，依赖
+> 当前 shell 能把 `python` 解析到 venv（先 `source .venv/bin/activate` 或把
+> `.venv/bin` 加进 `PATH`）。本机若没装系统 Python 或 venv 缺 `activate`，裸
+> shell 直接 `make dev` 会报 `command not found` / `ModuleNotFoundError`，此时
+> 一律改用 `./backend.bash` 或 `uv run`。
+
+Server runs at `http://localhost:8522`（`/web/` 前端，`/docs` API 文档）。
 
 - `CUITCCA_API_KEY` 留空 → 所有读写接口自动跳过鉴权（便于本地联调）。
 - 配置后 → 强制 Bearer 鉴权。
+
+### 启动排障
+
+| 现象 | 原因 / 处理 |
+|------|-------------|
+| 启动即报 `ModuleNotFoundError` | `.venv` 是空壳（目录在但依赖没装）：脚本只在目录不存在时才 `uv sync`，手动补一次 `uv sync`（可选 `--extra ocr`） |
+| 端口 8522 被占用 | 脚本会自动杀掉占用进程；手动 `lsof -i :8522` 查、`kill <pid>` 清 |
+| 首次启动很慢 / CPU 满载 | 正常：正在下载嵌入与重排模型（bge-reranker-v2-m3 约 2.2GB），缓存后每次约 10~30 秒 |
+| `fastapi.log` 一直是空的 | 启动早期输出被缓冲 / 模型加载未完成；出现 `Application startup complete` 后再看 |
+| 后台进程随终端/宿主环境退出 | `nohup` 能扛 SIGHUP，但若宿主环境按进程组回收子进程（如 CI / agent 沙箱、SSH 会话异常断开），守护循环仍可能被带走；此时重新跑一次 `./backend.bash` 拉起即可 |
+| `.venv/bin/activate` 不存在 | 个别 uv 版本创建的 venv 无 activate 脚本，脚本里 `source` 那步报错但**不影响启动**（守护进程直接用 `.venv/bin/python`） |
+
+> 也见根目录 `README.md` 的 [一键启动脚本做了什么事](../README.md#一键启动脚本做了什么事) 一节。
 
 ## Run Frontend (dev mode with hot reload)
 
