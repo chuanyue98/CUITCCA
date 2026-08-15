@@ -397,6 +397,9 @@ async function streamAsk(
     let fullText = '';
     let firstChunk = true;
     let routeBadge: HTMLElement | null = null;
+    // 后端发过 error 事件（Agent 决策 LLM 异常、超时等）。置位后影响三处收尾
+    // 行为：不补"我还不知道"兜底、不写历史、不把错误文案混进答案正文。
+    let runFailed = false;
     let traceEl: HTMLElement | null = null;
     const runningTraces: Array<{ status: HTMLElement; item: HTMLElement; toolName: string; done: boolean }> = [];
 
@@ -547,13 +550,31 @@ async function streamAsk(
                         finishToolTraceItem(trace.status, trace.item, event.is_error !== true);
                     }
                 } else if (event.type === 'error') {
+                    // 关键：**不能**把错误文案拼进 fullText。Agent 在调工具前会
+                    // 先流出一段过程独白（"我来帮您查询…让我先检索校园知识库。"），
+                    // 正常跑完时后面跟着真答案还算通顺，但中途失败（实测是 LLM
+                    // 供应商 429）时留在屏幕上的只有独白，再拼上"刚才没能查完"
+                    // 就成了一段前言不搭后语的东西，用户以为是模型在胡言乱语。
+                    // 改成：已经流出的内容原样保留，错误作为独立区块单独渲染，
+                    // 两者视觉上分开，谁是答案、谁是故障提示一目了然。
+                    runFailed = true;
                     if (firstChunk) {
                         answerEl.innerHTML = '';
                         firstChunk = false;
                     }
-                    const msg = String(event.message || '出错了，请稍后再试一下');
-                    fullText += msg;
-                    scheduleRender(fullText);
+                    cancelPendingRaf();
+                    flushRender();
+                    const errorEl = document.createElement('div');
+                    errorEl.className = 'answer_error';
+                    errorEl.textContent = String(event.message || '出错了，请稍后再试一下');
+                    answerEl.insertAdjacentElement('afterend', errorEl);
+                    // 失败时 route badge 停在"正在深入查证…"会像是还在跑（清除
+                    // 它的代码只在 done 分支里，而失败路径永远走不到 done）。
+                    if (routeBadge) {
+                        routeBadge.textContent = '查证未完成';
+                        routeBadge.classList.add('is-failed');
+                    }
+                    scrollToBottom();
                 } else if (event.type === 'done') {
                     // done 是主回答结束的信号，带 final response（agent 分支还有
                     // truncated 标记）。response 已经在 token 事件里流式展示过了。
@@ -588,12 +609,19 @@ async function streamAsk(
         cancelPendingRaf();
         flushRender();
 
-        if (!fullText.trim()) {
+        // 一个字都没流出来时才补兜底文案；runFailed 时错误区块已经把情况说清楚
+        // 了，再叠一句"我还不知道"是第二段互相矛盾的提示。
+        if (!fullText.trim() && !runFailed) {
             fullText = '我还不知道，请反馈给我吧';
             answerEl.innerHTML = renderMarkdown(fullText);
         }
 
-        appendHistory('bot', fullText);
+        // 失败的这轮不写历史：fullText 此时可能只是半截过程独白，存进
+        // localStorage 会在刷新后被当成一条正常回答重放，而且因为没有 done
+        // 事件、👍👎 反馈行也没挂上，用户连纠正它的入口都没有。
+        if (!runFailed) {
+            appendHistory('bot', fullText);
+        }
         await loadCitations(citationsEl);
     } catch (error) {
         cancelPendingRaf();

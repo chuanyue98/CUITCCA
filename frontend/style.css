@@ -1177,6 +1177,27 @@ input:focus, select:focus, textarea:focus {
   animation: pulse-soft 1.4s ease-in-out infinite;
 }
 
+/* 查证中断：呼吸动画必须停掉——失败之后还在脉动会读成"仍在进行中"。 */
+.route_badge.is-failed::before {
+  background: var(--danger-text);
+  animation: none;
+}
+
+/* ===== 回答区的故障提示 =====
+   独立区块，不并进 .replycontent 的 Markdown 正文里：流式失败时已经流出的
+   那半截文字仍然原样保留，故障提示单独成块，用户一眼能分清哪段是模型说的、
+   哪段是系统在报错。 */
+.answer_error {
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-left: 3px solid var(--danger-text);
+  border-radius: 0 6px 6px 0;
+  background: var(--danger-soft);
+  color: var(--danger-text-strong);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 /* ===== 回答元信息条 ===== */
 .answer_meta {
   display: flex;
