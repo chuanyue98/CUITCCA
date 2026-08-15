@@ -31,7 +31,7 @@
                             <div class="content_bot_img"></div>
                             <div class="content_bot">
                                 <p>你好！我是成信大校园助手，关于学校的问题都可以问我。</p>
-                                <p>不确定问什么的话，试试下面这些：</p>
+                                <p>不确定问什么的话，试试下面这些，也可以接着追问「需要带什么证件？」体验多轮对话：</p>
                             </div>
                         </div>
                         <!-- 空状态引导：原来首屏只有一句欢迎语 + 一大片空白，
@@ -81,12 +81,13 @@
                             <div class="chat_talk_container" id="changeborder_div">
                                 <div class="chat_textarea">
                                     <div class="textarea">
-                                        <textarea name="" id="input" cols="10" rows="1" aria-label="输入问题" placeholder="输入你的问题...（Enter 发送，Shift+Enter 换行）"></textarea>
+                                        <textarea name="" id="input" cols="10" rows="1" aria-label="输入问题" placeholder="输入你的问题...（Enter 发送，Shift+Enter 换行）" maxlength="5000"></textarea>
                                     </div>
                                 </div>
                                 <button class="chat_talk_stop is-hidden" id="stop-generating" title="停止生成" aria-label="停止生成">■</button>
                                 <button class="chat_talk_submit" id="submit" aria-label="发送">&#10140;</button>
                             </div>
+                            <div class="chat_input_hint">Enter 发送 · Shift+Enter 换行</div>
                         </div>
                     </footer>
                 </div>

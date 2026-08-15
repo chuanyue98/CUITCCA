@@ -7,9 +7,15 @@ import { escapeHtml } from "./utils/dom";
 
 
 const baseURL = '/index';
+const LAST_INDEX_KEY = 'cuitcca_last_index_v1';
 let currentActiveIndex: string | null = null;
 let summaryUpdateTimer: ReturnType<typeof setTimeout> | null = null;
 let updateTimers: Record<string, ReturnType<typeof setTimeout>> = {}; // 存储各个节点的定时器
+
+// 检查是否有未保存的节点编辑（用于切换索引前的二次确认）
+function hasUnsavedNodeEdits(): boolean {
+    return Object.keys(updateTimers).length > 0 || !!summaryUpdateTimer;
+}
 
 // 全局加载遮罩控制
 function showLoading(text = '正在处理中...') {
@@ -68,11 +74,13 @@ async function loadIndexes() {
             select.appendChild(option);
         });
 
-        // 默认选中第一个
+        // 默认选中: 优先 localStorage 记忆的上次索引, 其次第一个
         if (!currentActiveIndex || !data.indexes.includes(currentActiveIndex)) {
-            currentActiveIndex = data.indexes[0];
+            const last = localStorage.getItem(LAST_INDEX_KEY);
+            currentActiveIndex = (last && data.indexes.includes(last)) ? last : data.indexes[0];
         }
         select.value = currentActiveIndex!;
+        localStorage.setItem(LAST_INDEX_KEY, currentActiveIndex!);
 
         // 加载摘要和节点
         loadIndexSummary(currentActiveIndex!);
@@ -84,8 +92,20 @@ async function loadIndexes() {
     }
 }
 
-// 绑定下拉选择事件
+// 绑定下拉选择事件（切换前若有未保存修改, 弹二次确认）
 document.getElementById('index-select')!.addEventListener('change', (e: Event) => {
+    const target = e.target as HTMLSelectElement | null;
+    const newValue = target ? target.value : null;
+
+    // 切换前检查未保存修改
+    if (newValue !== currentActiveIndex && hasUnsavedNodeEdits()) {
+        if (!window.confirm('当前索引有未保存的修改（节点或摘要），切换会丢弃这些修改。确定切换吗？')) {
+            // 用户取消, 还原 select 显示为 currentActiveIndex
+            if (currentActiveIndex) (target as HTMLSelectElement).value = currentActiveIndex;
+            return;
+        }
+    }
+
     if (summaryUpdateTimer) {
         clearTimeout(summaryUpdateTimer);
     }
@@ -94,9 +114,9 @@ document.getElementById('index-select')!.addEventListener('change', (e: Event) =
     }
     updateTimers = {};
     if (searchDebounceTimer) { clearTimeout(searchDebounceTimer); searchDebounceTimer = null; }
-    const target = e.target as HTMLSelectElement | null;
-    currentActiveIndex = target ? target.value : null;
+    currentActiveIndex = newValue;
     if (currentActiveIndex) {
+        localStorage.setItem(LAST_INDEX_KEY, currentActiveIndex);
         loadIndexSummary(currentActiveIndex);
         if (typeof loadIndexNodes === 'function') {
             loadIndexNodes(currentActiveIndex);
@@ -178,6 +198,7 @@ function debouncedUpdateSummary(text: string) {
     }
 
     summaryUpdateTimer = setTimeout(async () => {
+        summaryUpdateTimer = null; // 触发后清空, 避免 hasUnsavedNodeEdits 误报
         if (statusTag) {
             statusTag.innerText = "保存中...";
             statusTag.style.color = "rgb(25, 84, 142)";
@@ -751,6 +772,7 @@ function debouncedUpdateNode(nodeId: string, text: string, statusElement: HTMLEl
     }
 
     updateTimers[nodeId] = setTimeout(async () => {
+        delete updateTimers[nodeId]; // 触发后清空, 避免 hasUnsavedNodeEdits 误报
         statusElement.innerText = "正在自动保存...";
         statusElement.style.color = "rgb(25, 84, 142)";
 

@@ -636,8 +636,31 @@ async function streamAsk(
             return;
         }
         console.error('请求失败:', error);
-        fullText = fullText || ('请求失败: ' + (error instanceof Error ? error.message : String(error)));
+        const errText = '请求失败: ' + (error instanceof Error ? error.message : String(error));
+        fullText = fullText || errText;
+        // 失败气泡: 显示已生成的部分 + 错误信息 + 重试按钮
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'chat_retry_btn';
+        retryBtn.type = 'button';
+        retryBtn.textContent = '🔄 重试';
+        retryBtn.addEventListener('click', () => {
+            // 清空当前气泡内容, 重新发起相同 query 的流式生成
+            answerEl.innerHTML = '';
+            citationsEl.classList.add('is-hidden');
+            citationsEl.innerHTML = '';
+            showThinkingIndicator(answerEl);
+            // 新建一个 abort controller, 避免与已结束的请求冲突
+            const newAbort = new AbortController();
+            activeAbortController = newAbort;
+            // 本地这条链路的流式函数叫 streamAsk，且需要 messageEl（追问建议、
+            // 反馈行都挂在整条消息上，不是只挂答案元素）——远端那版函数名与
+            // 签名都不同，合并时按本地签名改过来。
+            streamAsk(query, answerEl, citationsEl, messageEl).finally(() => setGeneratingUI(false));
+            setGeneratingUI(true);
+            retryBtn.remove();
+        });
         answerEl.innerHTML = renderMarkdown(fullText);
+        answerEl.appendChild(retryBtn);
         appendHistory('bot', fullText);
         finalizeMeta();
     } finally {
@@ -678,6 +701,20 @@ async function loadCitations(citationsEl: HTMLElement) {
             const snippet = document.createElement('div');
             snippet.textContent = node.text.length > 200 ? node.text.slice(0, 200) + '…' : node.text;
             item.appendChild(snippet);
+            // 复制按钮：复制的是**完整**原文，不是上面截断到 200 字的展示片段
+            // ——核对信息时要的是全文。
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'citation_copy_btn';
+            copyBtn.type = 'button';
+            copyBtn.title = '复制';
+            copyBtn.textContent = '📋';
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard?.writeText(node.text).then(() => {
+                    copyBtn.textContent = '✓';
+                    setTimeout(() => { copyBtn.textContent = '📋'; }, 1200);
+                }).catch(() => { /* 静默 */ });
+            });
+            item.appendChild(copyBtn);
             list.appendChild(item);
         });
         toggle.addEventListener('click', () => list.classList.toggle('is-hidden'));

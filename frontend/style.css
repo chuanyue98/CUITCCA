@@ -12,6 +12,7 @@
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;600&display=swap');
 
 /* ===== 设计令牌（浅色） ===== */
 :root {
@@ -427,6 +428,149 @@ html { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; 
 }
 
 .menu_font_row { font-size: 15px; }
+
+/* 侧边栏底部操作按钮（主题切换 / API Key 设置） */
+.side_bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(209, 209, 209, 0.3);
+    flex-shrink: 0;
+}
+.side_action_btn {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid rgba(25, 84, 142, 0.2);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    text-align: left;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.side_action_btn:hover {
+    background: var(--primary-bg);
+    color: var(--primary);
+    border-color: rgba(25, 84, 142, 0.4);
+}
+
+/* API Key 设置弹窗 */
+.apikey_modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: apikey_fadein 0.2s ease;
+}
+@keyframes apikey_fadein { from { opacity: 0; } to { opacity: 1; } }
+.apikey_dialog {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 24px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.apikey_title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.apikey_message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.apikey_input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(25, 84, 142, 0.2);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    background: var(--surface);
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+.apikey_input:focus { border-color: var(--primary); }
+.apikey_actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+.apikey_btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.apikey_btn--ghost {
+    background: transparent;
+    border-color: rgba(209, 209, 209, 0.5);
+    color: var(--text-secondary);
+}
+.apikey_btn--ghost:hover { background: var(--surface-alt); }
+.apikey_btn--primary {
+    background: var(--primary);
+    color: white;
+}
+.apikey_btn--primary:hover { background: var(--primary-light); }
+.apikey_btn--danger {
+    background: transparent;
+    border-color: var(--danger);
+    color: var(--danger);
+    margin-right: auto;
+}
+.apikey_btn--danger:hover { background: var(--danger); color: white; }
+
+/* 手动主题切换: data-theme="dark" 覆盖 prefers-color-scheme */
+html[data-theme="dark"] {
+    --primary: rgb(94, 156, 211);
+    --primary-light: rgb(120, 176, 224);
+    --primary-bg: rgba(94, 156, 211, 0.15);
+    --text-primary: #e4e6eb;
+    --text-secondary: #b0b3b8;
+    --text-tertiary: #8a8d91;
+    --bg-gradient-start: #16181c;
+    --bg-gradient-end: #0e0f11;
+    --surface: #1f2125;
+    --surface-alt: #2a2d32;
+}
+html[data-theme="dark"] body, html[data-theme="dark"] html {
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+}
+html[data-theme="dark"] #side_left,
+html[data-theme="dark"] .headline,
+html[data-theme="dark"] .panel_right,
+html[data-theme="dark"] .node_card,
+html[data-theme="dark"] .glass_card,
+html[data-theme="dark"] .guide_card { background-color: var(--surface) !important; }
+html[data-theme="dark"] .foot_fix { background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); }
+html[data-theme="dark"] .chat_talk_container,
+html[data-theme="dark"] .clear,
+html[data-theme="dark"] .chat_talk_stop { background-color: var(--surface) !important; color: var(--text-primary) !important; }
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] .node_editor,
+html[data-theme="dark"] .summary_textarea,
+html[data-theme="dark"] .form_group input,
+html[data-theme="dark"] .form_group textarea,
+html[data-theme="dark"] .index_select,
+html[data-theme="dark"] .new_index_input,
+html[data-theme="dark"] .node_search_input { background-color: var(--surface); color: var(--text-primary); }
 
 /* ===== 右侧工作区 ===== */
 .side_right {
@@ -1257,12 +1401,110 @@ input:focus, select:focus, textarea:focus {
 .citation_item {
   font-size: 12px;
   color: var(--text-secondary);
+  /* 背景用 --surface-alt 而不是写死的 rgba(0,0,0,0.03)：后者在深色模式下
+     等于"更黑一点"，几乎看不出层次。 */
   background: var(--surface-alt);
   border-left: 3px solid var(--primary);
   padding: 8px 12px;
   border-radius: 8px;
   line-height: 1.6;
+  /* 给右上角的 .citation_copy_btn 腾出绝对定位的锚点与避让空间 */
+  position: relative;
+  padding-right: 32px;
 }
+.citation_copy_btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+.citation_copy_btn:hover { opacity: 1; background: rgba(0,0,0,0.06); }
+
+/* 欢迎示例问题气泡 */
+.welcome_examples {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(25, 84, 142, 0.2);
+}
+.welcome_examples_hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+.example_questions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.example_q {
+    background: var(--primary-bg);
+    border: 1px solid rgba(25, 84, 142, 0.2);
+    color: var(--primary);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.example_q:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(25, 84, 142, 0.2);
+}
+
+/* 失败重试按钮 */
+.chat_retry_btn {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 5px 14px;
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: 14px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.chat_retry_btn:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* 输入框快捷键提示 */
+.chat_input_hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    padding-bottom: 4px;
+    letter-spacing: 0.04em;
+}
+
+/* Toast 关闭按钮 (仅 error/warning 出现) */
+.toast-error, .toast-warning { position: relative; padding-right: 24px; }
+.toast_close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1;
+    user-select: none;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+.toast_close:hover { color: white; background: rgba(255, 255, 255, 0.15); }
 
 .citation_head {
   font-size: 11px;
@@ -1401,74 +1643,233 @@ input:focus, select:focus, textarea:focus {
 /* ======================================================================
    知识库管理页面 (manage.html)
    ====================================================================== */
+/* ===== Editorial Operations Console (manage.html) ===== */
+
+/* — Design tokens, scoped to .console-page — */
+.console-page {
+  --ed-paper: #FAF8F3;
+  --ed-paper-alt: #F4F1E8;
+  --ed-surface: #FFFDF7;
+  --ed-ink: #1f1c16;
+  --ed-ink-2: #6b6358;
+  --ed-ink-3: #9a9388;
+  --ed-rule: #ddd5c6;
+  --ed-rule-2: #c4ba9f;
+  --ed-accent: #1b3a5f;
+  --ed-accent-2: #2c5680;
+  --ed-accent-soft: rgba(27, 58, 95, 0.06);
+  --ed-success: #3d6b3d;
+  --ed-danger: #8b2c2c;
+  --ed-warning: #8a5a1a;
+
+  background: var(--ed-paper);
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ed-ink);
+}
+
+/* — Typography primitives — */
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ed-ink-3);
+  font-weight: 500;
+}
+.section_no {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ed-accent);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* — Masthead (replaces .headline on manage) — */
+.console_masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: var(--ed-paper);
+  border-bottom: 1px solid var(--ed-ink);
+  flex-shrink: 0;
+}
+.masthead_brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.masthead_toggle {
+  background: none;
+  border: 1px solid var(--ed-rule);
+  color: var(--ed-ink);
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.masthead_toggle:hover {
+  border-color: var(--ed-ink);
+  color: var(--ed-accent);
+}
+.masthead_wordmark {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.masthead_title {
+  font-family: 'Fraunces', 'Noto Serif SC', Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+  font-variation-settings: 'opsz' 24;
+  letter-spacing: -0.01em;
+  color: var(--ed-ink);
+  line-height: 1.2;
+}
+.masthead_title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ed-accent);
+}
+.masthead_meta {
+  display: flex;
+  gap: 28px;
+}
+.meta_kv {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.meta_k {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-ink-3);
+}
+.meta_v {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ed-ink-2);
+  font-weight: 500;
+}
+
+/* — Panel heading (§ markers) — */
+.console_panel_head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ed-rule);
+  margin-bottom: 18px;
+}
+.console_panel_head--inline {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  margin-right: auto;
+}
+.console_panel_title_group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.console_panel_title {
+  font-family: 'Fraunces', 'Noto Serif SC', Georgia, serif;
+  font-size: 17px;
+  font-weight: 500;
+  font-variation-settings: 'opsz' 18;
+  color: var(--ed-ink);
+  line-height: 1.3;
+}
+
+/* — Console panel (replaces .glass_card on manage) — */
+.console_panel {
+  background: var(--ed-surface);
+  border: 1px solid var(--ed-rule);
+  padding: 22px 24px;
+  border-radius: 2px;
+}
+.console_panel + .console_panel {
+  margin-top: 20px;
+}
+
+/* — Dashboard layout — */
 .dashboard_container {
   display: flex;
   flex-direction: row;
   flex-grow: 1;
   width: 100%;
-  padding: 20px;
-  gap: 20px;
+  padding: 24px 32px;
+  gap: 24px;
   overflow: hidden;
 }
-
 .panel_left {
   display: flex;
   flex-direction: column;
-  width: 45%;
+  width: 44%;
   min-width: 400px;
   gap: 20px;
   height: 100%;
   overflow-y: auto;
-  padding-right: 5px;
+  padding-right: 4px;
 }
-
 .panel_right {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   height: 100%;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-sm);
+  background: var(--ed-surface);
+  border: 1px solid var(--ed-rule);
+  border-radius: 2px;
   overflow: hidden;
+  /* flex 子元素默认 min-width:auto，会被内容固有宽度撑破容器（同
+     .index_select 那处注释说的溢出问题）。 */
   min-width: 0;
 }
 
-/* Tabs */
+/* — Tabs — */
 .tabs_header {
   display: flex;
-  border-bottom: 1px solid var(--border-faint);
-  margin-bottom: 16px;
-  gap: 18px;
+  border-bottom: 1px solid var(--ed-ink);
+  margin-bottom: 18px;
+  gap: 0;
 }
-
 .tab_btn {
-  padding: 10px 4px;
+  padding: 8px 0;
+  margin-right: 24px;
   border: none;
   background: none;
   cursor: pointer;
-  color: var(--text-tertiary);
+  color: var(--ed-ink-3);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   font-weight: 500;
-  font-size: 13.5px;
   position: relative;
-  transition: color 0.2s;
+  transition: color 0.15s;
 }
-
-.tab_btn:hover { color: var(--primary); }
-
-.tab_btn.active { color: var(--primary); font-weight: 600; }
-
+.tab_btn:hover { color: var(--ed-ink-2); }
+.tab_btn.active {
+  color: var(--ed-ink);
+  font-weight: 600;
+}
 .tab_btn.active::after {
   content: '';
   position: absolute;
   bottom: -1px;
   left: 0;
   width: 100%;
-  height: 2.5px;
-  border-radius: 3px;
-  background: var(--accent-grad);
+  height: 2px;
+  background-color: var(--ed-accent);
 }
+.tab_content { display: none; }
+.tab_content.active { display: block; }
 
 .tab_content { display: none; }
 .tab_content.active { display: block; }
@@ -1869,13 +2270,26 @@ input:focus, select:focus, textarea:focus {
   flex-shrink: 0;
 }
 
-/* 索引管理 */
+/* — Index action row —
+   注意：上面本地那版管理页样式在前、远端 Editorial Console 这版在后，
+   同名选择器由后者覆盖（视觉以远端 #33 的重构为准），本地独有的功能样式
+   （Doc ID 徽标、Node ID 复制、分页跳转/每页条数、删除分级）因为选择器不
+   重名而完整保留。合并后可以再做一轮去重，但那属于纯清理，不在本次合并
+   的范围内。 */
 .index_action_row {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 14px;
 }
-
+.index_action_row .field_label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ed-ink-3);
+  white-space: nowrap;
+}
 .index_select {
   flex-grow: 1;
   /* flex 子元素默认 min-width:auto，不能收缩到内容固有宽度以下——而 select
@@ -1883,48 +2297,95 @@ input:focus, select:focus, textarea:focus {
      .panel_left 被压到 400px 定宽时，这一行连同 .new_index_input 都会溢出
      46px，导致同行的"删除当前"按钮右半边被外层 overflow-y:auto 裁掉。 */
   min-width: 0;
-  padding: 10px 15px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  outline: none;
-  background: var(--surface);
+  padding: 8px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--ed-rule);
+  background: var(--ed-paper);
+  color: var(--ed-ink);
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  transition: border-color 0.15s;
 }
-
+.index_select:focus { border-color: var(--ed-accent); }
 .index_create_row {
   display: flex;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
-
 .new_index_input {
   flex-grow: 1;
   /* 同 .index_select：input 默认 size 撑出的固有宽度会顶破 flex 容器的
      min-width:auto，导致这一行在 .panel_left 收窄到 400px 时溢出。 */
   min-width: 0;
-  padding: 10px 15px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-faint);
+  padding: 8px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--ed-rule);
+  background: var(--ed-paper);
+  color: var(--ed-ink);
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
+  font-size: 13px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s;
 }
+.new_index_input:focus { border-color: var(--ed-accent); }
 
+/* — Buttons (editorial: flat, hairline, no gradient) — */
+.console-page .btn {
+  padding: 8px 16px;
+  border: 1px solid var(--ed-ink);
+  border-radius: 2px;
+  background: var(--ed-ink);
+  color: var(--ed-paper);
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.console-page .btn-primary {
+  background: var(--ed-accent);
+  border-color: var(--ed-accent);
+  color: #fff;
+}
+.console-page .btn-primary:hover {
+  background: var(--ed-accent-2);
+  border-color: var(--ed-accent-2);
+}
+.console-page .btn-success {
+  background: transparent;
+  border-color: var(--ed-ink);
+  color: var(--ed-ink);
+}
+.console-page .btn-success:hover {
+  background: var(--ed-ink);
+  color: var(--ed-paper);
+}
+.console-page .btn-danger {
+  background: transparent;
+  border-color: var(--ed-danger);
+  color: var(--ed-danger);
+}
+.console-page .btn-danger:hover {
+  background: var(--ed-danger);
+  color: #fff;
+}
 .btn_save_disk {
-  padding: 0 16px;
-  border-radius: var(--radius-sm);
+  padding: 0 14px;
   display: flex;
   align-items: center;
-  gap: 6px;
   white-space: nowrap;
 }
 
+/* — Summary section — */
 .summary_section {
-  border-top: 1px dashed var(--border-faint);
-  padding-top: 15px;
+  border-top: 1px solid var(--ed-rule);
+  padding-top: 16px;
 }
-
 .summary_header {
   display: flex;
   justify-content: space-between;
@@ -1932,20 +2393,24 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 8px;
   gap: 8px;
 }
-
 .summary_label {
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-#summary-status-tag {
-  font-size: 12px;
-  color: var(--text-tertiary);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ed-ink-2);
   font-weight: 500;
-  transition: color 0.2s;
 }
-
+.summary_label_en {
+  color: var(--ed-ink-3);
+  font-weight: 400;
+}
+#summary-status-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ed-ink-3);
+  letter-spacing: 0.08em;
+}
 .summary_textarea {
   width: 100%;
   /* 注意：这个 textarea 没有 rows 属性（默认 rows=2），也没设 height，
@@ -1953,30 +2418,58 @@ input:focus, select:focus, textarea:focus {
      只够显示 3 行，长摘要根本读不全；把 max-height 调大是无效的（试过，
      可见行数纹丝不动），真正要抬高的是 min-height。这里放宽到 200px（约 8 行）。 */
   min-height: 200px;
-  /* max-height: 150px 删掉——它只会限制用户拖拽 resize: vertical 能拉到多大，
-     留着反而碍事，改成 none 不设上限。 */
+  /* max-height 不设上限——它只会限制用户拖拽 resize: vertical 能拉到多大，
+     留着反而碍事。 */
   max-height: none;
-  background: var(--surface-alt);
-  padding: 12px;
-  border-radius: 10px;
+  background: var(--ed-paper);
+  padding: 10px 12px;
+  border-radius: 2px;
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--ed-ink);
   line-height: 1.6;
-  border: 1px solid var(--border-faint);
+  border: 1px solid var(--ed-rule);
   outline: none;
   resize: vertical;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s;
 }
+.summary_textarea:focus { border-color: var(--ed-accent); }
 
-.summary_textarea:focus {
-  border-color: var(--primary);
-  box-shadow: var(--focus-ring);
-  background: var(--surface);
+/* — Drag zone — */
+.drag_zone {
+  border: 1px dashed var(--ed-rule-2);
+  border-radius: 2px;
+  padding: 28px 20px;
+  text-align: center;
+  background: var(--ed-paper);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
 }
-
-.glass_card_mt { margin-top: 20px; }
+.drag_zone.dragover {
+  border-color: var(--ed-accent);
+  background: var(--ed-accent-soft);
+}
+.drag_zone svg {
+  color: var(--ed-ink-3);
+  margin: 0 auto 10px auto;
+  display: block;
+}
+.drag_zone_main_text {
+  font-size: 13px;
+  color: var(--ed-ink-2);
+  font-weight: 500;
+}
+.drag_zone_hint_text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ed-ink-3);
+  margin-top: 6px;
+  letter-spacing: 0.05em;
+}
 .file_input_hidden { display: none; }
+.glass_card_mt { margin-top: 20px; }
 
+/* 上传进度列表（远端 Editorial Console 那一版没有这组样式，保留本地实现） */
 .upload_progress_list {
   margin-top: 15px;
   font-size: 12px;
@@ -1998,55 +2491,345 @@ input:focus, select:focus, textarea:focus {
 .upload_progress_msg--success { color: var(--success); }
 .upload_progress_msg--error { color: var(--danger); }
 
-/* 节点搜索 */
-.node_search_header {
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border-subtle);
+/* — Form — */
+.form_group {
+  margin-bottom: 14px;
+}
+.form_group label {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-shrink: 0;
-  background: var(--surface-alt);
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-ink-2);
+  font-weight: 500;
+}
+.field_hint {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: var(--ed-ink-3);
+  font-weight: 400;
+}
+.form_group input, .form_group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--ed-rule);
+  background: var(--ed-paper);
+  color: var(--ed-ink);
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form_group input:focus, .form_group textarea:focus {
+  border-color: var(--ed-accent);
+}
+.btn-submit {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--ed-ink);
+  border-radius: 2px;
+  background: var(--ed-ink);
+  color: var(--ed-paper);
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-submit:hover {
+  background: var(--ed-accent);
+  border-color: var(--ed-accent);
+}
+.btn-submit-qa {
+  background: transparent;
+  color: var(--ed-ink);
+}
+.btn-submit-qa:hover {
+  background: var(--ed-ink);
+  color: var(--ed-paper);
+  border-color: var(--ed-ink);
 }
 
+/* — Node search header — */
+.node_search_header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--ed-rule);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  background: var(--ed-paper);
+}
 .panel-heading_inline {
   margin-right: auto;
   margin-bottom: 0;
 }
-
 .node_search_input {
-  width: 220px;
-  padding: 9px 13px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-faint);
-  outline: none;
+  width: 240px;
+  padding: 6px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--ed-rule);
+  background: var(--ed-surface);
+  color: var(--ed-ink);
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
   font-size: 13px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  transition: border-color 0.15s;
 }
+.node_search_input:focus { border-color: var(--ed-accent); }
 
+/* — Node list viewport — */
 .node_list_viewport {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 18px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background-color: var(--surface);
+  background: var(--ed-surface);
 }
-
 .node_empty_hint {
   text-align: center;
-  color: var(--text-tertiary);
+  color: var(--ed-ink-3);
   margin-top: 48px;
-  font-size: 13px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
 }
-
 .node_empty_hint--primary {
-  color: var(--primary);
+  color: var(--ed-accent);
   font-weight: 500;
 }
+.node_empty_hint--error {
+  color: var(--ed-danger);
+}
 
-.node_empty_hint--error { color: var(--danger); }
+/* — Node card — */
+.node_card {
+  background: var(--ed-surface);
+  border: 1px solid var(--ed-rule);
+  border-radius: 2px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s;
+}
+.node_card:hover {
+  border-color: var(--ed-rule-2);
+}
+.node_meta_row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ed-ink-3);
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--ed-rule);
+  padding-bottom: 8px;
+}
+.node_doc_id {
+  background: var(--ed-accent-soft);
+  color: var(--ed-accent);
+  padding: 2px 6px;
+  border-radius: 1px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.node_id_text {
+  font-family: 'IBM Plex Mono', monospace;
+}
+.node_editor {
+  width: 100%;
+  /* 80px 装不下：语料分块长度中位数 564 字、最大 3720 字，实测 10/10 的
+     textarea 都要滚动，且卡片内滚动和外层 #node-list-viewport 滚动嵌套，
+     滚轮容易滚错层。200px（约 9 行）能让多数分块一屏读完，resize:vertical
+     仍在，用户可以自己再拉高。 */
+  min-height: 200px;
+  resize: vertical;
+  padding: 8px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--ed-rule);
+  background: var(--ed-paper);
+  color: var(--ed-ink);
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.node_editor:focus { border-color: var(--ed-accent); }
+.node_actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.node_action_buttons {
+  display: flex;
+  gap: 16px;
+}
+.node_status_tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ed-ink-3);
+  letter-spacing: 0.06em;
+}
+.btn-delete-node {
+  background: none;
+  border: none;
+  color: var(--ed-danger);
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0;
+}
+.btn-delete-node:hover { text-decoration: underline; }
+.btn-delete-doc { color: var(--ed-warning); }
+
+/* — Pagination — */
+#pagination-bar {
+  height: 48px;
+  border-top: 1px solid var(--ed-rule);
+  background: var(--ed-paper);
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+#pagination-bar button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.4 !important;
+}
+.page_indicator {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ed-ink-2);
+  letter-spacing: 0.05em;
+}
+.pagination_buttons {
+  display: flex;
+  gap: 8px;
+}
+.pagination_btn {
+  padding: 5px 14px;
+  border-radius: 2px;
+  border: 1px solid var(--ed-rule);
+  background: var(--ed-surface);
+  color: var(--ed-ink);
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  transition: border-color 0.15s, background 0.15s;
+}
+.pagination_btn:hover {
+  border-color: var(--ed-ink);
+  background: var(--ed-paper);
+}
+
+/* — Upload progress — */
+.upload_progress_list {
+  margin-top: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ed-ink-2);
+}
+.upload_progress_item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+.upload_progress_item--primary { color: var(--ed-accent); }
+.upload_progress_item--success { color: var(--ed-success); }
+.upload_progress_item--error   { color: var(--ed-danger); }
+.upload_progress_msg { font-weight: 500; }
+.upload_progress_msg--success { color: var(--ed-success); }
+.upload_progress_msg--error   { color: var(--ed-danger); }
+
+/* — Inline spinner (editorial accent) — */
+.inline-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--ed-accent-soft);
+  border-top: 2px solid var(--ed-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* — Loading overlay (editorial override) — */
+.console-page #loading-overlay {
+  background: rgba(250, 248, 243, 0.7);
+}
+.console-page .spinner {
+  border: 3px solid var(--ed-rule);
+  border-top: 3px solid var(--ed-accent);
+}
+.console-page .loading-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ed-accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* — Console scrollbar — */
+.console-page .panel_left::-webkit-scrollbar,
+.console-page .node_list_viewport::-webkit-scrollbar { width: 5px; }
+.console-page .panel_left::-webkit-scrollbar-thumb,
+.console-page .node_list_viewport::-webkit-scrollbar-thumb {
+  background-color: var(--ed-rule-2);
+}
+
+/* — Dark mode for console — */
+@media (prefers-color-scheme: dark) {
+  .console-page {
+    --ed-paper: #161310;
+    --ed-paper-alt: #1c1815;
+    --ed-surface: #1f1b16;
+    --ed-ink: #e8e0d0;
+    --ed-ink-2: #a89e8a;
+    --ed-ink-3: #6b6358;
+    --ed-rule: #2e2922;
+    --ed-rule-2: #3d362c;
+    --ed-accent: #6b94c4;
+    --ed-accent-2: #82a8d4;
+    --ed-accent-soft: rgba(107, 148, 196, 0.1);
+    --ed-success: #7ab87a;
+    --ed-danger: #c47878;
+    --ed-warning: #c4a878;
+  }
+}
+
+/* — Responsive — */
+@media (max-width: 1024px) {
+  .console-page .dashboard_container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .console-page .panel_left,
+  .console-page .panel_right {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    min-width: auto;
+  }
+  .console-page .panel_right { height: 500px; }
+  .console-page .console_masthead { padding: 14px 20px; }
+  .console-page .masthead_meta { display: none; }
+}
 
 /* ======================================================================
    使用指南页面 (use_function.html)
