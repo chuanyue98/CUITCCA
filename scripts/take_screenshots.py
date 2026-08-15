@@ -87,14 +87,24 @@ def screenshot_chat(page, base_url: str, output: Path, timeout_error) -> None:
     page.click("#submit")
     # 用户消息一定出现
     page.wait_for_selector("#chatbox .message.user", timeout=5000)
-    # 给 AI 回复 8s 窗口；超时也截（退化为仅含用户消息）
+    # 判据不能用 ".message.bot .replycontent" 是否存在——首屏欢迎语和"正在思考"
+    # 占位都是这个结构，选择器会立刻命中，截出来是加载态而不是回答。真正的
+    # "答完了"信号是：思考指示器已从 DOM 移除，且发送按钮退出 is-loading。
+    # 走完整链路（检索 + rerank + 生成）通常十几秒，给 60s 窗口。
     try:
-        page.wait_for_selector("#chatbox .message.bot .replycontent", timeout=8000)
-        # 等待思考指示器消失、流式输出稳定
+        page.wait_for_function(
+            """() => {
+                const thinking = document.querySelector('.thinking-indicator');
+                const submit = document.getElementById('submit');
+                return !thinking && submit && !submit.classList.contains('is-loading');
+            }""",
+            timeout=60000,
+        )
+        # 追问建议在 done 事件之后单独发出，留一拍让它渲染完
         page.wait_for_timeout(1500)
     except timeout_error:
         print(
-            "[screenshots] 未在 8s 内检测到 AI 回复（LLM 可能未配置），按当前状态截图",
+            "[screenshots] 未在 60s 内等到回复结束（LLM 可能未配置或超时），按当前状态截图",
             file=sys.stderr,
         )
         page.wait_for_timeout(800)

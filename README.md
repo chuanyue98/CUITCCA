@@ -598,7 +598,7 @@ uv run pytest tests/ -m "not eval"                 # 跳过评测类测试
 uv run pytest tests/test_hybrid_retriever.py -v    # 单文件
 ```
 
-- 测试规模：**450+ 用例**（CI 强制覆盖率 `fail_under=90`）
+- 测试规模：**601 个用例**，覆盖率 93.6%（CI 强制 `fail_under=90`）
 - 覆盖索引 CRUD、混合检索、QAWorkflow、Agent 工具编排、增量摄取、
   多格式解析（含旧版 Office / OCR 降级路径）、表格感知分块、front-matter metadata 提升、
   Web 连接器（限速 / 退避重试 / robots / 增量 hash，全程 mock 不联网）、
@@ -610,9 +610,15 @@ uv run pytest tests/test_hybrid_retriever.py -v    # 单文件
 ### 前端测试
 
 - **类型检查**：`cd frontend && npx tsc --noEmit`（CI 已接入）
-- **E2E 测试**：Playwright，位于 `tests/playwright/`，见 [开发指南文档](docs/development.md)
+- **单元测试**：vitest + happy-dom，位于 `frontend/tests/`，19 个用例覆盖
+  `src/utils/` 下的 API 封装、DOM 辅助与 toast（CI 已接入）
 
-> 前端单元测试（vitest）已列入 Roadmap，当前以 TypeScript 类型检查 + Playwright E2E 兜底。
+```bash
+cd frontend && npm run test           # 单次运行
+cd frontend && npm run test:coverage  # 带覆盖率
+```
+
+- **E2E 测试**：Playwright，位于 `tests/playwright/`，见 [开发指南文档](docs/development.md)
 
 ### E2E（Playwright）
 
@@ -727,7 +733,6 @@ uv run python scripts/take_screenshots.py
 - 官方 Docker 镜像与 docker-compose 一键部署
 - 多语言界面（i18n）
 - MCP 工具接入（`llama-index-tools-mcp`，把校园系统能力挂进 Agent 工具注册表）
-- 前端 vitest 单元测试接入
 
 ### 已知短板（如实记录，不粉饰）
 
