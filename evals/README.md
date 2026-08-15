@@ -275,6 +275,27 @@ LLM-as-judge 本身可能有偏差，但给出理由后"judge 为什么给这个
 局限（如实记录）：judge 和生成用同一个模型，可能存在"模型偏爱自己输出"的
 偏差；评估 judge 自身的可靠性属于后续扩展。这两点都在脚本 docstring 里写明了。
 
+**首次真实跑的部分结果（2026-08-15，`results/answer_20260815_033107.json`）**：
+
+```
+faithfulness       0.930     (n=34)
+answer_relevance   4.37 / 5  通过率 80%
+answer_match       3.91 / 5  通过率 60%
+```
+
+76 题里只有 34 题拿到可用打分，剩下的是被 LLM 供应商限流打断的：38 次 judge
+调用返回 429（31 次 `rpm exhausted`、4 次 `token plan limit exhausted`），另有
+34 题因为限流打到了 `RouterRetriever` 的 `LLMSingleSelector`（多索引时选哪个库
+本身要调一次 LLM）而检索为空、回答退化成兜底文案。上面的数字是**排除掉兜底
+回答之后**在 34 题上算的。
+
+**这轮不算基线**，样本量不够。补完整基线要先解决限流：给脚本加请求间隔/并发
+上限，或者用 `--limit` 分段跑再合并。这件事还没做。
+
+顺带记一个现象：`answer_match` 通过率（60%）明显低于 `answer_relevance`（80%），
+说明失败模式偏向"答得切题但关键事实对不齐"，而不是跑题——和检索评测里
+`comprehension` 一档 hit_rate 偏低（89.47%）方向一致。
+
 ### 4. Rerank A/B 评测（回答"值不值得上 reranker"）
 
 ```bash

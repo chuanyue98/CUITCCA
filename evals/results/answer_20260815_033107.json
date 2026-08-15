@@ -1,0 +1,1650 @@
+{
+  "timestamp": "2026-08-15T03:31:07.939215+00:00",
+  "golden": "/home/cy/github/chuanyue98/CUITCCA/evals/golden.seed.jsonl",
+  "endpoint": "workflow",
+  "questions": 76,
+  "scored": 35,
+  "answer_errors": 3,
+  "judge_errors": 38,
+  "overall": {
+    "faithfulness": 0.9033471290614148,
+    "answer_relevance": 4.371428571428571,
+    "answer_relevance_pass_rate": 0.8,
+    "answer_match": 3.8285714285714287,
+    "answer_match_pass_rate": 0.6
+  },
+  "by_category": {
+    "comprehension": {
+      "count": 9,
+      "faithfulness": 0.8126503126503126,
+      "answer_relevance": 4.333333333333333,
+      "answer_match": 3.4444444444444446,
+      "answer_match_pass_rate": 0.4444444444444444
+    },
+    "multi_hop": {
+      "count": 4,
+      "faithfulness": 0.8615384615384616,
+      "answer_relevance": 4.5,
+      "answer_match": 4.5,
+      "answer_match_pass_rate": 0.75
+    },
+    "procedural": {
+      "count": 1,
+      "faithfulness": 1.0,
+      "answer_relevance": 5.0,
+      "answer_match": 2.0,
+      "answer_match_pass_rate": 0.0
+    },
+    "simple_fact": {
+      "count": 19,
+      "faithfulness": 0.9473684210526315,
+      "answer_relevance": 4.2631578947368425,
+      "answer_match": 3.8421052631578947,
+      "answer_match_pass_rate": 0.631578947368421
+    },
+    "table_lookup": {
+      "count": 2,
+      "faithfulness": 0.9285714285714286,
+      "answer_relevance": 5.0,
+      "answer_match": 5.0,
+      "answer_match_pass_rate": 1.0
+    }
+  },
+  "details": [
+    {
+      "id": "q001",
+      "question": "成都信息工程大学的校训是什么？",
+      "category": "simple_fact",
+      "expected_answer": "成于大气 信达天下",
+      "answer": "成都信息工程大学的校训是**“成于大气 信达天下”**。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 1,
+          "supported_statements": 1,
+          "faithfulness": 1.0,
+          "note": "回答中的校训陈述与参考上下文完全一致，可以直接从上下文找到支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接、完整地给出了校训内容，完全切题，没有遗漏任何要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案完全一致，关键事实全部正确，语义完全等价。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_xygk_dxjs.htm__9fc52aa93f.md",
+        "www.cuit.edu.cn_info_1006_15037.htm__49d06eb35f.md",
+        "www.cuit.edu.cn_info_1002_15766.htm__b9704971fd.md",
+        "www.cuit.edu.cn_info_1002_16122.htm__55da295610.md",
+        "www.cuit.edu.cn_info_1003_16822.htm__7b6bf1e6c4.md"
+      ]
+    },
+    {
+      "id": "q002",
+      "question": "成都信息工程大学的前身是什么，创建于哪一年？",
+      "category": "simple_fact",
+      "expected_answer": "前身是1951年创建的中国人民解放军西南空军气象干部训练大队。",
+      "answer": "根据提供的资料，成都信息工程大学的前身院校是**中国人民解放军西南空军气象干部训练大队**，建校时间为**1951年**。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 2,
+          "supported_statements": 2,
+          "faithfulness": 1.0,
+          "note": "两个陈述均被参考上下文明确支持"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地给出了成都信息工程大学的前身和创建年份，覆盖了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案在关键事实上完全一致，均正确指出了前身是中国人民解放军西南空军气象干部训练大队，创建于1951年，语义等价，无遗漏或错误。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_xygk_xxls.htm__e607fe747b.md",
+        "www.cuit.edu.cn_xygk_xxjj.htm__938596a227.md",
+        "www.cuit.edu.cn_info_1006_16611.htm__5e45cc3802.md",
+        "www.cuit.edu.cn_info_1006_16415.htm__799e737f8d.md",
+        "www.cuit.edu.cn_info_1006_16610.htm__f995e22726.md"
+      ]
+    },
+    {
+      "id": "q003",
+      "question": "学校是哪一年更名为“成都信息工程大学”的？",
+      "category": "simple_fact",
+      "expected_answer": "2015年。",
+      "answer": "成都信息工程大学于2015年更名为现名。",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": [
+        "www.cuit.edu.cn_xygk_xxls.htm__e607fe747b.md",
+        "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+        "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+        "data/upload_files/学校信息/学校历史.txt",
+        "data/upload_files/学校信息/学校简介.txt"
+      ]
+    },
+    {
+      "id": "q004",
+      "question": "高考成绩排名在各省文理科前200名报考成都信息工程大学的新生，可以获得多少一等新生奖学金？",
+      "category": "simple_fact",
+      "expected_answer": "新生入学后一次性奖励10000元/生。",
+      "answer": "根据提供的上下文信息，没有提及“高考成绩排名在各省文史类、理工类前200名”的新生可获得的“一等新生奖学金”金额。因此，无法回答该问题。请提供相关文件或数据。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 1,
+          "supported_statements": 1,
+          "faithfulness": 1.0,
+          "note": "回答中的核心事实陈述（上下文未提及相关信息）与参考上下文一致，因此判断为supported=true。"
+        },
+        "relevance": {
+          "score": 1,
+          "reason": "回答没有提供问题所问的奖学金金额，而是表明无法回答，因此完全没有回答问题。"
+        },
+        "answer_match": {
+          "score": 1,
+          "reason": "模型回答声称无法回答该问题，但参考答案明确给出了正确金额（10000元/生），模型回答完全错误，与参考答案语义不一致。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_15428.htm__386b12ea95.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md",
+        "www.cuit.edu.cn_info_1006_16611.htm__5e45cc3802.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md"
+      ]
+    },
+    {
+      "id": "q005",
+      "question": "国家奖学金和国家励志奖学金的奖励标准分别是多少，两者的资助对象有什么区别？",
+      "category": "multi_hop",
+      "expected_answer": "国家奖学金奖励标准为8000元/人年，面向二年级以上特别优秀的学生；国家励志奖学金奖励标准为5000元/人年，面向二年级以上品学兼优的家庭经济困难学生。",
+      "answer": "根据您提供的上下文信息，文件中未明确列出国家奖学金和国家励志奖学金的具体奖励金额标准。但根据普通高校国家奖助学金的一般规定，国家奖学金标准通常为8000元/人·年，国家励志奖学金标准为5000元/人·年。此信息仅供参考，请以学校官方最新通知为准。\n\n两者的资助对象（申请条件）主要区别如下：\n\n- **国家奖学金**：面向二年级以上（含二年级）全日制本科（含第二学士学位）学生中**特别优秀**的学生，要求学习成绩达到学校一等奖学金标准，且学习成绩排名与综合测评成绩排名均位于前10%（含10%）；若排名在前30%但未进入前10%，需在“其他方面表现非常突出”并提供证明材料。同一学年内，获得国家奖学金的学生**不能同时获得国家励志奖学金和学校等级奖学金**，但家庭经济困难的学生可同时申请国家助学金。\n\n- **国家励志奖学金**：面向**品学兼优的家庭经济困难**学生，需符合学校等级奖学金评定办法，且家庭经济困难认定通过。同一学年内，获得国家励志奖学金的学生**可以同时申请国家助学金**，但不能同时获得国家奖学金。此外，乡村振兴急需紧缺专业等享受学费全免政策的学生不再获得国家励志奖学金，享受生活费补助政策的学生不再同时获得国家助学金。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 13,
+          "supported_statements": 11,
+          "faithfulness": 0.8461538461538461,
+          "note": "回答中关于奖励金额的部分（8000元和5000元）是模型自行补充的外部知识，与上下文无关，属于错误信息；资助对象部分的描述基本正确，能从上下文中找到支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整直接地给出了国家奖学金和国家励志奖学金的奖励标准金额，并详细说明了二者的资助对象区别，覆盖了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答准确给出了国家奖学金8000元/人·年和国家励志奖学金5000元/人·年的奖励标准，并正确描述了资助对象分别为特别优秀的学生和品学兼优的家庭经济困难学生，与参考答案关键事实完全一致，仅详略不同，语义等价。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md",
+        "www.cuit.edu.cn_info_1006_15428.htm__386b12ea95.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md"
+      ]
+    },
+    {
+      "id": "q006",
+      "question": "学校勤工助学的工资标准是多少？",
+      "category": "simple_fact",
+      "expected_answer": "150—200元/人月。",
+      "answer": "根据学校提供的助学措施信息，勤工助学的工资标准为**150—200元/人月**，按月计算，未提供时薪或小时补贴的具体标准。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 3,
+          "supported_statements": 3,
+          "faithfulness": 1.0,
+          "note": "所有陈述均能被参考上下文支持，工资标准直接来自片段1，按月计算和未提供时薪信息也与上下文一致。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接给出了学校勤工助学的工资标准范围（150—200元/人月），并说明了计算方式，完整且切题地回答了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答准确给出了150-200元/人月的工资标准，与参考答案完全一致，且补充信息不影响核心事实的正确性。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "助学措施.txt",
+        "四川省大学生就业创业扶持清单.pdf",
+        "www.cuit.edu.cn_info_1006_16668.htm__f14fb58f45.md",
+        "www.cuit.edu.cn_xygk_dxjs.htm__9fc52aa93f.md",
+        "www.cuit.edu.cn_xygk_dxjs.htm__9fc52aa93f.md"
+      ]
+    },
+    {
+      "id": "q007",
+      "question": "学校现有专任教师和博士的数量分别大约是多少？",
+      "category": "simple_fact",
+      "expected_answer": "专任教师1600余人，其中博士800余人。",
+      "answer": "根据提供的信息，学校现有专任教师约1600余人，其中博士约800余人。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 2,
+          "supported_statements": 2,
+          "faithfulness": 1.0,
+          "note": "两个陈述均能从参考上下文（片段1、3、4）中找到直接对应信息，支持成立。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接给出了专任教师和博士的数量，完整覆盖了问题的两个要点，没有遗漏或偏离。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案在关键事实上完全一致，均准确表达了专任教师1600余人、博士800余人，仅措辞上添加了‘约’字，但语义等价。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "师资队伍.txt",
+        "成都信息工程大学学校基本概况.txt",
+        "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+        "data/upload_files/学校信息/学校简介.txt",
+        "管理学院.txt"
+      ]
+    },
+    {
+      "id": "q008",
+      "question": "在成信大申请转专业，负责组织、指导和审核转专业工作的“领导小组”办公室设在哪个部门？",
+      "category": "simple_fact",
+      "expected_answer": "设在教务处。",
+      "answer": "根据成都信息工程大学转专业管理办法，负责组织、指导和审核转专业工作的领导小组办公室设在**教务处**。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 1,
+          "supported_statements": 1,
+          "faithfulness": 1.0,
+          "note": "该陈述与参考上下文完全一致，直接支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接、完整地指出了领导小组办公室设在教务处，完全切题，没有遗漏任何要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案语义完全一致，明确指出领导小组办公室设在教务处，关键事实正确无误。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "转专业政策.txt",
+        "转专业政策.txt",
+        "论坛搜集（李俊卓）.docx",
+        "转专业政策.txt",
+        "关于做好2022年本科学生校内转专业工作的通知.pdf"
+      ]
+    },
+    {
+      "id": "q009",
+      "question": "学生可以通过哪两种方式申请转专业？",
+      "category": "comprehension",
+      "expected_answer": "统一转专业（学校统一组织）和单独转专业（学生单独提出申请）。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 1,
+          "supported_statements": 0,
+          "faithfulness": 0.0,
+          "note": "参考上下文为空，回答中的陈述无法得到支持，且未提供任何关于转专业方式的信息。"
+        },
+        "relevance": {
+          "score": 1,
+          "reason": "回答完全没有提及转专业的任何方式，只是表示不知道并请求反馈，因此未回答问题。"
+        },
+        "answer_match": {
+          "score": 1,
+          "reason": "模型回答未提供任何关于转专业方式的信息，完全答非所问，与参考答案语义无关。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": []
+    },
+    {
+      "id": "q010",
+      "question": "校园卡丢失了应该去哪里办理挂失？",
+      "category": "simple_fact",
+      "expected_answer": "到一卡通服务中心办理。",
+      "answer": "根据提供的上下文信息，关于校园卡丢失、挂失、补办及办理地点的具体内容如下：\n\n**挂失流程**：  \n请及时在微信公众号“成信计财·新一卡通·一卡通服务”项目中进行挂失，避免财产损失。\n\n**补办流程**：  \n挂失后携带本人身份证，到各校区校园一卡通服务中心办理补卡事宜，补卡需缴纳工本费15元/张。\n\n**办理地点**：  \n- 航空港校区：教工食堂1楼一卡通办公室  \n- 龙泉校区：学生食堂一楼西侧\n\n**工作时间（法定工作日）**：  \n- 航空港校区：上午09:00-10:00，下午16:00-18:00  \n- 龙泉校区：上午10:00-13:00，下午16:00-18:00\n\n**联系电话**：  \n- 航空港校区：028-85966009、13088003616、18048511659  \n- 龙泉校区：13438939076",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 10,
+          "supported_statements": 10,
+          "faithfulness": 1.0,
+          "note": "所有陈述均能从参考上下文中直接找到或合理推出，回答准确反映了上下文信息。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地回应了问题，明确了挂失的渠道（微信公众号），并提供了相关补充信息（补办地点等），没有遗漏任何要点。"
+        },
+        "answer_match": {
+          "score": 3,
+          "reason": "模型回答详细描述了挂失和补办流程，但挂失步骤明确要求通过微信公众号操作，而非直接到一卡通服务中心，这与参考答案‘到一卡通服务中心办理’的关键事实不符；补办地点正确，但问题问的是‘挂失’，模型回答给出了错误的地点信息，属于部分关键事实正确但有遗漏和错误。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "挂失流程.txt",
+        "校园一卡通.txt",
+        "学生公寓服务.txt",
+        "普通全日制本专科毕业证 (学位证) 遗失补办证明书流程.txt",
+        "论坛搜集（李俊卓）.docx"
+      ]
+    },
+    {
+      "id": "q011",
+      "question": "学校招生就业处主要负责哪些工作？",
+      "category": "comprehension",
+      "expected_answer": "负责学校年度招生计划的编制、申报，招生宣传、咨询和录取工作，以及毕业生就业工作，包括收集、发布就业信息等。",
+      "answer": "",
+      "answer_error": "RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "metrics": {},
+      "judge_error": null,
+      "retrieved_sources": []
+    },
+    {
+      "id": "q012",
+      "question": "就业指导协会是什么类型的社团，主要开展哪些工作？",
+      "category": "comprehension",
+      "expected_answer": "是一个创新实践型社团，帮助同学们解答就业方面的问题并提供指导，日常工作包括收集并宣传就业信息、协助招生就业处就业指导中心开展就业指导工作。",
+      "answer": "",
+      "answer_error": "RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "metrics": {},
+      "judge_error": null,
+      "retrieved_sources": []
+    },
+    {
+      "id": "q013",
+      "question": "举报就业签约、统计造假问题的电话号码是多少？",
+      "category": "simple_fact",
+      "expected_answer": "028—85967605。",
+      "answer": "根据提供的上下文信息，未直接提及“就业签约和统计造假问题”的专门举报电话号码。如有相关疑问，建议联系学校就业指导部门或拨打全国高校毕业生就业服务热线咨询。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 3,
+          "supported_statements": 1,
+          "faithfulness": 0.3333333333333333,
+          "note": "回答正确指出上下文未提供专门举报电话，但后续建议属于模型自行补充，与上下文无关。"
+        },
+        "relevance": {
+          "score": 2,
+          "reason": "回答没有直接提供举报电话号码，而是说明未提及并给出替代建议，只沾边问题主题，未正面回答核心问题。"
+        },
+        "answer_match": {
+          "score": 1,
+          "reason": "模型回答未提供正确的电话号码，而是建议联系其他部门，与参考答案完全不符，属于答非所问。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "全国高校毕业生毕业去向登记系统操作指南（用人单位）.pdf",
+        "全国高校毕业生毕业去向登记系统操作指南（学校、院系）.pdf",
+        "全国高校毕业生毕业去向登记与网上签约平台操作指南.pdf",
+        "全国高校毕业生毕业去向登记与网上签约平台操作指南.pdf",
+        "四川省大学生就业创业扶持清单.pdf"
+      ]
+    },
+    {
+      "id": "q014",
+      "question": "怎样关注并绑定“成信就业”微信公众号？",
+      "category": "comprehension",
+      "expected_answer": "微信搜索并关注“成信就业”公众号，输入个人网存账号登录，即可完成微信绑定。",
+      "answer": "关注并绑定“成信就业”微信公众号的方法如下：\n\n1. **关注公众号**：在微信中搜索“成信就业”公众号并关注，或扫描官方提供的二维码关注。\n2. **微信绑定**：关注后，点击下方菜单栏中的【就业服务】→【办事大厅】按钮，输入个人网存账号进行登录，即可完成微信绑定。绑定后，可在办事大厅模块中填报、核实生源信息及毕业去向等。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 6,
+          "supported_statements": 6,
+          "faithfulness": 1.0,
+          "note": "所有陈述均能被参考上下文直接支持，回答准确无误。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地给出了关注和绑定公众号的具体步骤，涵盖了搜索/扫码关注、菜单操作、账号登录等所有要点，完全切题。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案在关键事实上完全一致：都包含了搜索关注公众号和输入个人网存账号登录完成绑定的步骤。模型回答补充了菜单路径的细节，但未遗漏或错误任何关键事实，语义等价。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "成信就业公众号使用说明.pdf",
+        "成信就业公众号使用说明.pdf",
+        "就业宝微信端使用手册（学生版）.docx",
+        "成信就业公众号使用说明.pdf",
+        "成信就业公众号使用说明.pdf"
+      ]
+    },
+    {
+      "id": "q015",
+      "question": "《四川省大学生就业创业扶持政策清单》是哪一年的版本，由谁发布？",
+      "category": "simple_fact",
+      "expected_answer": "2021年版，由四川省就业工作领导小组办公室于2021年11月发布。",
+      "answer": "根据您提供的上下文信息，并未包含“四川省大学生就业创业扶持政策清单”的版本年份和发布单位。作为成都信息工程大学校园小助手，我仅能回答与学校相关的问题，因此无法提供该信息。请提供更具体的问题或确认信息是否与学校相关。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 3,
+          "supported_statements": 2,
+          "faithfulness": 0.6666666666666666,
+          "note": "回答中关于上下文缺失的陈述正确，但自称校园小助手并限制回答范围属于上下文未提及的额外信息，不被支持。"
+        },
+        "relevance": {
+          "score": 1,
+          "reason": "回答完全没有提供问题所要求的版本年份和发布单位，而是以无法回答为由回避了问题，属于完全没有回答问题。"
+        },
+        "answer_match": {
+          "score": 1,
+          "reason": "模型回答完全未回答问题的关键事实，声称无法提供信息，与参考答案内容完全不符，属于答非所问。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_15308.htm__06a1e8a6c9.md",
+        "www.cuit.edu.cn_info_1006_15308.htm__06a1e8a6c9.md",
+        "jwc.cuit.edu.cn_cxcy.htm__6519d12d28.md",
+        "www.cuit.edu.cn_info_1006_16411.htm__2b03c1ba07.md",
+        "www.cuit.edu.cn_info_1006_16411.htm__2b03c1ba07.md"
+      ]
+    },
+    {
+      "id": "q016",
+      "question": "1978年学校升格为本科院校时校名是什么，办学定位口号是什么？",
+      "category": "multi_hop",
+      "expected_answer": "1978年学校升格为本科院校“成都气象学院”，时任中国气象局局长邹竞蒙提出了“理工结合、以工为主；气电结合，以电为主”的办学定位。",
+      "answer": "根据提供的上下文信息，1978年学校升格为本科院校时的校名是**成都气象学院**，办学定位口号为**“理工结合、以工为主；气电结合，以电为主”**，办学理念即为**“气象与电子信息结合、以电子信息为主”**。",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": [
+        "www.cuit.edu.cn_xygk_xxls.htm__e607fe747b.md",
+        "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+        "data/upload_files/学校信息/学校历史.txt",
+        "www.cuit.edu.cn_xygk_xxjj.htm__938596a227.md",
+        "电子工程学院.txt"
+      ]
+    },
+    {
+      "id": "q017",
+      "question": "从建校至今，学校经历过哪些主要的更名和隶属关系变化？",
+      "category": "multi_hop",
+      "expected_answer": "1951年创建为西南空军气象干部训练大队；1956年改制为成都气象学校；1978年升格为成都气象学院；2000年由中国气象局划转四川省并更名为成都信息工程学院；2001年四川统计学校并入；2015年更名为成都信息工程大学。",
+      "answer": "根据成都信息工程大学的历史沿革，自建校以来学校的主要更名及隶属关系变迁如下：\n\n- **1951年**：创建 **中国人民解放军西南空军气象干部训练大队**，隶属空军。\n- **1956年**：改制为 **成都气象学校**，隶属关系转为气象系统（中央气象局）。\n- **1978年**：升格为本科院校 **成都气象学院**，隶属中国气象局。\n- **2000年**：由中国气象局划转四川省，更名为 **成都信息工程学院**，隶属四川省。\n- **2001年**：整体合并原隶属国家统计局的 **四川统计学校**（四川统计学校前身可追溯至1950年西南军政委员会工业部干部学校），学校隶属关系仍为四川省。\n- **2010年**：成为 **四川省人民政府与中国气象局签约共建** 学校，实行省部共建。\n- **2015年**：更名为 **成都信息工程大学**，隶属四川省。\n- **2023年**：成为 **国家统计局和四川省人民政府签约共建** 学校，进一步拓展省部共建合作。\n- **2024年**：获批博士学位授予单位。\n\n以上即为学校自建校以来的主要更名及隶属关系变迁历程。",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: ValueError: judge 返回了空文本",
+      "retrieved_sources": [
+        "www.cuit.edu.cn_xygk_xxls.htm__e607fe747b.md",
+        "data/upload_files/学校信息/学校历史.txt",
+        "信息搜集汇总/学校信息/学校介绍/学校历史.txt",
+        "统计学院.txt",
+        "通信工程学院.txt"
+      ]
+    },
+    {
+      "id": "q018",
+      "question": "成都信息工程大学的校风、教风、学风分别是什么？",
+      "category": "comprehension",
+      "expected_answer": "校风：爱心 责任 行动；教风：爱生、敬业、求实、创新；学风：尊师、好学、励志、笃行。",
+      "answer": "根据成都信息工程大学的官方信息，学校的校风、教风、学风分别如下：\n\n- **校风（学校风气）**：**爱心、责任、行动**\n- **教风（教师教风）**：**求实、创新**\n- **学风（学生学风）**：**尊师、好学、励志、笃行**",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 3,
+          "supported_statements": 3,
+          "faithfulness": 1.0,
+          "note": "回答中的校风、教风、学风均能在参考上下文中找到对应内容，完全一致。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地列出了成都信息工程大学的校风、教风、学风，没有遗漏任何要点，完全切题。"
+        },
+        "answer_match": {
+          "score": 3,
+          "reason": "校风回答正确，学风回答正确，但教风只回答了'求实、创新'，遗漏了'爱生、敬业'，属于部分关键事实正确且有遗漏。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "data/upload_files/学校信息/大学精神.txt",
+        "信息搜集汇总/学校信息/学校介绍/大学精神.txt",
+        "www.cuit.edu.cn_xygk_dxjs.htm__9fc52aa93f.md",
+        "www.cuit.edu.cn_xygk_dxjs.htm__9fc52aa93f.md",
+        "data/upload_files/学校信息/大学精神.txt"
+      ]
+    },
+    {
+      "id": "q019",
+      "question": "学校现有多少个学院（部、中心）、多少个本科专业、在校生规模大约是多少？",
+      "category": "simple_fact",
+      "expected_answer": "现有19个学院（部、中心），61个本科专业（其中招生专业52个），2.5万余名全日制在校生。",
+      "answer": "根据提供的信息，学校现有19个学院（部、中心），招生本科专业52个，各类在籍学生30000余人，其中全日制学生（普通本科生、研究生、留学生）约25330人。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 4,
+          "supported_statements": 4,
+          "faithfulness": 1.0,
+          "note": "所有陈述均可从参考上下文直接或合理推出，信息一致。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地给出了学院（部、中心）数量、本科专业数量和在校生规模，涵盖了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 3,
+          "reason": "学院数量（19个）和全日制在校生规模（约25330人，与2.5万余名一致）正确，但遗漏了本科专业总数（61个），仅提及招生专业52个，属于关键事实遗漏，因此部分正确。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_xygk_xxjj.htm__938596a227.md",
+        "www.cuit.edu.cn_info_1006_16611.htm__5e45cc3802.md",
+        "www.cuit.edu.cn_xygk_xxjj.htm__938596a227.md",
+        "www.cuit.edu.cn_xygk_xxjj.htm__938596a227.md",
+        "www.cuit.edu.cn_zzjg.htm__1b0236eb32.md"
+      ]
+    },
+    {
+      "id": "q020",
+      "question": "学校助学措施中，除了国家助学金和国家助学贷款，还有哪些帮助经济困难学生的方式？",
+      "category": "comprehension",
+      "expected_answer": "还包括学费减免、勤工助学，以及广州助学基金、蓝剑助学基金、呈祥助学基金、春燕助学基金、成信助学基金、栋梁工程基金、“爱心一家人”等社会资助项目。",
+      "answer": "根据您提供的成都信息工程大学相关通知，除国家助学金和国家助学贷款外，学校针对经济困难学生还有以下资助方式：\n\n1. **临时困难补助**：如因地震等突发灾害导致家庭经济困难，可申请一次性临时困难补助（详见《关于启动因地震灾害导致家庭经济困难专项资助工作的通知》）。\n2. **社会资助（校友助学金）**：包括思华助学金（特困生突发事件资助、特困新生入学资助）、睿阳助学金（网络空间安全学院及甘肃籍学生）、曙光助学金（品学兼优家庭贫困学生）。\n3. **国家励志奖学金**：用于奖励资助品学兼优的家庭经济困难学生（详见《关于开展2025-2026学年国家励志奖学金评审工作的通知》中的相关内容）。\n4. **家庭经济困难学生认定**：通过认定后可享受相应资助，包括但不限于上述项目。\n\n关于您提到的“勤工助学、学费减免、绿色通道”，在本次提供的上下文信息中未明确提及，建议您咨询学校学生资助管理中心（电话：028-85966380）进一步了解。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 11,
+          "supported_statements": 10,
+          "faithfulness": 0.9090909090909091,
+          "note": "大部分陈述正确，但关于国家励志奖学金通知标题的陈述缺乏上下文支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接针对问题，列举了临时困难补助、社会资助、国家励志奖学金等多种具体的助学方式，并说明未提及的勤工助学等可咨询学校，完整覆盖了问题要求，没有答非所问或跑题。"
+        },
+        "answer_match": {
+          "score": 3,
+          "reason": "模型回答列出了临时困难补助、社会资助（校友助学金）、国家励志奖学金等，这些属于经济困难学生资助方式，但遗漏了参考答案中明确提到的关键事实‘学费减免’和‘勤工助学’，且未肯定这些措施的存在，反而说‘未明确提及’。社会资助项目名称与参考答案不同，但属于同类，因此整体上部分关键事实正确，有遗漏。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_16487.htm__a348a3e5b3.md",
+        "www.cuit.edu.cn_info_1006_16288.htm__8ebba2f8fe.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md",
+        "www.cuit.edu.cn_info_1006_15059.htm__3507ccb638.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md"
+      ]
+    },
+    {
+      "id": "q021",
+      "question": "成都信息工程大学现有专任教师多少人，其中博士有多少人？",
+      "category": "simple_fact",
+      "expected_answer": "现有专任教师1600余人，其中博士800余人，高级职称600余人。",
+      "answer": "根据提供的上下文信息，成都信息工程大学专任教师总数为1200余人，但未明确说明具有博士学位的教师人数。因此，无法从现有信息中获取该数据。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 3,
+          "supported_statements": 3,
+          "faithfulness": 1.0,
+          "note": "所有陈述均被参考上下文支持，回答准确反映了上下文信息。"
+        },
+        "relevance": {
+          "score": 3,
+          "reason": "回答只给出了专任教师总数（1200余人），但未回答博士人数，仅说明无法获取，没有完整覆盖问题的两个要点，属于部分切题。"
+        },
+        "answer_match": {
+          "score": 1,
+          "reason": "模型回答称专任教师为1200余人，与参考答案的1600余人严重不符，且未提供博士人数，关键事实全部错误。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "成都信息工程大学学校基本概况.txt",
+        "自动化学院.txt",
+        "文化艺术学院.txt",
+        "网络空间安全学院.txt",
+        "管理学院.txt"
+      ]
+    },
+    {
+      "id": "q022",
+      "question": "学校聘请了多少名院士、长江学者、杰青等高层次专家担任兼职教授？",
+      "category": "simple_fact",
+      "expected_answer": "聘有100余名院士、长江、杰青等高层次专家为学校兼职教授。",
+      "answer": "根据提供的上下文信息，学校聘请了**100余名**院士、长江学者、国家杰出青年科学基金获得者等高层次专家担任兼职教授。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 1,
+          "supported_statements": 1,
+          "faithfulness": 1.0,
+          "note": "回答中的数字和表述与参考上下文完全一致，多个片段均明确提到“聘请100余名院士、长江、杰青等高层次专家为我校兼职教授”。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接给出了具体数量（100余名），并明确涵盖了问题中提到的院士、长江学者、杰青等高层次专家，完整且直接地回答了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案在关键事实上完全一致：数量均为'100余名'，列举的专家类型（院士、长江学者、杰青）语义等价，只是措辞略有差异，无遗漏或错误。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "data/upload_files/学校信息/学校简介.txt",
+        "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+        "师资队伍.txt",
+        "成都信息工程大学学校基本概况.txt",
+        "网络空间安全学院.txt"
+      ]
+    },
+    {
+      "id": "q023",
+      "question": "本校教师在校外担任兼职博士生导师的有多少人？",
+      "category": "simple_fact",
+      "expected_answer": "本校教师担任校外兼职博士生导师28人，比较有影响力的主要学术兼职46项。",
+      "answer": "根据提供的信息，本校教师在校外担任兼职博士生导师的人数为28人。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 1,
+          "supported_statements": 1,
+          "faithfulness": 1.0,
+          "note": "参考上下文中的片段1明确提到'本校教师担任校外兼职博士生导师28人'，因此该陈述得到支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接给出了具体数字，完整、直接地回答了问题，没有遗漏任何要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答准确给出了本校教师在校外担任兼职博士生导师的人数为28人，与参考答案中的关键事实完全一致，没有遗漏或错误。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "师资队伍.txt",
+        "data/upload_files/学校信息/学校简介.txt",
+        "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+        "成都信息工程大学学校基本概况.txt",
+        "软件工程学院.txt"
+      ]
+    },
+    {
+      "id": "q024",
+      "question": "学校师资队伍建设坚持的理念是什么？",
+      "category": "comprehension",
+      "expected_answer": "坚持“以人为本、人才强校”的理念，以提升师资队伍整体素质为目标，以优势学科、特色学科为依托，以特色专业建设为导向，以“提高质量、突出特色、强化优势”为主线。",
+      "answer": "根据提供的上下文信息，学校师资队伍建设坚持的理念是“以人为本、人才强校”。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 1,
+          "supported_statements": 1,
+          "faithfulness": 1.0,
+          "note": "该陈述直接在参考上下文（片段1、片段2等）中找到原文支持，判断为正确。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接、完整地给出了学校师资队伍建设坚持的理念，没有遗漏或偏离问题。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答准确提取了参考答案中的核心理念'以人为本、人才强校'，该部分正是问题所问的'理念'，关键事实正确且语义等价。参考答案中的其他内容属于具体实施路径或目标，并非理念本身，因此模型回答没有遗漏关键事实。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "师资队伍.txt",
+        "www.cuit.edu.cn_szdw_szgk.htm__be701e144c.md",
+        "信息搜集汇总/学校信息/学校介绍/学校简介.txt",
+        "data/upload_files/学校信息/学校简介.txt",
+        "www.cuit.edu.cn_info_1002_16588.htm__8e21d831c7.md"
+      ]
+    },
+    {
+      "id": "q025",
+      "question": "国家助学金的资助标准是多少？",
+      "category": "simple_fact",
+      "expected_answer": "国家助学金用于资助普通本专科在校生中的家庭经济困难学生，资助标准为2000—4000元/人年。",
+      "answer": "根据成都信息工程大学2025-2026学年国家助学金的相关规定，本专科生国家助学金分为三个档次，每生每年资助标准如下：\n\n- 一档：2500元/人·年  \n- 二档：3700元/人·年  \n- 三档：4900元/人·年  \n\n其中，全日制在校退役士兵学生统一按二档标准执行，即每生每年3700元。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 5,
+          "supported_statements": 5,
+          "faithfulness": 1.0,
+          "note": "所有陈述均被参考上下文中的片段3（成都信息工程大学2025-2026学年国家助学金规定）和片段1（退役士兵标准）直接支持，回答准确无误。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接给出了国家助学金的资助标准，包括三个档次的具体金额，并补充了退役士兵的特殊情况，完整、直接地回答了问题，没有遗漏要点。"
+        },
+        "answer_match": {
+          "score": 3,
+          "reason": "模型回答给出了三个具体档次，其中一档2500元和二档3700元在参考答案的2000-4000元范围内，但三档4900元超出了该范围，与参考答案的语义不一致。关键事实部分正确，但存在错误信息，因此评分3分。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_15281.htm__2a430a96f1.md",
+        "四川省大学生就业创业扶持清单.pdf",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md",
+        "助学措施.txt",
+        "资助政策.docx"
+      ]
+    },
+    {
+      "id": "q026",
+      "question": "学校勤工助学的工资标准是多少？",
+      "category": "simple_fact",
+      "expected_answer": "勤工助学工资标准为150—200元/人月。",
+      "answer": "根据成都信息工程大学提供的助学措施信息，学校勤工助学岗位的工资标准为**150—200元/人月**，未提供每小时工资的具体标准。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 2,
+          "supported_statements": 2,
+          "faithfulness": 1.0,
+          "note": "回答准确反映了上下文中的勤工助学工资标准，并正确指出未提供每小时标准。"
+        },
+        "relevance": {
+          "score": 4,
+          "reason": "回答直接给出了一个具体学校的工资标准，正面回答了问题，但未提及不同学校标准可能不同这一通用性细节，属于漏了少量次要信息。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答准确给出了与参考答案一致的工资标准150—200元/人月，关键事实完全正确，措辞差异不影响语义等价。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "助学措施.txt",
+        "www.cuit.edu.cn_info_1006_16668.htm__f14fb58f45.md",
+        "《成都信息工程大学人才培养——第二课堂（综合素质培养）实施意见（试行）》-附件.pdf",
+        "资助政策.docx",
+        "www.cuit.edu.cn_info_1006_14920.htm__388e8f3908.md"
+      ]
+    },
+    {
+      "id": "q027",
+      "question": "目前已经开展生源地助学贷款的省市有哪些？",
+      "category": "comprehension",
+      "expected_answer": "已经开展生源地贷款的省市有江苏、甘肃、陕西、重庆、湖北、四川，另有新疆、内蒙古、贵州、云南、浙江、山东、江西、安徽、青海、海南、广西、山西、河北、上海、辽宁等省正在陆续开展。",
+      "answer": "根据上下文信息，生源地信用助学贷款已开展的省、自治区、直辖市有：**江苏、甘肃、陕西、重庆、湖北、四川**。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 1,
+          "supported_statements": 1,
+          "faithfulness": 1.0,
+          "note": "回答中的陈述与参考上下文完全一致，可以被直接支持。"
+        },
+        "relevance": {
+          "score": 3,
+          "reason": "回答直接列出了六个省市，正面回应了问题，但明显遗漏了大量已开展生源地助学贷款的省份，仅给出部分信息，属于部分切题。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答准确列出了参考答案中'已经开展'的六个省市（江苏、甘肃、陕西、重庆、湖北、四川），关键事实全部正确，与问题要求一致，无遗漏或错误。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "助学措施.txt",
+        "资助政策.docx",
+        "四川省大学生就业创业扶持清单.pdf",
+        "论坛搜集（李俊卓）.docx",
+        "www.cuit.edu.cn_info_1006_15281.htm__2a430a96f1.md"
+      ]
+    },
+    {
+      "id": "q028",
+      "question": "学校设有哪些社会资助项目帮助家庭经济困难的优秀学生？",
+      "category": "comprehension",
+      "expected_answer": "主要项目有广州助学基金、蓝剑助学基金、呈祥助学基金、春燕助学基金、成信助学基金、栋梁工程基金、“爱心一家人”等，资金来源于企业、校友、教职工捐赠。",
+      "answer": "根据成都信息工程大学提供的官方信息，学校的社会资助项目主要包括以下校友捐赠设立的助学金，用于资助家庭经济困难、品学兼优的学生：\n\n1. **思华助学金**：由86级校友邓思华先生发起，用于资助突发重大疾病或重大事故的在校本科生和研究生，以及新生报到时面临经济困难的特困生。特困生突发事件资助不超过2万元/人，特困新生入学资助1000-1500元/人，全年共6万元。\n\n2. **睿阳助学金**：由校友企业甘肃睿阳科技有限公司捐资设立，资助网络空间安全学院学生和学校甘肃籍家庭经济困难学生。每年资助10人，每人每月300元（按10个月计算），原则上网络空间安全学院与甘肃籍学生各5人。\n\n3. **曙光助学金**：由81级校友余曙捐资设立，资助品学兼优、家庭贫困的在校学生。每年评定10人，每人3000元，原则上资助全日制本科生，特殊情况可含少量研究生。\n\n此外，学校还设有国家助学金、国家励志奖学金等政府资助项目，以及临时困难补助等应急资助。所有资助项目均以家庭经济困难认定为基础，具体申请流程和条件请参照学校学生工作处发布的官方通知。\n\n如需了解更多，可联系学校学生资助管理中心（电话：028-85966380）或关注各学院通知。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 21,
+          "supported_statements": 19,
+          "faithfulness": 0.9047619047619048,
+          "note": "回答中大部分陈述正确，但存在两处不准确：一是概括性描述'品学兼优'不完全符合所有校友助学金项目（思华、睿阳未明确要求品学兼优）；二是额外提及的'临时困难补助'在上下文中未找到明确支持（仅有针对受灾的'临时生活补助'）。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接列出了学校设立的社会资助项目（思华、睿阳、曙光助学金），并说明了资助对象和金额，完全切题地回应了问题中关于‘社会资助项目’的要点，没有遗漏或跑题。"
+        },
+        "answer_match": {
+          "score": 1,
+          "reason": "模型回答未包含参考答案中列出的任何一项社会资助项目（如广州助学基金、蓝剑助学基金等），而是列举了完全不同的项目（思华助学金、睿阳助学金、曙光助学金），并错误地混入了国家助学金等政府资助项目。关键事实全部错误，语义上与参考答案不一致。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_15059.htm__3507ccb638.md",
+        "www.cuit.edu.cn_info_1006_15059.htm__3507ccb638.md",
+        "www.cuit.edu.cn_info_1006_16126.htm__bc6c2473df.md",
+        "www.cuit.edu.cn_info_1006_16721.htm__d874b47542.md",
+        "www.cuit.edu.cn_info_1006_16288.htm__8ebba2f8fe.md"
+      ]
+    },
+    {
+      "id": "q029",
+      "question": "什么条件的新生可以获得新生一等奖学金，金额是多少？",
+      "category": "simple_fact",
+      "expected_answer": "报考我校且高考成绩排名在各省（自治区、直辖市）文理科前200名的新生，颁发一等奖学金，入学后一次性奖励10000元/生。",
+      "answer": "根据学校奖学金政策，新生一等奖学金的评定条件为：**报考我校且高考成绩排名在各省（自治区、直辖市）文理科前200名的新生**。奖励金额为：**新生入学后一次性奖励10000元/生**。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 2,
+          "supported_statements": 2,
+          "faithfulness": 1.0,
+          "note": "两个陈述均被参考上下文直接支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地给出了新生一等奖学金的评定条件和奖励金额，覆盖了问题的所有要点，没有遗漏。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案在条件（报考我校且高考成绩排名在各省文理科前200名）和金额（入学后一次性奖励10000元/生）上完全一致，关键事实全部正确，语义等价。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "信息搜集汇总/招生信息/奖学措施.txt",
+        "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md"
+      ]
+    },
+    {
+      "id": "q030",
+      "question": "新生二等奖学金的评定条件和金额是什么？",
+      "category": "simple_fact",
+      "expected_answer": "第一志愿报考我校，且高考成绩高于学校在该省理科调档线70分、文科调档线50分的新生，颁发二等奖学金，入学后一次性奖励2000元/生。",
+      "answer": "根据您提供的上下文信息，我仅能回答与成都信息工程大学相关的问题。但您所询问的“新生二等奖学金”、“新生入学奖学金二等奖”或“新生优秀奖学金二等奖”等内容，在当前提供的《关于开展2024-2025学年普通本科生国家奖学金评审工作的通知》中并未涉及。该通知仅关于国家奖学金的评审工作，不包含新生奖学金的相关信息。\n\n因此，我无法为您提供关于新生二等奖学金的评选标准、申请条件或奖励金额的准确回答。建议您查阅学校其他相关文件或联系学生工作处获取详细信息。",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15428.htm__386b12ea95.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md"
+      ]
+    },
+    {
+      "id": "q031",
+      "question": "高中参加过学科奥林匹克竞赛获奖的新生能拿到什么奖励？",
+      "category": "simple_fact",
+      "expected_answer": "在录取的应届新生中，高中阶段参加由中国科协主办的全国中学生学科（数学、物理、化学、生物、信息学）奥林匹克竞赛获得全国决赛一、二、三等奖的新生，颁发单项奖，入学后一次性奖励1000元/生。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: ValueError: judge 没有返回任何陈述",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q032",
+      "question": "国家奖学金和国家励志奖学金的奖励标准分别是多少，面向哪些学生？",
+      "category": "multi_hop",
+      "expected_answer": "国家奖学金奖励二年级以上（含二年级）普通本专科学生中特别优秀的学生，标准8000元/人年；国家励志奖学金奖励二年级以上品学兼优的家庭经济困难学生，标准5000元/人年。",
+      "answer": "根据提供的上下文信息，**未明确给出**国家奖学金和国家励志奖学金的具体奖励金额（如人民币数值）。但关于面向的学生群体，可以明确如下：\n\n- **国家奖学金**：面向在校二年级以上（含二年级）全日制本科（含第二学士学位）学生中**特别优秀**的学生。同一学年内，获得国家奖学金的学生不能同时获得国家励志奖学金和学校等级奖学金，但可以同时申请国家助学金。  \n- **国家励志奖学金**：面向**家庭经济困难、品学兼优**的全日制本科学生。获得国家励志奖学金的学生可以同时申请国家助学金，但不能同时获得国家奖学金。\n\n如需具体金额，建议查阅学校官方发布的《成都信息工程大学普通本科学生奖励办法》或咨询学生资助管理中心（电话：028-85966380）。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 5,
+          "supported_statements": 3,
+          "faithfulness": 0.6,
+          "note": "部分陈述正确，但关于国家励志奖学金面向对象（上下文中未明确）以及国家奖学金学生申请助学金的条件（缺少“家庭经济困难”限定）有误。"
+        },
+        "relevance": {
+          "score": 3,
+          "reason": "回答只完整回答了面向学生群体，但明确表示未给出奖励标准的具体金额，属于部分切题，遗漏了问题的一个核心要点。"
+        },
+        "answer_match": {
+          "score": 3,
+          "reason": "模型回答正确指出了国家奖学金和国家励志奖学金面向的学生群体（部分关键事实正确），但明确表示未给出奖励金额，而问题要求回答奖励标准，金额是必不可少的核心关键事实。因此存在关键事实遗漏，不符合‘完全正确’或‘仅措辞差异’的标准，属于部分正确且有遗漏，故评3分。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_15428.htm__386b12ea95.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15269.htm__52421d8d48.md"
+      ]
+    },
+    {
+      "id": "q033",
+      "question": "学校的等级奖学金分几个等级，最高金额是多少，覆盖比例是多少？",
+      "category": "simple_fact",
+      "expected_answer": "等级奖学金共分四个等级：特等奖、一等奖、二等奖、三等奖，最高金额2000元/生·学年，占在校生比例的33%。",
+      "answer": "根据提供的信息，成都信息工程大学的奖学金等级划分、各等级最高金额及获奖学生覆盖比例如下：\n\n**等级奖学金（校级）**：\n- 划分等级：特等奖、一等奖、二等奖、三等奖（共四个等级）\n- 最高金额：**2000元/生·学年**\n- 获奖学生覆盖比例：**占在校生比例的33%**\n\n此外，学校还设有国家奖学金（8000元/人年）和国家励志奖学金（5000元/人年），以及单项奖（如三好生、优秀学生干部等），但单项奖未明确覆盖比例。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 7,
+          "supported_statements": 7,
+          "faithfulness": 1.0,
+          "note": "所有陈述均能被参考上下文支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地回答了问题的所有要点：等级奖学金分为四个等级，最高金额2000元，覆盖比例33%，完全切题。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答准确给出了等级奖学金的四个等级、最高金额2000元/生·学年以及覆盖比例33%，与参考答案语义完全一致。额外提及的国家奖学金等其他内容不影响核心事实的正确性，属于措辞/详略差异。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+        "信息搜集汇总/招生信息/奖学措施.txt",
+        "www.cuit.edu.cn_info_1006_15428.htm__386b12ea95.md",
+        "www.cuit.edu.cn_info_1006_15428.htm__386b12ea95.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md"
+      ]
+    },
+    {
+      "id": "q034",
+      "question": "新生奖学金办法从哪一级新生开始实施，由哪个部门负责解释？",
+      "category": "multi_hop",
+      "expected_answer": "本办法自2016级新生开始实施，由学校招生就业处负责解释。",
+      "answer": "根据学校《奖学措施》文件，新生奖学金办法的相关信息如下：\n\n- **实施起始年级**：自二〇一六年级（即2016级）新生开始实施。\n- **解释部门**：学校招生就业处。\n- **负责解释**：学校招生就业处。\n- **新生入学奖学金政策规定**：设立一等奖学金（10000元/生）、二等奖学金（2000元/生）和单项奖（1000元/生），具体条件详见文件第二条。\n- **适用对象**：报考我校的应届新生，具体包括：\n  - 高考成绩排名在各省（自治区、直辖市）文理科前200名的新生（一等奖学金）；\n  - 第一志愿（平行志愿省份按第一自然顺序志愿）报考我校，且高考成绩高于我校在该省理科调档线70分、文科调档线50分的新生（二等奖学金）；\n  - 高中阶段参加中国科协主办的全国中学生学科奥林匹克竞赛（数学、物理、化学、生物、信息学）全国决赛一、二、三等奖的新生（单项奖）。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 9,
+          "supported_statements": 9,
+          "faithfulness": 1.0,
+          "note": "所有陈述均与参考上下文一致，得到支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地给出了问题要求的实施起始年级（2016级）和解释部门（招生就业处），没有遗漏任何要点，且额外信息不影响切题性。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答正确指出了新生奖学金办法从2016级新生开始实施，由学校招生就业处负责解释，与参考答案关键事实完全一致，额外信息不影响语义等价性。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "信息搜集汇总/招生信息/奖学措施.txt",
+        "信息搜集汇总/招生就业（dyc）/招生录取/奖学措施.txt",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md",
+        "www.cuit.edu.cn_info_1006_15270.htm__679c744c1a.md"
+      ]
+    },
+    {
+      "id": "q035",
+      "question": "学校转专业工作对学生转出有没有设置门槛？",
+      "category": "simple_fact",
+      "expected_answer": "在国家政策许可范围内，学校对学院各专业允许转出的条件不作限制，不设置转出门槛。",
+      "answer": "根据《成都信息工程大学本科学生转专业管理办法》第三条，学校对学院各专业允许转出的条件不作限制，不设置转出门槛。因此，学生转出没有条件限制或门槛要求。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 2,
+          "supported_statements": 2,
+          "faithfulness": 1.0,
+          "note": "回答完全符合参考上下文，准确反映了转出不设门槛的规定。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接引用学校管理办法，明确说明学校对转专业转出不设置门槛，完整、直接地回答了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案语义完全一致，均明确指出学校不设置转出门槛，关键事实正确，仅增加了具体学校名称和文件引用，属于措辞/详略差异。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "论坛搜集（李俊卓）.docx",
+        "转专业政策.txt",
+        "转专业政策.txt",
+        "论坛搜集（李俊卓）.docx",
+        "转专业政策.txt"
+      ]
+    },
+    {
+      "id": "q036",
+      "question": "转专业工作应遵循什么原则？",
+      "category": "simple_fact",
+      "expected_answer": "转专业工作应遵循公平、公开、公正和择优录取原则，建立公示制度，按照程序规范操作。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: ValueError: judge 没有返回任何陈述",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q037",
+      "question": "学校转专业工作分为几级管理，领导小组组长由谁担任，办公室设在哪里？",
+      "category": "multi_hop",
+      "expected_answer": "转专业工作分为校、院两级管理。学校转专业工作领导小组组长由分管本科教学的校领导担任，成员包括教务处、学生工作处、招生就业处等部门负责人；领导小组办公室设在教务处。",
+      "answer": "根据《成都信息工程大学本科学生转专业管理办法》的规定：\n\n1. **学校转专业工作管理层次**：分为校、院两级管理。\n2. **转专业工作领导小组组长职务**：由分管本科教学的校领导担任。\n3. **转专业工作办公室设立地点**：设在教务处。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 3,
+          "supported_statements": 3,
+          "faithfulness": 1.0,
+          "note": "所有陈述均直接来源于参考上下文中的相关条款，信息准确无误。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地回应了问题的所有三个要点：转专业工作为校、院两级管理，组长由分管本科教学的校领导担任，办公室设在教务处。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案在关键事实上完全一致：转专业工作为校、院两级管理，组长由分管本科教学的校领导担任，办公室设在教务处。仅增加了引用来源，不影响语义等价。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "论坛搜集（李俊卓）.docx",
+        "关于做好2022年本科学生校内转专业工作的通知.pdf",
+        "关于做好2022年本科学生校内转专业工作的通知.pdf",
+        "附件1：2022年学院转专业实施细则汇编.pdf",
+        "转专业政策.txt"
+      ]
+    },
+    {
+      "id": "q038",
+      "question": "学院转专业工作小组由哪些人组成？",
+      "category": "comprehension",
+      "expected_answer": "工作小组成员包括学院分党委书记、院长、分管本科教学工作副院长、学生科科长、教务科科长、本科教学秘书、辅导员代表以及教师代表等。",
+      "answer": "",
+      "answer_error": "RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "metrics": {},
+      "judge_error": null,
+      "retrieved_sources": []
+    },
+    {
+      "id": "q039",
+      "question": "转专业管理办法的制定依据是哪些文件？",
+      "category": "comprehension",
+      "expected_answer": "依据教育部《普通高等学校学生管理规定》（教育部第41号令）、《成都信息工程大学普通本科学生学籍管理规定》以及学校“三段培养、两次分流”的人才培养模式整体改革要求制定。",
+      "answer": "根据您提供的上下文信息，成都信息工程大学转专业管理办法的制定依据主要包括以下文件：\n\n1. **《成都信息工程大学普通本科学生学籍管理规定》**（适用于全校普通本科学生，作为基础性上位文件）\n2. **《成都信息工程大学中外合作办学本科学生学籍管理办法》**（专门针对中外合作办学项目学生转专业等学籍管理事宜）\n\n此外，对于“中高计划”项目，还涉及 **《成都信息工程大学“中外高水平大学学生交流计划”“2+2”学分互认联合培养项目学业管理规定》**。\n\n上述文件在转专业规定中被明确引用，是学校制定转专业管理办法的直接政策依据。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 4,
+          "supported_statements": 2,
+          "faithfulness": 0.5,
+          "note": "前两个文件在上下文中被明确引用为转专业规定依据，但第三个文件在中高计划转专业规定中未被引用，且总结性陈述因包含不准确信息而判断为不支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地列出了转专业管理办法的制定依据文件，包括三个具体文件及其适用说明，完全覆盖了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 3,
+          "reason": "模型回答提到了《成都信息工程大学普通本科学生学籍管理规定》，这是参考答案中的关键文件之一，但遗漏了教育部《普通高等学校学生管理规定》（第41号令）以及学校“三段培养、两次分流”的人才培养模式整体改革要求这两个关键依据，并且额外添加了中外合作办学相关文件，这些文件在参考答案中未提及且不属于通用依据。因此，关键事实有部分正确，但有明显遗漏和多余内容。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1006_16609.htm__d3f03f1df9.md",
+        "www.cuit.edu.cn_info_1006_16611.htm__5e45cc3802.md",
+        "www.cuit.edu.cn_info_1006_16610.htm__f995e22726.md",
+        "www.cuit.edu.cn_info_1006_15059.htm__3507ccb638.md",
+        "xyw.cuit.edu.cn_bmgk.htm__df4a2ba9b1.md"
+      ]
+    },
+    {
+      "id": "q040",
+      "question": "图书馆每天的开馆时间是几点到几点？",
+      "category": "simple_fact",
+      "expected_answer": "图书馆周一至周日开馆时间为8:00-22:00，节假日开馆时间另见公告。",
+      "answer": "根据提供的信息，图书馆的每日开放时间为：**周一至周日 8:00—22:00**。节假日开馆时间另见公告。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 2,
+          "supported_statements": 2,
+          "faithfulness": 1.0,
+          "note": "回答中的两个陈述均可从参考上下文（片段2和片段3）中找到明确支持，但需注意参考上下文中同时存在面向社会大众的8:30-21:30和考研专区的8:00-21:40等不同开放时间，回答未区分读者类型，直接引用8:00-22:00仍属上下文内信息。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接给出了图书馆每天的开放时间（周一至周日8:00-22:00），完整且切题地回应了问题，没有遗漏任何要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案语义完全一致，关键事实（周一至周日8:00-22:00，节假日另见公告）全部正确，仅措辞略有差异但无实质区别。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "xueke.txt",
+        "图书馆.txt",
+        "xueke.txt",
+        "图书馆.txt",
+        "xueke.txt"
+      ]
+    },
+    {
+      "id": "q041",
+      "question": "本科生在图书馆最多能借几本书，借期多长？",
+      "category": "table_lookup",
+      "expected_answer": "本科生允许借书总册数10册，正常借期一个月，允许续借1次，续借借期一个月。",
+      "answer": "根据成都信息工程大学图书馆的借阅规则，本科生借书数量上限为 **10册**，正常借阅期限为 **一个月**（30天）。如需续借，可办理一次，续借期限同样为一个月。请在到期前及时归还或办理续借手续，超期将按每天每册0.20元收取超期占用费。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 7,
+          "supported_statements": 6,
+          "faithfulness": 0.8571428571428571,
+          "note": "除第一个陈述（引入学校名称）外，其余陈述均能被参考上下文支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地给出了本科生借书数量上限（10册）和借期（一个月），完全覆盖了问题的两个要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案在关键事实上完全一致：借书数量10册，借期一个月，可续借1次且续借期一个月，语义等价且无错误。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "图书馆.txt",
+        "xueke.txt",
+        "xueke.txt",
+        "图书馆.txt",
+        "xueke.txt"
+      ]
+    },
+    {
+      "id": "q042",
+      "question": "硕士研究生和教师的图书借阅册数与借期分别是多少？",
+      "category": "table_lookup",
+      "expected_answer": "硕士生和教师均可借15册；硕士生借期二个月、可续借1次续借二个月，教师借期三个月、可续借1次续借三个月。",
+      "answer": "根据成都信息工程大学图书馆的借阅规则，硕士研究生和教师的图书借阅情况如下：\n\n- **硕士研究生**：借书总册数为15册，正常借期为二个月，允许续借1次，续借借期为二个月。\n- **教师**：借书总册数为15册，正常借期为三个月，允许续借1次，续借借期为三个月。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 8,
+          "supported_statements": 8,
+          "faithfulness": 1.0,
+          "note": "所有陈述均能从参考上下文中的借阅规则表格直接找到对应信息，完全支持。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地给出了硕士研究生和教师的借阅册数（均为15册）以及借期（硕士二个月，教师三个月），并补充了续借信息，完全覆盖了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答与参考答案在关键事实上完全一致，包括借阅册数、借期、续借次数和续借期限，语义等价，仅措辞略有差异。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "",
+        "图书馆.txt",
+        "图书馆.txt",
+        "xueke.txt",
+        "四川省大学生就业创业扶持清单.pdf"
+      ]
+    },
+    {
+      "id": "q043",
+      "question": "图书馆哪些类型的书刊资料不外借？",
+      "category": "comprehension",
+      "expected_answer": "中外文工具书、现刊、外文影印版、外文原版书、过刊合订本、报纸等书刊报资料仅供室内阅览，概不外借，出借图书以普通图书为限。",
+      "answer": "根据图书馆的相关规定，以下类型的书刊资料仅供室内阅览，**概不外借**：\n\n- 中外文工具书\n- 现刊（当期期刊）\n- 外文影印版图书\n- 外文原版图书\n- 过刊合订本\n- 报纸（含过期报纸）\n\n此外，社会大众读者（校外人员）仅限馆内阅览，不提供外借服务。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 7,
+          "supported_statements": 7,
+          "faithfulness": 1.0,
+          "note": "所有陈述均可从参考上下文中直接找到或合理推出，回答准确无误。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答完整、直接地列出了图书馆不外借的书刊资料类型，并额外说明了特定读者群体的限制，覆盖了问题的所有要点。"
+        },
+        "answer_match": {
+          "score": 5,
+          "reason": "模型回答完整列出了参考答案中所有不外借的书刊资料类型（中外文工具书、现刊、外文影印版、外文原版书、过刊合订本、报纸），语义完全一致，且额外补充的读者类型信息未与参考答案冲突，属于合理详略差异，关键事实全部正确。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "xueke.txt",
+        "xueke.txt",
+        "xueke.txt",
+        "图书馆.txt",
+        "xueke.txt"
+      ]
+    },
+    {
+      "id": "q044",
+      "question": "在图书馆借的书还没还，一卡通丢了应该去哪里办理挂失？",
+      "category": "procedural",
+      "expected_answer": "应及时到图书馆一楼咨询服务台办理挂失手续；挂失前账户中所有图书（含自借、他人冒用盗借）均由原一卡通所有人负责归还。",
+      "answer": "根据您提供的上下文信息，回答如下：\n\n1. **校园卡挂失办理地点**：  \n   - 请及时在微信公众号“成信计财·新一卡通·一卡通服务”中进行挂失，然后携带身份证到各校区校园一卡通服务中心办理补卡。  \n   - 航空港校区：教工食堂1楼一卡通办公室。  \n   - 龙泉校区：学生食堂一楼西侧。\n\n2. **图书馆借书未归还**：  \n   - 读者所借图书必须如期归还，超期不还者按每天每册0.20元收取超期占用费。若图书遗失，需按《书刊丢损管理办法》赔偿（具体标准见上下文）。离校前须还清所有图书。",
+      "answer_error": null,
+      "metrics": {
+        "faithfulness": {
+          "total_statements": 8,
+          "supported_statements": 8,
+          "faithfulness": 1.0,
+          "note": "所有陈述均能从参考上下文中找到直接支持或合理推出，回答准确无误。"
+        },
+        "relevance": {
+          "score": 5,
+          "reason": "回答直接给出了办理一卡通挂失的具体地点和方式（微信公众号和各校区一卡通服务中心），完整回答了问题核心，没有遗漏要点。"
+        },
+        "answer_match": {
+          "score": 2,
+          "reason": "模型回答中关于挂失地点的信息与参考答案不符：参考答案要求到图书馆一楼咨询服务台办理挂失，而模型回答建议在微信公众号挂失后到校园一卡通服务中心补卡，未提及图书馆服务台。同时，模型回答未涉及挂失前图书责任归属这一关键事实。虽然提到了挂失和处理图书超期等部分内容，但核心地点错误，且遗漏重要信息，属于大部分错误，只碰对个别点。"
+        }
+      },
+      "judge_error": null,
+      "retrieved_sources": [
+        "挂失流程.txt",
+        "校园一卡通.txt",
+        "xueke.txt",
+        "图书馆.txt",
+        "xueke.txt"
+      ]
+    },
+    {
+      "id": "q045",
+      "question": "已经超期的图书还能续借吗？",
+      "category": "simple_fact",
+      "expected_answer": "不能。需续借的图书应在到期前来图书馆或在图书馆网站办理续借手续，已经超期的图书不能续借。",
+      "answer": "根据提供的信息，没有涉及图书馆图书续借的相关规定，因此无法回答该问题。请咨询学校图书馆或查阅相关借阅规则。",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": [
+        "www.cuit.edu.cn_info_1002_15904.htm__659004523f.md",
+        "www.cuit.edu.cn_info_1007_16213.htm__ae814af8d7.md",
+        "www.cuit.edu.cn_info_1002_15913.htm__a0b6c36a83.md",
+        "www.cuit.edu.cn_info_1006_16379.htm__b57ce0a0ab.md",
+        "www.cuit.edu.cn_info_1006_16703.htm__a0559c1e89.md"
+      ]
+    },
+    {
+      "id": "q046",
+      "question": "学生的校园一卡通有哪些功能？",
+      "category": "comprehension",
+      "expected_answer": "学生卡具有校园电子身份认证、图书自助借阅、航空港学生公寓21栋热水洗澡消费（需易校园APP绑定校园卡）、学生食堂及校园超市消费等功能。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q047",
+      "question": "教工卡比学生卡多了什么功能？",
+      "category": "multi_hop",
+      "expected_answer": "教工卡具有校园电子身份认证、图书自助借阅、各校区交通车、教工食堂、学生食堂及校园超市消费等功能，相比学生卡多了各校区交通车和教工食堂消费功能。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q048",
+      "question": "校园一卡通怎么充值？",
+      "category": "procedural",
+      "expected_answer": "在易校园APP或微信小程序“易校园”内使用支付宝和微信充值。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q049",
+      "question": "电子校园卡怎么申领？",
+      "category": "procedural",
+      "expected_answer": "校园一卡通服务中心已完成个人信息录入和加密工作，在易校园APP或微信小程序“易校园”内申领并激活电子校园卡，申领流程参看《校园卡（电子卡）申领流程》。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q050",
+      "question": "学生公寓的热水怎么收费？",
+      "category": "simple_fact",
+      "expected_answer": "学生公寓热水刷卡使用，按流量0.04元/升计费。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q051",
+      "question": "热水卡在哪里充值，充值时间是什么时候？",
+      "category": "multi_hop",
+      "expected_answer": "充值地点在15栋学生公寓一楼热水管理中心；充值时间为周一至周五下午15:00-18:00（节假日除外）。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q052",
+      "question": "学生公寓热水每天的供水时段是怎么安排的？",
+      "category": "table_lookup",
+      "expected_answer": "热水实行分时段供水：早上7:00-9:00，中午12:00-14:00，晚上17:30-24:00。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q053",
+      "question": "热水设施出故障了报修电话是多少？",
+      "category": "contact_lookup",
+      "expected_answer": "如出现热水设施故障（水小、不出水、水温低、扣费异常等），报修电话为1519818。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q054",
+      "question": "热水卡丢了余额还能找回吗？",
+      "category": "simple_fact",
+      "expected_answer": "不能。热水卡为专用卡，学生凭学生证办理，卡内余额无法挂失，需妥善保管。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q055",
+      "question": "学校的快递点都在哪里？",
+      "category": "comprehension",
+      "expected_answer": "菜鸟驿站位于一栋右侧，除京东和顺丰外基本所有快递都在此处，取件需取件码；顺丰快递位于一食堂背后、二栋附近；京东快递位于二食堂附近。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'token plan limit exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q056",
+      "question": "寄快递到航空港校区应该填什么地址和邮编？",
+      "category": "simple_fact",
+      "expected_answer": "航空港校区地址为成都市西南航空港经济开发区学府路一段24号，邮编610225。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q057",
+      "question": "龙泉校区的快递地址和邮编是什么？",
+      "category": "simple_fact",
+      "expected_answer": "龙泉校区地址是成都市龙泉驿区阳光城幸福路10号，邮编610103。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q058",
+      "question": "取菜鸟驿站的快递需要准备什么？",
+      "category": "procedural",
+      "expected_answer": "取快递需要取件码，下载菜鸟裹裹APP即可获取。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q059",
+      "question": "从人南校区到航空港校区的交通车有哪几个班次？",
+      "category": "table_lookup",
+      "expected_answer": "人南到航空港的班次有07:20（教学班次、经停地铁8号线顺风站B口附近）、07:50（经停地铁8号线顺风站B口附近）、09:30（教学班次）、13:20（经停地铁8号线顺风站B口附近）。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q060",
+      "question": "航空港校区回人南的交通车什么时候发车？",
+      "category": "table_lookup",
+      "expected_answer": "航空港到人南的班次有12:20（经停地铁8号线顺风站）、15:55（教学班次、经地铁8号线顺风站）、17:50（经停地铁8号线顺风站）。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q061",
+      "question": "人南到龙泉校区的交通车经停哪里？",
+      "category": "table_lookup",
+      "expected_answer": "人南到龙泉的班次经停净居寺，班次有07:10（教学班次、经停净居寺）、07:20（经停净居寺）、08:50（经停净居寺）、12:50（12:20航空港→人南12:50→龙泉）。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q062",
+      "question": "毕业证或学位证遗失了要补办证明书，需要准备哪些材料？",
+      "category": "procedural",
+      "expected_answer": "需要：①填写《成都信息工程大学毕业证（学位证）遗失补办证明书申请表》；②3张1寸最近的彩色标准纸质像片并提供电子版照片；③本人身份证原件及正反面复印件一张；④档案馆出具的学历证明（2000年及以前毕业的学生）；⑤财务处学费交清证明；⑥委托他人代办的还需授权委托书和双方身份证正反面复印件。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q063",
+      "question": "补办毕业证明书要多久，在哪里办理？",
+      "category": "multi_hop",
+      "expected_answer": "办理时间2-3个工作日，通讯地址为成都信息工程大学航空港校区行政楼208。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q064",
+      "question": "办理毕业证遗失补办的联系电话是多少，找哪位老师？",
+      "category": "contact_lookup",
+      "expected_answer": "联系电话028-85967803，段老师、吴老师。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'token plan limit exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q065",
+      "question": "毕业证遗失补办的受理范围是哪些人？",
+      "category": "simple_fact",
+      "expected_answer": "受理范围为我校毕业的普通全日制本专科毕业生，包括航空港、龙泉校区毕业的普通全日制本专科学生。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'token plan limit exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q066",
+      "question": "毕业设计（论文）管理系统有哪几种登录方式？",
+      "category": "comprehension",
+      "expected_answer": "提供两种登录方式：一是校内统一身份认证登录，使用学校信息中心统一提供的用户名和密码，校外使用需要借助WebVPN；二是直接登录，使用知网（CNKI）系统的用户名和密码，内网和外网均可直接登录，无需WebVPN。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q067",
+      "question": "在校外访问毕业设计管理系统，用统一身份认证登录需要什么条件？",
+      "category": "multi_hop",
+      "expected_answer": "校外使用统一身份认证登录需要借助WebVPN；如果不想用WebVPN，可以改用知网（CNKI）账号直接登录，内外网均可访问。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q068",
+      "question": "学校现有几个校区，占地面积多少？",
+      "category": "simple_fact",
+      "expected_answer": "学校现有航空港、龙泉两个校区，占地面积2000余亩。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q069",
+      "question": "学校的人才培养模式是什么？",
+      "category": "comprehension",
+      "expected_answer": "学校借鉴国际CDIO工程教育理念，构建起“三段培养、两次分流，多元发展”的人才培养模式，致力于培养具有健康心智体魄、良好人文素质、系统理论知识、扎实实践能力的高素质应用型专门人才。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q070",
+      "question": "成都信息工程大学是由哪些单位共建的？",
+      "category": "simple_fact",
+      "expected_answer": "学校是四川省和中国气象局共建、四川省重点发展的省属普通本科院校。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q071",
+      "question": "学校加入了哪些高校联盟或国际组织？",
+      "category": "comprehension",
+      "expected_answer": "学校是国际CDIO组织、中国气象人才培养联盟、成渝地区双城经济圈高校联盟的正式成员。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q072",
+      "question": "校训“成于大气”具体是什么含义？",
+      "category": "comprehension",
+      "expected_answer": "“成于大气”既指学校诞生、成长和发展于中国气象事业，更指学校办学、师生做人做事成就于大气精神和成功于大气品质。大气精神指坚定奋斗方向、统观大局、把握大势的气度，海纳百川、兼收并蓄的气量，自强不息、求真务实、拼搏进取的气概，立大志、干大事、创大业的气魄；大气品质指宽广的胸襟、豁达的心境、积极的态度、博大的爱心和厚重的责任。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q073",
+      "question": "校训“信达天下”是什么意思？",
+      "category": "comprehension",
+      "expected_answer": "“信达天下”最基本的是做人的要求，即以诚取信，以良好的信用和信誉达于天下；其次指成信大和成信人在信息时代必须面向世界、面向未来和面向现代化，开拓开放，通达天下。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'token plan limit exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q074",
+      "question": "学校中等专业学校时期的第一任教学主任是谁，任职时间是什么时候？",
+      "category": "table_lookup",
+      "expected_answer": "彭平，男，任教学主任，任职时间1951年1月至1954年4月。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q075",
+      "question": "四川统计学校时期担任过校长的有哪些人？",
+      "category": "table_lookup",
+      "expected_answer": "四川统计学校时期担任过校长的包括万里（1950.12-1952.08）、孟功才（1952.10-1961.05）、孙世义（1961.05-1963.03）、尹光荣（代校长1963.03-1964.02、1965.03-1967.02，校长1978.02-1984.05）等。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    },
+    {
+      "id": "q076",
+      "question": "校园卡丢了去哪里挂失？",
+      "category": "procedural",
+      "expected_answer": "校园卡挂失请到一卡通服务中心办理。",
+      "answer": "我还不知道，请反馈给我吧",
+      "answer_error": null,
+      "metrics": {},
+      "judge_error": "faithfulness: RateLimitError: Error code: 429 - {'error': {'message': 'rpm exhausted', 'type': 'quota_exceeded_error', 'code': '8'}}",
+      "retrieved_sources": []
+    }
+  ]
+}
