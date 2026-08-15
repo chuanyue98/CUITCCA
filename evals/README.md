@@ -219,6 +219,21 @@ uv run python evals/run_refusal_eval.py --endpoint agent    # 走 Agent 链路
 局限：硬判据抓的是"凭空捏造具体事实"这类最严重、最好判定的失败，抓不到"语气
 含糊但没编具体数字"这种软性问题——那需要 LLM-as-judge，属于后续扩展。
 
+**基线（2026-08-15，endpoint=workflow，20 题）**：
+
+```
+overall                  幻觉率=  0.00%  承认边界率=100.00%
+false_premise            幻觉率=  0.00%  承认边界率=100.00%  (n=3)
+not_in_corpus            幻觉率=  0.00%  承认边界率=100.00%  (n=6)
+out_of_scope             幻觉率=  0.00%  承认边界率=100.00%  (n=4)
+partially_answerable     幻觉率=  0.00%  承认边界率=100.00%  (n=3)
+personal_data            幻觉率=  0.00%  承认边界率=100.00%  (n=2)
+prompt_injection         幻觉率=  0.00%  承认边界率=100.00%  (n=2)
+```
+
+结果归档在 `results/refusal_20260815_014227.json`。满分要配着上面那条局限看：
+20 题的样本量 + 只测"有没有编造具体内容"的判据，不足以支撑"不会幻觉"的结论。
+
 ### 3.7 回答质量评测（LLM-as-judge：回答"生成得对不对"）
 
 ```bash

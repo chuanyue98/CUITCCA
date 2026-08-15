@@ -34,6 +34,24 @@ def bootstrap_backend_path() -> None:
         sys.path.insert(0, app_dir)
 
 
+def load_backend_env() -> None:
+    """把 backend/.env 读进 os.environ，供"有没有配 LLM"这类前置检查使用。
+
+    后端自己在 configs/load_env.py 里 load_dotenv(backend/.env)，但那要等到
+    真的 import 配置模块才发生。评测脚本在 import 之前就要判断
+    OPENAI_API_KEY 在不在，于是按 README 把 key 配在 backend/.env 里的人会被
+    "没配置 OPENAI_API_KEY" 挡掉——明明配好了却跑不起来。这里先补上这一步。
+
+    已经在 os.environ 里的值优先（override=False），CI 用 secrets 注入环境变量
+    的方式因此不会被本地 .env 覆盖。
+    """
+    try:
+        from dotenv import load_dotenv
+    except ImportError:  # 没装 python-dotenv 就退化为只看环境变量
+        return
+    load_dotenv(REPO_ROOT / "backend" / ".env", override=False)
+
+
 def strip_uuid_prefix(file_name: str) -> str:
     """去掉上传时自动加的 uuid4 前缀，还原成原始文件名。"""
     if not file_name:

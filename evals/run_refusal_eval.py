@@ -51,7 +51,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from evals._common import EVALS_DIR, bootstrap_backend_path, load_jsonl  # noqa: E402
+from evals._common import EVALS_DIR, bootstrap_backend_path, load_backend_env, load_jsonl  # noqa: E402
 
 DEFAULT_GOLDEN = EVALS_DIR / "golden.refusal.jsonl"
 DEFAULT_RESULTS_DIR = EVALS_DIR / "results"
@@ -218,6 +218,7 @@ def main() -> int:
         return 1
 
     bootstrap_backend_path()
+    load_backend_env()
 
     if not os.environ.get("OPENAI_API_KEY"):
         print(
