@@ -21,8 +21,15 @@
   --primary-light: rgb(61, 130, 196);
   --primary-soft: rgba(25, 84, 142, 0.1);
   --primary-softer: rgba(25, 84, 142, 0.06);
-  --accent-grad: linear-gradient(135deg, rgb(25, 84, 142) 0%, rgb(61, 130, 196) 100%);
+  /* 填充按钮的渐变两端都要单独达到 4.5:1（WCAG AA，13.5px/600 不算大号文本）
+     ——原来两端取的是 --primary / --primary-light 本身，浅端在白字下只有
+     3.18:1。这里专门加深，不能直接复用 --primary 系列 token（那些还要兼顾
+     跟 --primary-soft 之类透明度族的观感搭配）。 */
+  --accent-grad: linear-gradient(135deg, #19548e 0%, #2f6ea8 100%);
   --accent-grad-soft: linear-gradient(135deg, rgba(25, 84, 142, 0.1) 0%, rgba(61, 130, 196, 0.08) 100%);
+  /* 填充按钮统一用这个前景色（浅色白字/暗色近黑字），不要在各按钮规则里
+     散落写 color: #fff。 */
+  --btn-fg: #ffffff;
 
   /* 功能色 */
   --success: #22a559;
@@ -31,6 +38,20 @@
   --danger-light: #f06a6e;
   --warning: #f59e0b;
   --info: #1890ff;
+  /* 按钮专用的加深渐变：直接用 --success/--danger 做渐变两端白字对比度不够
+     （浅端 3.91:1 / 3.00:1），但 --success/--danger 本身还挂着文字色用途
+     （.tool-status.ok 等），不能直接改，所以单独开一组 token。 */
+  --success-grad: linear-gradient(135deg, #146b3a 0%, #1a8248 100%);
+  --danger-grad: linear-gradient(135deg, #b81f26 0%, #cc3036 100%);
+  /* 管理页"删除分块"/"删除整档"两个纯文字/浅底删除按钮专用的文字色——不能
+     直接用 --danger 本身（白底 3.91:1，不达 WCAG AA 4.5:1）。整档删除一次
+     清空整份文档的所有分块，比删除分块危险得多，因此故意比它深一档、对比
+     度余量更大，让人一眼看出"这个更重"（实测 --danger-text 白底 5.20:1，
+     --danger-text-strong 配 --danger-soft 浅底混合 5.45:1）。 */
+  --danger-text: #cc3036;
+  --danger-text-strong: #b81f26;
+  --danger-soft: rgba(184, 31, 38, 0.1);
+  --danger-border-strong: rgba(184, 31, 38, 0.35);
 
   /* 圆角标度 */
   --radius-sm: 10px;
@@ -47,7 +68,10 @@
   /* 文字层级 */
   --text-primary: #1f2430;
   --text-secondary: #55606e;
-  --text-tertiary: #8d97a5;
+  /* 实测 #8d97a5 在白底 2.96:1 / 页面渐变底 2.75:1，不达 WCAG AA 的 4.5:1
+     ——它承载回答元信息条、引用来源等大量 11-13px 小字，加深到 #68717d
+     （4.94:1 / 4.61:1 达标）。暗色 #828b99 实测已达标，未改。 */
+  --text-tertiary: #68717d;
 
   /* 表面与边框 */
   --bg-gradient-start: #f4f7fc;
@@ -70,6 +94,11 @@
   --scroll-thumb-hover: rgba(25, 84, 142, 0.45);
   --focus-ring: 0 0 0 4px rgba(25, 84, 142, 0.14);
   --overlay-bg: rgba(244, 247, 252, 0.55);
+  /* 聊天页三栏（消息列/清空按钮行/输入框行）共用同一个最大宽度 + 左右
+     padding，保证左右边缘完全对齐——之前三者各写各的 max-width/padding，
+     加上 .chat_talk_container 自己的 800px 上限和 margin-right:10px，导致
+     输入框比消息列窄、还整体左偏（实测右缘相差 55px）。 */
+  --chat-col-max: 900px;
 }
 
 /* ===== 设计令牌（暗色） ===== */
@@ -80,14 +109,29 @@
     --primary-light: rgb(126, 182, 229);
     --primary-soft: rgba(101, 163, 218, 0.16);
     --primary-softer: rgba(101, 163, 218, 0.08);
-    --accent-grad: linear-gradient(135deg, rgb(45, 92, 138) 0%, rgb(101, 163, 218) 100%);
+    /* 暗色下 --accent-grad 还被用作用户气泡 .content_man 的背景，浅端原来
+       只有 2.69:1——加深两端，白字达标。 */
+    --accent-grad: linear-gradient(135deg, #265079 0%, #3a72aa 100%);
     --accent-grad-soft: linear-gradient(135deg, rgba(101, 163, 218, 0.12) 0%, rgba(126, 182, 229, 0.08) 100%);
+    /* 暗色下按钮改用近黑文字压在鲜亮填充色上（暗色 UI 的通行做法），比继续
+       加深填充色更保留品牌鲜艳度。 */
+    --btn-fg: #0d0f13;
     --success: #3fb570;
     --success-light: #52c98a;
     --danger: #f26d70;
     --danger-light: #f88a8d;
     --warning: #f5a623;
     --info: #45a4ff;
+    /* 暗色下 --success/--danger 本身已经够亮，直接复用做渐变、配 --btn-fg
+       近黑字即可达标（7.36:1 / 6.57:1），不需要像浅色那样另配色值。 */
+    --success-grad: linear-gradient(135deg, var(--success) 0%, var(--success-light) 100%);
+    --danger-grad: linear-gradient(135deg, var(--danger) 0%, var(--danger-light) 100%);
+    /* 暗色下 --danger/--danger-light 本身已经够亮，直接复用做删除按钮文字色
+       即可达标（实测 5.53:1 / 6.93:1），不需要像浅色那样另配色值。 */
+    --danger-text: var(--danger);
+    --danger-text-strong: var(--danger-light);
+    --danger-soft: rgba(242, 109, 112, 0.16);
+    --danger-border-strong: rgba(242, 109, 112, 0.4);
 
     --text-primary: #e6e9ef;
     --text-secondary: #b3bac6;
@@ -473,7 +517,9 @@ html { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; 
   font-size: 13.5px;
   transition: filter 0.2s, transform 0.15s, box-shadow 0.2s, opacity 0.2s;
   white-space: nowrap;
-  color: #fff;
+  /* --btn-fg 而不是写死 #fff：暗色下填充按钮改用近黑字压亮色底，写死白字
+     在暗色渐变上对比度不够（实测低至 2.08:1）。 */
+  color: var(--btn-fg);
 }
 
 .btn:hover { filter: brightness(1.07); box-shadow: var(--shadow-sm); }
@@ -482,14 +528,22 @@ html { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; 
 .btn-primary {
   background: var(--accent-grad);
   box-shadow: 0 3px 10px rgba(25, 84, 142, 0.22);
+  /* --accent-grad 的两档色值是专门按白字校准的（浅 7.78/5.36，暗 8.38/5.04）
+     ——暗色下 --btn-fg 的近黑字压上去在渐变深处只剩 2.29:1，明显不达标，
+     所以这里固定白字，不跟随 --btn-fg（--btn-fg 的近黑字方案是给
+     --success-grad/--danger-grad 那种暗色下本就很亮的底色用的）。 */
+  color: #fff;
 }
 .btn-success {
-  background: linear-gradient(135deg, var(--success), var(--success-light));
-  box-shadow: 0 3px 10px rgba(34, 165, 89, 0.22);
+  background: var(--success-grad);
+  /* 阴影色跟着 --success-grad 加深后的起点色走（#146b3a），原来的
+     rgba(34,165,89) 是旧渐变色，留着会跟新按钮色不搭。 */
+  box-shadow: 0 3px 10px rgba(20, 107, 58, 0.24);
 }
 .btn-danger {
-  background: linear-gradient(135deg, var(--danger), var(--danger-light));
-  box-shadow: 0 3px 10px rgba(229, 72, 77, 0.22);
+  background: var(--danger-grad);
+  /* 同上，跟 --danger-grad 起点色（#b81f26）对齐。 */
+  box-shadow: 0 3px 10px rgba(184, 31, 38, 0.24);
 }
 
 /* ===== 统一表单控件 ===== */
@@ -608,7 +662,7 @@ input:focus, select:focus, textarea:focus {
 
 .talk_content {
   width: 100%;
-  max-width: 900px;
+  max-width: var(--chat-col-max);
   margin: 0 auto;
   flex-grow: 1;
   overflow-y: auto;
@@ -620,6 +674,24 @@ input:focus, select:focus, textarea:focus {
   flex-direction: column;
   gap: 4px;
   padding: 12px 0;
+}
+
+/* 空状态（欢迎语 + 首屏引导还在）时垂直居中，而不是吊在顶部大片留白里
+   （1440×900 下实测欢迎语孤零零贴在 900px 高空白区顶部）。.starter 只在
+   dismissStarter() 之前存在，一旦开始对话就被移除，:has(.starter) 自动
+   失效，回到顶对齐——不需要 JS 切换状态类。
+
+   注意居中要做在 .talk_content 上，不能给 #chatbox 加 min-height: 100%：
+   .talk_content 是 flex-grow:1 + flex-basis:auto，它的 flex 基准尺寸取决于
+   内容高度，而子元素的百分比高度又反过来取决于它，两者循环。实测那样写会
+   把 .talk_content 的基准撑到整个可视高度，把 .chat_bottom(40px) 和
+   .foot_fix(120px) 一起顶出视口——输入框直接从屏幕上消失。
+   .talk_content 本身经 flex 布局已有确定高度，让它做居中容器不改变任何
+   元素的高度，天然没有这个问题。 */
+.talk_content:has(.starter) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* ===== 消息气泡 ===== */
@@ -678,6 +750,8 @@ input:focus, select:focus, textarea:focus {
 
 .message .content_man {
   background: var(--accent-grad);
+  /* 同 .btn-primary：--accent-grad 是按白字校准的，固定白字而不用
+     --btn-fg（暗色近黑字在这个渐变上不达标，见 .btn-primary 处注释）。 */
   color: #fff;
   border-radius: 16px 4px 16px 16px;
   box-shadow: 0 4px 14px rgba(25, 84, 142, 0.22);
@@ -841,7 +915,12 @@ input:focus, select:focus, textarea:focus {
   padding-top: 14px;
   padding-bottom: 14px;
   gap: 8px;
-  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  /* 不能重画一份 body 的渐变：.foot_fix 是 .talk_content 的兄弟节点、不在
+     滚动容器内，这里的取值和 body 渐变在同一位置的实际取值总是对不上（body
+     渐变是整屏 135deg，.foot_fix 只是页面下方一块局部区域，同一个渐变公式
+     在不同起讫点算出来的颜色不一样），输入区上沿因此有一条贯穿全宽的可见
+     色带。改透明让 body 的渐变直接透过来，天然连续。 */
+  background: transparent;
 }
 
 .chat_container {
@@ -850,8 +929,12 @@ input:focus, select:focus, textarea:focus {
   justify-content: center;
   align-items: center;
   width: 100%;
+  max-width: var(--chat-col-max);
+  margin: 0 auto;
+  padding: 0 10px;
   height: auto;
   min-height: 52px;
+  box-sizing: border-box;
 }
 
 .chat_mode_bar {
@@ -860,7 +943,8 @@ input:focus, select:focus, textarea:focus {
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
-  max-width: 900px;
+  max-width: var(--chat-col-max);
+  margin: 0 auto;
   padding: 0 10px;
   flex-shrink: 0;
 }
@@ -893,7 +977,11 @@ input:focus, select:focus, textarea:focus {
 
 .chat_talk_container {
   display: flex;
-  max-width: 800px;
+  /* 原来 max-width:800px + margin-right:10px 让输入框比消息列（900px）窄，
+     还整体左偏 5px——三栏对齐后输入框应该填满 .chat_container 让出的
+     900px 列宽，改用 flex:1 而不是固定上限。 */
+  max-width: none;
+  flex: 1;
   width: 100%;
   height: auto;
   min-height: 52px;
@@ -901,7 +989,7 @@ input:focus, select:focus, textarea:focus {
   border-radius: 26px;
   background: var(--surface);
   box-shadow: var(--shadow-sm);
-  margin-right: 10px;
+  margin-right: 0;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -930,7 +1018,13 @@ input:focus, select:focus, textarea:focus {
   min-height: 24px;
 }
 
-textarea {
+/* 这一整块属性都是聊天输入框专属的（flex-grow/height:100%/resize:none/
+   透明背景……），之前写成裸 textarea 选择器，整块泄漏到了反馈页等其它页面
+   ——height:100% 最致命：.feedback_textarea 只设了 min-height 没设 height，
+   在有确定高度的祖先链下形成循环解析，把卡片撑高了 178px（实测卡片
+   scrollHeight 740 / height 563）。收窄成 #input 精确限定，呼应下面
+   #input:focus 收窄同一坑的注释。 */
+#input {
   flex-grow: 1;
   width: 100%;
   height: 100%;
@@ -944,7 +1038,7 @@ textarea {
   background: transparent;
 }
 
-textarea:focus { outline: none; }
+#input:focus { outline: none; }
 
 /* 聊天输入框的焦点态由外层 .chat_talk_container.is-focused 承担（光晕画在
    胶囊容器上），这里必须用 #input 精确限定——宽泛的 textarea:focus 会把管理/
@@ -961,6 +1055,8 @@ textarea:focus { outline: none; }
   line-height: 1;
   border: none;
   border-radius: 50%;
+  /* 同 .btn-primary：背景是 --accent-grad，按白字校准，固定白字不用
+     --btn-fg。 */
   color: #fff;
   text-align: center;
   cursor: pointer;
@@ -1425,6 +1521,7 @@ textarea:focus { outline: none; }
   border: none;
   border-radius: var(--radius-sm);
   background: var(--accent-grad);
+  /* 同 .btn-primary：--accent-grad 按白字校准，固定白字不用 --btn-fg。 */
   color: #fff;
   font-weight: 600;
   font-size: 14px;
@@ -1436,9 +1533,14 @@ textarea:focus { outline: none; }
 .btn-submit:hover { filter: brightness(1.07); box-shadow: var(--shadow-md); }
 .btn-submit:active { transform: scale(0.985); }
 
+/* 原 #5b3aa8/#7a54c8 白字对比度不够（实测低至 2.42:1），按同一公式加深到
+   两端都 ≥4.5:1（白字实测 7.10 / 4.70）。这个渐变没有暗色专属覆盖，实测
+   --btn-fg 暗色下的近黑字压上去只有 2.70 / 4.08，不达标——所以这里刻意不
+   跟随 --btn-fg，固定用白字（在浅色和暗色下都是同一个渐变，白字两边都够）。 */
 .btn-submit-qa {
-  background: linear-gradient(135deg, #5b3aa8, #7a54c8);
+  background: linear-gradient(135deg, #6c3fae, #8a5bce);
   box-shadow: 0 3px 10px rgba(91, 58, 168, 0.22);
+  color: #fff;
 }
 
 /* 节点卡片 */
@@ -1461,34 +1563,106 @@ textarea:focus { outline: none; }
 
 .node_meta_row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   font-size: 11px;
   color: var(--text-tertiary);
   border-bottom: 1px solid var(--border-faint);
   padding-bottom: 8px;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
+.node_meta_docid {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  /* 跟索引操作行（.index_select / .new_index_input）那处溢出是同一类根因：
+     flex 子元素默认 min-width:auto，撑着不收缩到内容固有宽度以下——这里
+     的"内容固有宽度"是长 doc_id 单行不换行时的整串文字宽度。窄屏下长
+     doc_id（如"1_2023睿抗机器人开发者大赛CAIP编程设计赛道-校内报名通知
+     5-18.pdf_part_0"）会把 .node_doc_id 按钮连同这层外壳一起撑到卡片外
+     （实测 390px 视口下右缘到 500px，超出卡片 141px）。min-width:0 解除
+     "不收缩"限制，max-width:100% 兜底夹到卡片可用宽度以内，两者缺一
+     不可：只加 min-width:0 不够，因为 flex-shrink:0 本身不参与"挤压"计算，
+     真正让它变窄的是 max-width 作为夹子在 flex 尺寸解析后强制生效。 */
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Doc ID 徽标从纯展示改成可点击的筛选入口：点击等价于把该 doc_id 填进
+   #node-search 并触发筛选——用户删整档前天然想先看清这份文档到底包含哪些
+   分块，这个入口正好承接这个动线。改用 <button> 承载（而不是 span 加
+   role/tabindex）以获得原生键盘可达性和 click 语义，需要重置 UA 默认按钮
+   样式（边框/背景/字体）来保留原来的胶囊视觉。 */
 .node_doc_id {
+  font: inherit;
   background-color: var(--primary-soft);
   color: var(--primary);
   padding: 2px 8px;
+  border: none;
   border-radius: 5px;
   font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, box-shadow 0.15s;
+  /* 长 doc_id 允许换行、必要时任意位置断词（而不是单行撑宽或用 ellipsis
+     截断丢信息）——配合外层 .node_meta_docid 的 min-width:0 + max-width:
+     100% 才能真正把按钮限制在卡片宽度内，见外层那条注释。 */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  max-width: 100%;
 }
 
-.node_id_text {
-  font-family: monospace;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 55%;
+.node_doc_id:hover { box-shadow: 0 0 0 1px var(--border-strong) inset; }
+.node_doc_id:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* 无 doc_id（自动生成）的分块没有可筛选目标，禁用交互并弱化视觉，避免
+   看起来可点却点不出结果。 */
+.node_doc_id:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
+.node_doc_id:disabled:hover { box-shadow: none; }
+
+/* 字数 / "第 N 共 M 块"——这才是用户真正想看的元信息，腾出的空间来自下面
+   收缩后的 Node ID（原来它占 meta 行 37% 宽度，还被 ellipsis 截成一段看不
+   出意义的十六进制片段）。 */
+.node_meta_info {
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Node ID 缩成一个可复制的小标记：只显示前 8 位，完整值放 title 悬浮提示，
+   点击复制到剪贴板——对普通用户几乎无信息量的长 UUID 不再挤占卡片空间。 */
+.node_id_short {
+  /* 也用 <button> 承载（点击复制），需要重置 UA 默认按钮字体。 */
+  font: inherit;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: monospace;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  background: var(--surface-alt);
+  padding: 2px 7px;
+  border: 1px solid var(--border-faint);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.node_id_short:hover { background: var(--primary-soft); color: var(--primary); }
+.node_id_short:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 .node_editor {
   width: 100%;
-  min-height: 84px;
+  /* 语料分块长度中位数 564 字、最大 3720 字，84px 装不下——实测 10/10 的
+     textarea 都要滚动，且卡片内滚动和外层 #node-list-viewport 滚动嵌套，
+     滚轮容易滚错层。200px（13px/1.65 行高下约 9 行）能让多数分块一屏读完，
+     resize:vertical 仍保留，用户可以自己再拉高。用固定 min-height 而不是
+     field-sizing:content——后者 Firefox/Safari 尚不支持，拿不准就走稳妥
+     方案。 */
+  min-height: 200px;
   resize: vertical;
   padding: 10px;
   border-radius: 9px;
@@ -1513,7 +1687,7 @@ textarea:focus { outline: none; }
   gap: 8px;
 }
 
-.node_action_buttons { display: flex; gap: 16px; }
+.node_action_buttons { display: flex; align-items: center; gap: 8px; }
 
 .node_status_tag {
   font-size: 11px;
@@ -1524,29 +1698,57 @@ textarea:focus { outline: none; }
 .btn-delete-node {
   background: none;
   border: none;
-  color: var(--danger);
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
   padding: 2px 4px;
   border-radius: 6px;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 
-.btn-delete-node:hover { background: rgba(229, 72, 77, 0.08); }
+/* "删除分块"只删一个 node，风险相对小，保留纯文字按钮，但文字色不能直接
+   用 --danger（白底 3.91:1，不达 WCAG AA 的 4.5:1）——见 :root 里
+   --danger-text 的注释。 */
+.btn-delete-chunk {
+  color: var(--danger-text);
+  /* 用左边框当分隔线 + margin/padding 撑开间距，把它和左边"删除整档"从
+     贴在一起的两个字拉开视觉距离，降低连续误点的概率。 */
+  margin-left: 10px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border-faint);
+}
+.btn-delete-chunk:hover { background: var(--danger-soft); }
 
-.btn-delete-doc { color: var(--warning); }
-.btn-delete-doc:hover { background: rgba(245, 158, 11, 0.1); }
+/* "删除整档"一次性清空整份文档的所有分块（campus 索引里单个 doc_id 最多
+   189 个分块），比删除分块危险得多，因此故意做得比它"重"：浅红底 chip +
+   边框 + 更深的文字色（--danger-text-strong，对比度余量比 --danger-text
+   更大）+ 加粗，肉眼就能分出两者的风险等级。刻意没有做成大块实心红按钮——
+   那样会抢走整个卡片操作区的注意力，喧宾夺主。 */
+.btn-delete-doc {
+  color: var(--danger-text-strong);
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-border-strong);
+  font-weight: 700;
+  padding: 3px 10px;
+}
+.btn-delete-doc:hover { background: var(--danger-border-strong); }
 
-/* 分页 */
+/* 分页
+   154 页只有上一页/下一页翻到第 100 页要点 99 次，加了跳页输入框、首页/
+   末页、每页条数选择。原来的固定 height:52px 装不下这么多控件，改成
+   min-height + 允许换行（flex-wrap），窄屏下控件自动折成两行而不是横向
+   溢出；#pagination-bar / #page-indicator / #btn-prev-page / #btn-next-page
+   这几个 id 保持不变（测试可能依赖），新控件都是另加的。 */
 #pagination-bar {
-  height: 52px;
+  min-height: 52px;
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-alt);
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  gap: 8px 16px;
   flex-shrink: 0;
 }
 
@@ -1559,9 +1761,62 @@ textarea:focus { outline: none; }
   font-size: 12px;
   color: var(--text-secondary);
   font-weight: 500;
+  white-space: nowrap;
 }
 
-.pagination_buttons { display: flex; gap: 10px; }
+.pagination_left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pagination_size_label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pagination_size_select {
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--border-faint);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.pagination_buttons { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.pagination_jump {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination_jump_input {
+  width: 54px;
+  padding: 5px 6px;
+  border-radius: 7px;
+  border: 1px solid var(--border-faint);
+  background: var(--surface);
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pagination_jump_input:focus {
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
 
 .pagination_btn {
   padding: 6px 14px;
@@ -1574,6 +1829,8 @@ textarea:focus { outline: none; }
   color: var(--text-secondary);
   transition: all 0.18s;
 }
+
+.pagination_jump_btn { padding: 6px 10px; }
 
 .pagination_btn:hover:not(:disabled) {
   border-color: var(--primary);
@@ -1600,6 +1857,11 @@ textarea:focus { outline: none; }
 
 .index_select {
   flex-grow: 1;
+  /* flex 子元素默认 min-width:auto，不能收缩到内容固有宽度以下——而 select
+     的固有宽度由最长 option 撑开（实测索引名越长越容易触发）。1440×900 下
+     .panel_left 被压到 400px 定宽时，这一行连同 .new_index_input 都会溢出
+     46px，导致同行的"删除当前"按钮右半边被外层 overflow-y:auto 裁掉。 */
+  min-width: 0;
   padding: 10px 15px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
@@ -1618,6 +1880,9 @@ textarea:focus { outline: none; }
 
 .new_index_input {
   flex-grow: 1;
+  /* 同 .index_select：input 默认 size 撑出的固有宽度会顶破 flex 容器的
+     min-width:auto，导致这一行在 .panel_left 收窄到 400px 时溢出。 */
+  min-width: 0;
   padding: 10px 15px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-faint);
@@ -1662,8 +1927,14 @@ textarea:focus { outline: none; }
 
 .summary_textarea {
   width: 100%;
-  min-height: 84px;
-  max-height: 150px;
+  /* 注意：这个 textarea 没有 rows 属性（默认 rows=2），也没设 height，
+     所以渲染高度是被 min-height 卡住的，不是 max-height。之前 min-height: 84px
+     只够显示 3 行，长摘要根本读不全；把 max-height 调大是无效的（试过，
+     可见行数纹丝不动），真正要抬高的是 min-height。这里放宽到 200px（约 8 行）。 */
+  min-height: 200px;
+  /* max-height: 150px 删掉——它只会限制用户拖拽 resize: vertical 能拉到多大，
+     留着反而碍事，改成 none 不设上限。 */
+  max-height: none;
   background: var(--surface-alt);
   padding: 12px;
   border-radius: 10px;
@@ -1881,6 +2152,7 @@ textarea:focus { outline: none; }
 .feedback_submit {
   padding: 13px 44px;
   background: var(--accent-grad);
+  /* 同 .btn-primary：--accent-grad 按白字校准，固定白字不用 --btn-fg。 */
   color: #fff;
   border: none;
   border-radius: var(--radius-pill);
@@ -1923,6 +2195,42 @@ textarea:focus { outline: none; }
 /* ======================================================================
    响应式
    ====================================================================== */
+
+/* 窄屏侧边栏改为覆盖层，而不是挤占正文空间。
+   根因：#side_left 原来只是 display:none/block 切换，但 .outline 是
+   flex-direction:row——300px 定宽侧栏展开时是"挤占"而不是"盖上去"，390px
+   视口下正文被压到只剩 90px 宽，中文变成一字一行（实测）。这里只加"定位
+   浮起 + 遮罩"，display 切换机制本身（sidebar.ts 里的 container.style.display）
+   原样保留，不动结构。 */
+
+/* 默认（桌面端）隐藏：这条必须放在媒体查询外面——.sidebar_backdrop 是
+   sidebar.ts 无条件 appendChild 到 body 的一个裸 div，如果"display:none"
+   只写在 max-width:1023px 查询里，桌面端宽屏下该查询不生效，div 会以浏览器
+   默认的 display:block 渲染成一个铺满全屏的空白块（实测桌面端 1280px 下
+   getComputedStyle 显示 display:block）。 */
+.sidebar_backdrop { display: none; }
+
+@media (max-width: 1023px) {
+  #side_left {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 50;
+  }
+
+  .sidebar_backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background: rgba(16, 42, 74, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .sidebar_backdrop.is-visible { display: block; }
+}
+
 @media (max-width: 1200px) {
   .dashboard_container {
     flex-direction: column;
@@ -1939,7 +2247,9 @@ textarea:focus { outline: none; }
 
 @media (max-width: 768px) {
   .side_left { min-width: auto !important; }
-  .chat_talk_container { max-width: 100%; }
+  /* .chat_talk_container 的 max-width:100% 覆盖已不再需要：三栏对齐后基础
+     规则本身就是 flex:1（P2-9），天然填满 .chat_container 让出的空间，不
+     会比父容器宽。 */
   .message .content_man, .message .content_bot { max-width: 100%; }
   .guide_container { padding: 15px; }
   .glass_card { padding: 15px; }
@@ -1948,17 +2258,25 @@ textarea:focus { outline: none; }
   /* 管理页：索引操作行在小屏换行，避免按钮被挤出屏幕 */
   .index_action_row, .index_create_row { flex-wrap: wrap; }
   .btn_save_disk { width: 100%; justify-content: center; }
+  /* 输入框独占一行，"新建"/"删除当前"在下一行等宽并排——原来 .new_index_input
+     的 flex-grow 会把两个按钮先挤到换行，视觉权重变成"新建"挤在输入框旁、
+     "删除当前"整行填充红色，破坏性操作反而最显眼、也最容易被误触。 */
+  .new_index_input { flex: 1 1 100%; }
   .index_create_row .btn { flex: 1; white-space: nowrap; }
   .dashboard_container { padding: 12px; gap: 12px; }
 }
 
 @media (max-width: 480px) {
-  /* 窄屏保持横排：清空(40) + 输入框(flex) + 发送(44) 完全排得下一行 */
+  /* 窄屏保持横排：清空(带文字标签) + 输入框(flex) + 发送(44) 排得下一行。
+     以前这里把 .clear_label 藏起来只剩图标——和 index.html 里"移动端没有
+     hover，等于完全没有说明"这条设计意图直接矛盾（见那里的注释），窄屏反而
+     又变回一个裸垃圾桶图标。.chat_mode_bar 是独占一行 + justify-content:
+     flex-end，390px 下空间充裕，不需要靠藏文字来省空间。 */
   .chat_container { flex-direction: row; height: auto; padding: 0 8px; gap: 6px; }
-  /* 窄屏只留图标，文字标签藏起来 */
-  .clear { padding: 0 8px; }
-  .clear_label { display: none; }
-  .chat_talk_container { margin: 0; flex: 1; min-width: 0; }
+  /* min-width:0 是唯一还需要的覆盖：flex 子元素默认 min-width:auto 会按内容
+     撑开，窄屏下会把输入框挤宽溢出；margin/flex 已经是基础规则（P2-9），
+     不用在这里重复。 */
+  .chat_talk_container { min-width: 0; }
   .chat_talk_submit { margin-right: 0; }
   /* 首屏引导在窄屏收窄缩进与胶囊 */
   .starter { padding-left: 12px; }

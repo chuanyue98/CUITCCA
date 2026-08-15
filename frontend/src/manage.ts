@@ -504,7 +504,8 @@ async function submitQAGeneration() {
 let allNodesList: Array<{ text?: string; doc_id?: string; node_id?: string }> = [];
 let filteredNodesList: Array<{ text?: string; doc_id?: string; node_id?: string }> = [];
 let currentPage = 1;
-const pageSize = 10;
+// 每页条数可由用户在 #page-size-select 里改（10/20/50），不再是常量。
+let pageSize = 10;
 // updateTimers is declared at the top of the script block
 
 async function loadIndexNodes(indexName: string) {
@@ -588,10 +589,19 @@ function renderNodesPage() {
         const card = document.createElement('div');
         card.className = 'node_card';
 
+        // 该分块在所属文档内的位置（第 N / 共 M 块）：用 allNodesList 全量
+        // 数据按 doc_id 过滤，保留后端原始返回顺序（即分块顺序）。
+        const siblingNodes = allNodesList.filter(n => n.doc_id === node.doc_id);
+        const posInDoc = siblingNodes.findIndex(n => n.node_id === node.node_id) + 1;
+        const totalInDoc = siblingNodes.length || 1;
+        const charCount = (node.text || '').length;
+        const nodeIdShort = (node.node_id || '').slice(0, 8);
+
         card.innerHTML = `
             <div class="node_meta_row">
-                <span>Doc ID: <span class="node_doc_id"></span></span>
-                <span class="node_id_text">Node ID: ${escapeHtml(node.node_id)}</span>
+                <span class="node_meta_docid">Doc ID: <button type="button" class="node_doc_id"></button></span>
+                <span class="node_meta_info">${charCount} 字 · 第 ${posInDoc || 1} / ${totalInDoc} 块</span>
+                <button type="button" class="node_id_short" title="完整 Node ID：${escapeHtml(node.node_id)}（点击复制）">${escapeHtml(nodeIdShort)}</button>
             </div>
             <textarea class="node_editor"></textarea>
             <div class="node_actions">
@@ -604,8 +614,23 @@ function renderNodesPage() {
         `;
 
         // 安全设置文本，避免 HTML 注入或解析崩溃
-        const docIdSpan = card.querySelector('.node_doc_id') as HTMLElement | null;
-        if (docIdSpan) docIdSpan.textContent = node.doc_id || '自动生成';
+        const docIdBtn = card.querySelector('.node_doc_id') as HTMLButtonElement | null;
+        if (docIdBtn) {
+            const docId = node.doc_id || '';
+            docIdBtn.textContent = docId || '自动生成';
+            if (docId) {
+                // Doc ID 徽标可点击：等价于把该 doc_id 填进 #node-search 并
+                // 触发筛选，方便用户在"删除整档"前先看清这份文档包含哪些分块。
+                docIdBtn.title = '点击筛选该文档的所有分块';
+                docIdBtn.addEventListener('click', () => filterByDocId(docId));
+            } else {
+                // 无 doc_id（自动生成）的分块没有可筛选目标，禁用交互
+                docIdBtn.disabled = true;
+            }
+        }
+
+        const nodeIdShortBtn = card.querySelector('.node_id_short') as HTMLButtonElement | null;
+        nodeIdShortBtn?.addEventListener('click', () => copyNodeId(node.node_id || ''));
 
         const textarea = card.querySelector('.node_editor') as HTMLTextAreaElement | null;
         if (textarea) textarea.value = node.text || '';
@@ -636,24 +661,83 @@ function renderNodesPage() {
 
     const prevBtn = document.getElementById('btn-prev-page') as HTMLButtonElement | null;
     const nextBtn = document.getElementById('btn-next-page') as HTMLButtonElement | null;
+    const firstBtn = document.getElementById('btn-first-page') as HTMLButtonElement | null;
+    const lastBtn = document.getElementById('btn-last-page') as HTMLButtonElement | null;
     if (prevBtn) prevBtn.disabled = (currentPage === 1);
     if (nextBtn) nextBtn.disabled = (currentPage === totalPages);
-}
+    if (firstBtn) firstBtn.disabled = (currentPage === 1);
+    if (lastBtn) lastBtn.disabled = (currentPage === totalPages);
 
-function prevPage() {
-    if (currentPage > 1) {
-        currentPage--;
-        renderNodesPage();
-        (document.getElementById('node-list-viewport') as HTMLElement).scrollTop = 0;
+    // 跳页输入框：同步页码范围提示，方便用户知道能跳到哪一页
+    const jumpInput = document.getElementById('page-jump-input') as HTMLInputElement | null;
+    if (jumpInput) {
+        jumpInput.max = String(totalPages);
+        jumpInput.placeholder = `1-${totalPages}`;
     }
+
+    // 每页条数下拉框：保持和当前 pageSize 一致（切换索引/搜索时不会重置
+    // pageSize，只有用户主动改下拉框才会变）
+    const sizeSelect = document.getElementById('page-size-select') as HTMLSelectElement | null;
+    if (sizeSelect && sizeSelect.value !== String(pageSize)) sizeSelect.value = String(pageSize);
 }
 
-function nextPage() {
-    const totalPages = Math.ceil(filteredNodesList.length / pageSize);
-    if (currentPage < totalPages) {
-        currentPage++;
-        renderNodesPage();
-        (document.getElementById('node-list-viewport') as HTMLElement).scrollTop = 0;
+// 跳转到指定页，越界自动夹到 [1, totalPages] 区间——154 页时用户手输的页码
+// 很容易输错（0、负数、超过总页数、非数字），这里统一兜底，不会崩也不会
+// 出现空白页。
+function goToPage(page: number) {
+    const totalPages = Math.max(1, Math.ceil(filteredNodesList.length / pageSize));
+    const safePage = Number.isFinite(page) ? Math.floor(page) : 1;
+    currentPage = Math.min(Math.max(1, safePage), totalPages);
+    renderNodesPage();
+    (document.getElementById('node-list-viewport') as HTMLElement).scrollTop = 0;
+}
+
+function prevPage() { goToPage(currentPage - 1); }
+function nextPage() { goToPage(currentPage + 1); }
+function firstPage() { goToPage(1); }
+function lastPage() { goToPage(Math.ceil(filteredNodesList.length / pageSize)); }
+
+// 跳页输入框的提交：允许空输入/非数字，这时候只是不动，不弹错误打断操作
+function jumpToPageFromInput() {
+    const input = document.getElementById('page-jump-input') as HTMLInputElement | null;
+    if (!input) return;
+    const val = parseInt(input.value, 10);
+    if (!Number.isFinite(val)) {
+        showToast('请输入有效页码', 'error');
+        return;
+    }
+    goToPage(val);
+    input.value = '';
+}
+
+// 切换每页条数：尽量保持用户正在看的那批数据不跳变——记录当前页第一项的
+// 绝对下标，换算成新页码下能包含该项的页，而不是粗暴地跳回第 1 页。
+function changePageSize(newSize: number) {
+    const firstItemIndex = (currentPage - 1) * pageSize;
+    pageSize = newSize;
+    currentPage = Math.floor(firstItemIndex / pageSize) + 1;
+    renderNodesPage();
+}
+
+// 点击 Doc ID 徽标：等价于把该 doc_id 填进搜索框并触发筛选
+function filterByDocId(docId: string) {
+    const searchInput = document.getElementById('node-search') as HTMLInputElement | null;
+    if (!searchInput) return;
+    if (searchDebounceTimer) { clearTimeout(searchDebounceTimer); searchDebounceTimer = null; }
+    searchInput.value = docId;
+    currentPage = 1;
+    applyFilterAndRender();
+    searchInput.focus();
+}
+
+// 点击 Node ID 短标记：复制完整 ID 到剪贴板
+async function copyNodeId(nodeId: string) {
+    if (!nodeId) return;
+    try {
+        await navigator.clipboard.writeText(nodeId);
+        showToast('Node ID 已复制', 'success');
+    } catch (error) {
+        showToast('复制失败，请手动选择复制', 'error');
     }
 }
 
@@ -732,10 +816,14 @@ async function deleteDocByCard(docId: string) {
         showToast('该卡片无关联的 Doc ID，无法删除整档，请使用删除分块', 'error');
         return;
     }
-    if (!confirm(`确定要彻底删除文档 "${docId}" 及其所包含的所有分块吗？`)) {
+    // 先算出这份文档一共关联多少个分块，把数字放进确认文案——原来这行在
+    // confirm() 之后才执行，用户点确认时根本看不到即将删除的规模，而
+    // "删除整档"恰恰是一次性清空一份文档所有分块的高风险操作，最需要这个
+    // 数字。
+    const docNodes = allNodesList.filter(n => n.doc_id === docId);
+    if (!confirm(`确定要彻底删除文档 "${docId}" 吗？这会删掉它的全部 ${docNodes.length} 个分块，此操作不可逆！`)) {
         return;
     }
-    const docNodes = allNodesList.filter(n => n.doc_id === docId);
     docNodes.forEach(node => {
         if (updateTimers[node.node_id!]) {
             clearTimeout(updateTimers[node.node_id!]);
@@ -789,4 +877,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.btn-submit-qa')?.addEventListener('click', submitQAGeneration);
   document.getElementById('btn-prev-page')?.addEventListener('click', prevPage);
   document.getElementById('btn-next-page')?.addEventListener('click', nextPage);
+  document.getElementById('btn-first-page')?.addEventListener('click', firstPage);
+  document.getElementById('btn-last-page')?.addEventListener('click', lastPage);
+  document.getElementById('btn-jump-page')?.addEventListener('click', jumpToPageFromInput);
+  document.getElementById('page-jump-input')?.addEventListener('keydown', (e: Event) => {
+    if ((e as KeyboardEvent).key === 'Enter') jumpToPageFromInput();
+  });
+  document.getElementById('page-size-select')?.addEventListener('change', (e: Event) => {
+    const val = parseInt((e.target as HTMLSelectElement).value, 10);
+    if (Number.isFinite(val) && val > 0) changePageSize(val);
+  });
 });

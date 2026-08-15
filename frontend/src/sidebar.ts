@@ -25,7 +25,7 @@
               <div class="menu_mid">\
                   <div class="menu_mid1">\
                       <a href="./manage.html" title="管理 & 增加">\
-                          <div class="func"' + (activePage === 'manage' ? ' style="border-radius: 20px; box-shadow: 0 4px 15px rgba(25, 84, 142, 0.15); border-color: rgba(25, 84, 142, 0.2);"' : '') + '>\
+                          <div class="func' + (activePage === 'manage' ? ' func-active" style="border-radius: 20px; box-shadow: 0 4px 15px rgba(25, 84, 142, 0.15); border-color: rgba(25, 84, 142, 0.2);"' : '"') + '>\
                               <div class="img" style="color: ' + (activePage === 'manage' ? 'rgb(25, 84, 142)' : '#666') + ';">\
                                   <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-house-add" viewBox="0 0 16 16" aria-hidden="true" focusable="false">\
                                       <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h4a.5.5 0 1 0 0-1h-4a.5.5 0 0 1-.5-.5V7.207l5-5 6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z"/>\
@@ -38,7 +38,7 @@
                   </div>\
                   <div class="menu_mid2">\
                       <a href="./use_function.html" title="食用指南">\
-                          <div class="func"' + (activePage === 'use_function' ? ' style="border-radius: 20px; box-shadow: 0 4px 15px rgba(25, 84, 142, 0.15); border-color: rgba(25, 84, 142, 0.2);"' : '') + '>\
+                          <div class="func' + (activePage === 'use_function' ? ' func-active" style="border-radius: 20px; box-shadow: 0 4px 15px rgba(25, 84, 142, 0.15); border-color: rgba(25, 84, 142, 0.2);"' : '"') + '>\
                               <div class="img" style="color: ' + (activePage === 'use_function' ? 'rgb(25, 84, 142)' : '#666') + ';">\
                                   <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-compass" viewBox="0 0 16 16" aria-hidden="true" focusable="false">\
                                       <path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016zm6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>\
@@ -75,6 +75,8 @@
                       </div>\
                   </a>\
               </div>\
+          </div>\
+          <div class="side_footer">成信大校园助手 · 基于校园知识库</div>\
           </div>';
 
   const container = document.getElementById('side_left');
@@ -82,23 +84,65 @@
     container.innerHTML = sidebarHTML;
   }
 
+  // 窄屏遮罩：#side_left 在 <1024px 下被 style.css 的媒体查询改成
+  // position:fixed 覆盖层（不再挤占 .outline 的 flex 布局），这里配一层
+  // 半透明遮罩负责"盖住正文 + 点击关闭"。display:none/block 的折叠机制本身
+  // 不动（可能有测试断言），遮罩只是叠加在其之上的独立控制。
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sidebar_backdrop';
+  document.body.appendChild(backdrop);
+
   // 侧边栏折叠逻辑
   const button = document.getElementById('button');
   if (button && container) {
+    function isOpen() {
+      return container!.style.display === 'block';
+    }
+
+    function setOpen(open: boolean) {
+      container!.style.display = open ? 'block' : 'none';
+      // 窄屏才需要遮罩；桌面端侧栏常驻，遮罩不该出现（即使 open 状态是 true）。
+      backdrop.classList.toggle('is-visible', open && window.innerWidth < 1024);
+      button!.setAttribute('aria-expanded', String(open));
+    }
+
     function adjustSidebar() {
       if (window.innerWidth < 1024) {
         button!.style.display = 'block';
-        container!.style.display = 'none';
+        setOpen(false);
       } else {
         button!.style.display = 'none';
-        container!.style.display = 'block';
+        setOpen(true);
+        // 桌面端侧栏常驻，折叠按钮本身不可见也不该占据 tab 顺序里的
+        // "已展开/已折叠"语义。
+        button!.removeAttribute('aria-expanded');
       }
     }
 
     window.addEventListener('resize', adjustSidebar);
+    button!.setAttribute('aria-label', '切换侧边栏');
     button!.addEventListener('click', function () {
-      container!.style.display = (container!.style.display === 'none' || container!.style.display === '') ? 'block' : 'none';
+      setOpen(!isOpen());
     });
+
+    // 点遮罩关闭
+    backdrop.addEventListener('click', () => setOpen(false));
+
+    // 点侧栏内导航链接后关闭：窄屏下侧栏浮在正文上方，点完链接如果不收起，
+    // 下一个页面加载出来时遮罩还盖在上面，等于卡死交互。
+    container.addEventListener('click', (ev) => {
+      if (window.innerWidth < 1024 && (ev.target as HTMLElement).closest('a')) {
+        setOpen(false);
+      }
+    });
+
+    // Esc 关闭
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && window.innerWidth < 1024 && isOpen()) {
+        setOpen(false);
+      }
+    });
+
     adjustSidebar();
   }
 })();

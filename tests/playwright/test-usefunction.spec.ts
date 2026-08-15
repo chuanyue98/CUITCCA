@@ -152,10 +152,12 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
 
     const text = await page.locator('.guide_card').textContent() || '';
 
+    // 指南正文在 2026-08 重写过，章节以当前正文为准（提问/体验/机制/反馈）
     const chapters = [
-      { name: '温馨提示', regex: /1\s*[\.、]\s*温馨提示/ },
-      { name: '提问方式', regex: /2\s*[\.、]\s*提问方式/ },
-      { name: '问题反馈', regex: /3\s*[\.、]\s*问题反馈/ },
+      { name: '提问指南', regex: /1\s*[\.、]\s*怎么提问效果最好/ },
+      { name: '对话体验', regex: /2\s*[\.、]\s*对话体验/ },
+      { name: '问答机制', regex: /3\s*[\.、]\s*智能问答机制/ },
+      { name: '问题反馈', regex: /4\s*[\.、]\s*问题反馈/ },
     ];
 
     const results2: { name: string; found: boolean }[] = [];

@@ -32,6 +32,19 @@ function autoResizeInput() {
 
 inputEl.addEventListener('input', autoResizeInput);
 
+// 窄屏 placeholder 精简：完整文案"输入你的问题...（Enter 发送，Shift+Enter
+// 换行）"在 390px 宽下会换到第二行，被 1 行高的 textarea 从中间切掉半截
+// （截图确认），而且移动端软键盘本来就没有 Shift+Enter 概念，这段说明对
+// 移动端是无意义信息。html 里保留完整文案作为默认值（宽屏 / 首次渲染）。
+const FULL_PLACEHOLDER = inputEl.placeholder;
+const SHORT_PLACEHOLDER = '输入你的问题...';
+const mobilePlaceholderQuery = window.matchMedia('(max-width: 480px)');
+function syncPlaceholder(matches: boolean) {
+    inputEl.placeholder = matches ? SHORT_PLACEHOLDER : FULL_PLACEHOLDER;
+}
+syncPlaceholder(mobilePlaceholderQuery.matches);
+mobilePlaceholderQuery.addEventListener('change', (ev) => syncPlaceholder(ev.matches));
+
 inputEl.addEventListener('keydown', function (event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -106,8 +119,12 @@ function replayHistory() {
 }
 
 function scrollToBottom() {
-    const bottom = document.querySelector('.chat_bottom');
-    if (bottom) bottom.scrollIntoView({ behavior: 'auto', block: 'end' });
+    // 真正装消息、可滚动的容器是 .talk_content（style.css 里 overflow-y:
+    // auto 的那个），不是 .chat_bottom——.chat_bottom 是它的兄弟节点，待在
+    // .talk_outline 这个外层容器里，可滚动余量恒为 0，scrollIntoView 在它
+    // 身上是空操作（实测 12 轮对话后 scrollTop 停在 0，可滚动余量 1209px）。
+    const scroller = document.querySelector('.talk_content') as HTMLElement | null;
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
 }
 
 // ===== DOM 构建 =====
@@ -196,8 +213,9 @@ function sendMessage() {
 
     const { answerEl, citations, message } = appendBotBubble();
     showThinkingIndicator(answerEl);
+    // 不再额外调用 message.scrollIntoView：它的平滑滚动会被后续 streamAsk
+    // 里逐帧同步赋值 scrollTop 的 scrollToBottom 打断，两者打架。
     scrollToBottom();
-    message.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
     setGeneratingUI(true);
     streamAsk(question, answerEl, citations, message).finally(() => setGeneratingUI(false));

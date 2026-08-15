@@ -58,17 +58,21 @@ test('使用指南页面 UI/UX 深度检查', async ({ page }) => {
     if (parseFloat(li.fontSize) < 13) issues.push(`列表项字体太小: ${li.fontSize}`);
   }
 
-  // 6. Check content structure (3 sections)
+  // 6. Check content structure. 注意：指南正文在 2026-08 重写过（原内容声称
+  // "上下文关联未完善、页面不会保留任何数据"，与多轮对话/历史持久化/自动路由
+  // 的实际能力矛盾），章节名以当前正文为准。
   const sections = await page.$$eval('.guide_card p', els => els.map(el => el.textContent?.trim()));
   const sectionTexts = sections.join(' ');
   const hasWelcome = sectionTexts.includes('欢迎使用成信大校园助手');
-  const hasTip = sectionTexts.includes('温馨提示');
-  const hasQuestion = sectionTexts.includes('提问方式');
+  const hasQuestion = sectionTexts.includes('怎么提问效果最好');
+  const hasExperience = sectionTexts.includes('对话体验');
+  const hasMechanism = sectionTexts.includes('智能问答机制');
   const hasFeedback = sectionTexts.includes('问题反馈');
-  console.log(`章节检查: 欢迎=${hasWelcome} 温馨提示=${hasTip} 提问方式=${hasQuestion} 问题反馈=${hasFeedback}`);
+  console.log(`章节检查: 欢迎=${hasWelcome} 提问指南=${hasQuestion} 对话体验=${hasExperience} 机制=${hasMechanism} 反馈=${hasFeedback}`);
   if (!hasWelcome) issues.push('缺少欢迎文本');
-  if (!hasTip) issues.push('缺少温馨提示章节');
-  if (!hasQuestion) issues.push('缺少提问方式章节');
+  if (!hasQuestion) issues.push('缺少提问指南章节');
+  if (!hasExperience) issues.push('缺少对话体验章节');
+  if (!hasMechanism) issues.push('缺少智能问答机制章节');
   if (!hasFeedback) issues.push('缺少问题反馈章节');
 
   // 7. Check #side_left highlights use_function (use_function uses inline style on .func, not .menu_item_row.active)

@@ -46,7 +46,7 @@
                         </h3>
 
                         <div class="index_action_row">
-                            <select id="index-select" class="index_select">
+                            <select id="index-select" class="index_select" aria-label="选择知识库索引">
                                 <option value="">加载中...</option>
                             </select>
                             <button class="btn btn-primary btn_save_disk">
@@ -55,7 +55,7 @@
                         </div>
 
                         <div class="index_create_row">
-                            <input type="text" id="new-index-name" class="new_index_input" placeholder="输入新索引名称...">
+                            <input type="text" id="new-index-name" class="new_index_input" placeholder="输入新索引名称..." aria-label="新索引名称">
                             <button class="btn btn-success">新建</button>
                             <button class="btn btn-danger">删除当前</button>
                         </div>
@@ -66,7 +66,7 @@
                                 <span class="summary_label">索引摘要 (Summary)</span>
                                 <span id="summary-status-tag">未做修改</span>
                             </div>
-                            <textarea id="index-summary-textarea" class="summary_textarea" placeholder="选择或载入索引以编辑其摘要..."></textarea>
+                            <textarea id="index-summary-textarea" class="summary_textarea" placeholder="选择或载入索引以编辑其摘要..." aria-label="索引摘要"></textarea>
                         </div>
                     </div>
 
@@ -88,7 +88,7 @@
                                 <p class="drag_zone_main_text">拖拽文件到这里，或者点击选择</p>
                                 <p class="drag_zone_hint_text">支持 TXT / PDF / Markdown / Word / Excel 等多格式多文件上传</p>
                             </div>
-                            <input type="file" id="file-input" multiple accept=".txt,.pdf,.md,.csv,.xlsx,.docx" class="file_input_hidden">
+                            <input type="file" id="file-input" multiple accept=".txt,.pdf,.md,.csv,.xlsx,.docx" class="file_input_hidden" aria-label="选择要上传的文件">
                             <div id="upload-progress-list" class="upload_progress_list"></div>
                         </div>
 
@@ -129,7 +129,7 @@
                             数据分块浏览器 (Nodes)
                         </h3>
 
-                        <input type="text" id="node-search" class="node_search_input" placeholder="搜索关键词 / Doc ID...">
+                        <input type="text" id="node-search" class="node_search_input" placeholder="搜索关键词 / Doc ID..." aria-label="搜索数据分块">
                     </div>
 
                     <!-- 节点展示主区 (滚动容器) -->
@@ -139,10 +139,27 @@
 
                     <!-- 分页控制栏 -->
                     <div id="pagination-bar">
-                        <span id="page-indicator">第 1 / 1 页 (共 0 项)</span>
+                        <div class="pagination_left">
+                            <span id="page-indicator">第 1 / 1 页 (共 0 项)</span>
+                            <label class="pagination_size_label">
+                                每页
+                                <select id="page-size-select" class="pagination_size_select" aria-label="每页显示条数">
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                </select>
+                                条
+                            </label>
+                        </div>
                         <div class="pagination_buttons">
+                            <button id="btn-first-page" class="pagination_btn" title="首页">首页</button>
                             <button id="btn-prev-page" class="pagination_btn">上一页</button>
+                            <div class="pagination_jump">
+                                <input type="number" id="page-jump-input" class="pagination_jump_input" min="1" step="1" aria-label="跳转到页码">
+                                <button id="btn-jump-page" class="pagination_btn pagination_jump_btn">跳转</button>
+                            </div>
                             <button id="btn-next-page" class="pagination_btn">下一页</button>
+                            <button id="btn-last-page" class="pagination_btn" title="末页">末页</button>
                         </div>
                     </div>
                 </section>
