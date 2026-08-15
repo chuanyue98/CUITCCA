@@ -43,6 +43,38 @@ HYBRID_RETRIEVAL_ENABLED = True
 QUERY_REWRITE_ENABLED = True
 QUERY_REWRITE_SCORE_THRESHOLD = 0.45
 
+# 语义缓存 / 人工问答沉淀（handlers/qa_cache.py）：相同/相似问题命中缓存时
+# 直接复用历史答案，跳过检索 + LLM 生成（生产环境省成本、降延迟的标配）。
+# 存储是独立的 Chroma collection（cosine 空间），分两种 kind，命中阈值不同：
+# - auto（每次成功问答自动写入，未经人工校验）：阈值 0.92，只有几乎逐字
+#   相同的问题才敢直接复用——自动条目的答案没被人背过书，宁可miss也不给错。
+# - curated（👍 人工沉淀，Dify annotation reply 同款机制）：阈值 0.82，允许
+#   一定程度的同义改写复用——人背过书的高价值问答，措辞不同但意思一样就该
+#   命中。
+# 缓存查找只花一次本地 bge-m3 嵌入（毫秒级），miss 时多花的这点成本远低于
+# 命中时省下的整次检索 + LLM 生成。QA_CACHE_MAX_AUTO_ENTRIES 上限只驱逐 auto
+# 条目（按命中次数升序），curated 是人工资产不驱逐。
+QA_CACHE_ENABLED = True
+QA_CACHE_COLLECTION = "qa_cache"
+QA_CACHE_AUTO_THRESHOLD = 0.92
+QA_CACHE_CURATED_THRESHOLD = 0.82
+QA_CACHE_MAX_AUTO_ENTRIES = 500
+
+# 自动路由（handlers/auto_router.py）：去掉用户可见的"标准问答/Agent 模式"
+# 切换器后，用这个阈值判断一次提问该走零决策开销的 QAWorkflow 还是会多跳
+# 检索的 FunctionAgent。判据是**重排后**的 cross-encoder top1 分数，不是
+# RRF 融合分数——campus-corpus 上实测过两类问题的分数分布：
+#   RRF 融合 top1：语料覆盖的问题 0.026~0.033，语料未覆盖的问题同样是
+#   0.026~0.033，两类问题的分数几乎完全重叠，没有任何区分度，不能拿它做
+#   判断依据。
+#   重排后 top1：语料覆盖的问题 0.7286/0.9862/0.9863，语料未覆盖的问题
+#   0.0097/0.0285/0.1565/0.4950——区分度很好。
+# 0.6 取在覆盖侧实测最低值 0.73 和未覆盖侧实测最高值 0.50 中间，两边都留了
+# 安全余量。前提是 RERANK_ENABLED=True（重排真的发生了、分数有区分度）；
+# 关闭时 auto_router 只用"检索是否为空"这一个信号路由，不会拿没有区分度的
+# RRF 分数比这个阈值，见 handlers/auto_router.py 模块 docstring。
+AUTO_ROUTE_SCORE_THRESHOLD = 0.6
+
 # 检索 top_k 集中配置（Phase 2）。三处调用点历史上各自硬编码了不同的值，
 # 业务含义并不相同，这里只是把"数字定义在哪"集中到一处、可通过环境变量覆盖，
 # 默认值和改造前完全一致，不改变现有线上行为：
@@ -70,6 +102,14 @@ RERANK_TOP_N = 5
 RERANK_SCORE_THRESHOLD = 0.75
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
 
+# 摄取管道的噪声块过滤阈值（handlers/ingestion_pipeline.py:NoiseNodeFilter）。
+# 实测 campus 索引 1537 个 chunk 里 42 个（2.7%）纯空白、38 个（2.5%）内容只剩
+# "扫描全能王 创建" 这类 OCR 软件水印、62 个（4.0%）不足 30 字的碎片（比如
+# "7\n7"、"利结业 次"）——这些块照样被向量化、参与召回，纯粹是检索噪声。
+# 30 是经验值：短于这个长度的中文文本基本不可能承载一个完整、可检索的语义
+# 单元（差不多是一句短话的长度），可通过 MIN_CHUNK_LENGTH 按语料实际情况调整。
+MIN_CHUNK_LENGTH = 30
+
 
 def reload_env_variables():
     load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
@@ -77,7 +117,9 @@ def reload_env_variables():
         openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE, chroma_db_path, \
         db_path, DEFAULT_SIMILARITY_TOP_K, QUERY_ENDPOINT_TOP_K, MULTI_INDEX_FALLBACK_TOP_K, \
         RERANK_ENABLED, RERANK_RECALL_K, RERANK_TOP_N, RERANK_SCORE_THRESHOLD, RERANKER_MODEL, \
-        HYBRID_RETRIEVAL_ENABLED, QUERY_REWRITE_ENABLED, QUERY_REWRITE_SCORE_THRESHOLD
+        HYBRID_RETRIEVAL_ENABLED, QUERY_REWRITE_ENABLED, QUERY_REWRITE_SCORE_THRESHOLD, \
+        AUTO_ROUTE_SCORE_THRESHOLD, QA_CACHE_ENABLED, QA_CACHE_COLLECTION, QA_CACHE_AUTO_THRESHOLD, \
+        QA_CACHE_CURATED_THRESHOLD, QA_CACHE_MAX_AUTO_ENTRIES, MIN_CHUNK_LENGTH
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     openai_api_base = os.environ.get('OPENAI_API_BASE') or 'https://api.openai.com/v1'
@@ -127,6 +169,20 @@ def reload_env_variables():
     # 低延迟承诺。阈值取值依据见上方模块级常量注释（0.45 由真实评测数据校准）。
     QUERY_REWRITE_ENABLED = os.environ.get('QUERY_REWRITE_ENABLED', 'True').lower() in ('true', '1', 't')
     QUERY_REWRITE_SCORE_THRESHOLD = float(os.environ.get('QUERY_REWRITE_SCORE_THRESHOLD', '0.45'))
+
+    # 自动路由阈值。校准依据见上方模块级常量注释（campus-corpus 实测的
+    # RRF vs 重排分数对比）。
+    AUTO_ROUTE_SCORE_THRESHOLD = float(os.environ.get('AUTO_ROUTE_SCORE_THRESHOLD', '0.6'))
+
+    # 语义缓存。默认开启（本地嵌入毫秒级成本），相关说明见上方模块级常量注释。
+    QA_CACHE_ENABLED = os.environ.get('QA_CACHE_ENABLED', 'True').lower() in ('true', '1', 't')
+    QA_CACHE_COLLECTION = os.environ.get('QA_CACHE_COLLECTION', 'qa_cache')
+    QA_CACHE_AUTO_THRESHOLD = float(os.environ.get('QA_CACHE_AUTO_THRESHOLD', '0.92'))
+    QA_CACHE_CURATED_THRESHOLD = float(os.environ.get('QA_CACHE_CURATED_THRESHOLD', '0.82'))
+    QA_CACHE_MAX_AUTO_ENTRIES = int(os.environ.get('QA_CACHE_MAX_AUTO_ENTRIES', '500'))
+
+    # 摄取管道噪声块过滤的最小保留长度。校准依据见上方模块级常量注释。
+    MIN_CHUNK_LENGTH = int(os.environ.get('MIN_CHUNK_LENGTH', '30'))
 
     # 启动时校验必需的 env 变量
     if not openai_api_key:

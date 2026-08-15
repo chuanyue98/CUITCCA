@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import uuid
 from pathlib import Path
 
 from configs.load_env import FILE_PATH
@@ -105,23 +104,53 @@ async def insert_into_index(index: VectorStoreIndex, doc_file_path: str, skip_su
             _save_summary(index)
 
 
-async def embeddingQA(index: VectorStoreIndex, qa_pairs: list, id: str | None = None):
-    if id is None:
-        id = str(uuid.uuid4())
+def _embed_qa_and_persist(index: VectorStoreIndex, qa_pairs: list) -> None:
+    """同步的 QA 摄取+落盘工作，供 asyncio.to_thread 卸载到线程池执行。
+
+    原实现直接 ``index.insert_nodes(docs)``，doc_id 是 ``f"{id}_{i//2}"``
+    这种自增序号，完全绕开了 ``ingestion_pipeline.build_pipeline`` 那套
+    IngestionPipeline（UPSERTS 策略）+ 持久化 docstore 去重链路——同一份问答
+    对第二次导入会拿到新的序号（除非调用方每次都传相同的 ``id`` 且顺序完全
+    一致），管道判断不出"这是重复内容"，只会无限堆积重复分块。这不是假想的
+    问题：``campus`` 索引现在 1537 个 chunk 里 716 个（46.6%）是完全重复内容，
+    就是这条老路径长期运行的结果。
+
+    改法是和文件上传路径（``_ingest_and_persist``）走同一条链路：
+    ``load_or_create_docstore`` -> ``build_pipeline(vector_store=...,
+    docstore=...)`` -> ``pipeline.run`` -> ``persist_docstore``。同时把每条
+    QA 文档的 ``id_`` 从自增序号改成 ``content_hash(f"{q} {a}")``——这样
+    "同样的问答对无论第几次导入、无论调用方传不传 id"都会被 UPSERTS 判定成
+    同一份文档，内容不变就跳过，不重新嵌入。
+
+    ``id`` 参数因此不再参与 doc_id 的生成，但入参签名保留不变（
+    ``embeddingQA`` 的调用方 ``router/index.py`` 不用跟着改）。
+    """
+    from handlers.ingestion_pipeline import build_pipeline, content_hash
+    from handlers.vector_store import load_or_create_docstore, persist_docstore
 
     docs = []
     for i in range(0, len(qa_pairs), 2):
         q = qa_pairs[i]
         if i + 1 < len(qa_pairs):
             a = qa_pairs[i + 1]
-            doc_id = f"{id}_{i//2}"
-            doc = Document(text=f"{q} {a}", id_=doc_id)
+            text = f"{q} {a}"
+            doc = Document(text=text, id_=content_hash(text))
             customer_logger.info(f"{doc.text}")
             docs.append(doc)
 
+    if not docs:
+        return
+
+    docstore = load_or_create_docstore(index.index_id)
+    pipeline = build_pipeline(vector_store=index.vector_store, docstore=docstore)
+    pipeline.run(documents=docs)
+    persist_docstore(index.index_id, docstore)
+
+
+async def embeddingQA(index: VectorStoreIndex, qa_pairs: list, id: str | None = None):
     lock = await _get_index_lock(index.index_id)
     async with lock:
-        await asyncio.to_thread(index.insert_nodes, docs)
+        await asyncio.to_thread(_embed_qa_and_persist, index, qa_pairs)
         _save_summary(index)
 
 

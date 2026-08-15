@@ -49,17 +49,36 @@ class LoadAllIndexesTest(unittest.TestCase):
 
 
 class EmbeddingQATest(unittest.TestCase):
-    def test_two_calls_without_explicit_id_get_different_ids(self):
+    """embeddingQA 现在走 IngestionPipeline（见 handlers/index_crud.py:
+    _embed_qa_and_persist 的 docstring），doc_id 由内容 hash 决定，不再是
+    随机 uuid——两个内容不同的问答对应该拿到不同的（确定性）doc_id，两次
+    导入同一个问答对应该拿到相同的 doc_id（去重生效的前提）。mock 掉
+    build_pipeline/load_or_create_docstore/persist_docstore，只验证
+    embeddingQA 自己传给 pipeline 的 doc_id 是什么；真实的 UPSERTS 去重端到
+    端行为见 tests/test_index_crud.py 的 EmbeddingQADedupTest（用真实
+    pipeline + MockEmbedding）。"""
+
+    @patch("handlers.vector_store.persist_docstore")
+    @patch("handlers.vector_store.load_or_create_docstore")
+    @patch("handlers.ingestion_pipeline.build_pipeline")
+    def test_different_content_gets_different_content_hash_ids(
+        self, mock_build_pipeline, mock_load_docstore, mock_persist_docstore
+    ):
+        mock_pipeline = MagicMock()
+        mock_build_pipeline.return_value = mock_pipeline
         index1 = FakeIndex()
         index2 = FakeIndex()
+        index1.vector_store = MagicMock()
+        index2.vector_store = MagicMock()
 
-        # embeddingQA is now async
+        # embeddingQA is async
         asyncio.run(lh.embeddingQA(index1, ['q1', 'a1']))
-        asyncio.run(lh.embeddingQA(index2, ['q2', 'a2']))
+        id1 = mock_pipeline.run.call_args.kwargs["documents"][0].id_
 
-        id1 = index1.inserted_docs[0].id_
-        id2 = index2.inserted_docs[0].id_
-        self.assertNotEqual(id1, id2, 'each call without an explicit id must get a fresh uuid')
+        asyncio.run(lh.embeddingQA(index2, ['q2', 'a2']))
+        id2 = mock_pipeline.run.call_args.kwargs["documents"][0].id_
+
+        self.assertNotEqual(id1, id2, 'different QA content must get different (content-hash) doc ids')
 
 
 class SaveIndexTest(unittest.TestCase):

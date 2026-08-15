@@ -1,6 +1,6 @@
 """backend/app/handlers/ingestion_pipeline.py 的测试。
 
-覆盖四块：
+覆盖五块：
 1. resolve_authoritative_files 的同名冲突消解规则：纯重复 vs 同目录真冲突
    （按 mtime 取权威版本）vs 跨目录同名冲突（内容不同、无法判断新旧，全部
    保留、用相对路径区分）。以及读取失败的文件被彻底排除、不会静默丢弃或
@@ -10,6 +10,8 @@
    用 MockEmbedding + 内存态 SimpleVectorStore，不下载真实模型、不连网。
 4. ingest_files() 唯一入口：不同文件名、相同内容的文件在报告里全部被列出，
    不会因为"一个 doc_id 只能映射一个路径"这种简化模型而丢失文件名。
+5. NoiseNodeFilter：空白块/OCR 水印块/碎片化短块被丢弃，且不误杀"正文里恰好
+   含有水印软件名字"的正常长 chunk。
 """
 import os
 import time
@@ -19,6 +21,7 @@ from unittest.mock import patch
 
 from handlers.ingestion_pipeline import (
     ConflictResolution,
+    NoiseNodeFilter,
     build_pipeline,
     content_hash,
     ingest_files,
@@ -26,7 +29,7 @@ from handlers.ingestion_pipeline import (
     strip_uuid_prefix,
 )
 from llama_index.core.embeddings import MockEmbedding
-from llama_index.core.schema import Document
+from llama_index.core.schema import Document, TextNode
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.vector_stores.simple import SimpleVectorStore
 
@@ -262,8 +265,13 @@ class IngestionPipelineUpsertTest(unittest.TestCase):
     def _make_pipeline(self):
         vector_store = SimpleVectorStore()
         docstore = SimpleDocumentStore()
+        # min_chunk_length=0：这组用例验证的是 UPSERTS 去重行为，用的测试文本
+        # 本来就很短（几个字），跟"噪声块过滤"（NoiseNodeFilter，见
+        # test_ingestion_pipeline.py 里专门的 NoiseNodeFilterTest）是两件独立
+        # 的事，这里显式关掉过滤阈值，避免两套关注点互相干扰。
         pipeline = build_pipeline(
-            vector_store=vector_store, docstore=docstore, embed_model=MockEmbedding(embed_dim=8)
+            vector_store=vector_store, docstore=docstore, embed_model=MockEmbedding(embed_dim=8),
+            min_chunk_length=0,
         )
         return pipeline, vector_store, docstore
 
@@ -337,10 +345,13 @@ class IngestFilesTest(unittest.TestCase):
         return Path(path)
 
     def _make_pipeline(self):
+        # min_chunk_length=0，理由同上（IngestionPipelineUpsertTest._make_pipeline）：
+        # 这组用例测的是 ingest_files 自己的编排逻辑，不是噪声过滤。
         return build_pipeline(
             vector_store=SimpleVectorStore(),
             docstore=SimpleDocumentStore(),
             embed_model=MockEmbedding(embed_dim=8),
+            min_chunk_length=0,
         )
 
     def test_different_filenames_with_identical_content_both_appear_in_report(self):
@@ -408,6 +419,64 @@ class IngestFilesTest(unittest.TestCase):
 
         self.assertEqual(len(result.unreadable_files), 1)
         self.assertEqual(result.unreadable_files[0][0], bad)
+
+
+class NoiseNodeFilterTest(unittest.TestCase):
+    """缺口 2 的回归测试：噪声过滤要丢空白块/纯 OCR 水印块/碎片化短块，但不能
+    误杀"正文里恰好含有水印软件名字"的正常长 chunk。用真实实测过的噪声样本
+    （campus 索引里的空白块、"扫描全能王 创建"水印块、"7\\n7" 碎片块）。"""
+
+    def setUp(self):
+        self.filter = NoiseNodeFilter(min_length=30)
+
+    def _run(self, *texts: str) -> list[str]:
+        nodes = [TextNode(text=t) for t in texts]
+        kept = self.filter(nodes)
+        return [n.get_content() for n in kept]
+
+    def test_empty_string_is_dropped(self):
+        self.assertEqual(self._run(""), [])
+
+    def test_whitespace_only_is_dropped(self):
+        self.assertEqual(self._run("   \n\t  "), [])
+
+    def test_pure_ocr_watermark_chunk_is_dropped(self):
+        self.assertEqual(self._run("扫描全能王 创建"), [])
+
+    def test_camscanner_watermark_chunk_is_dropped(self):
+        self.assertEqual(self._run("Created with CamScanner"), [])
+
+    def test_short_fragment_without_watermark_is_dropped(self):
+        self.assertEqual(self._run("7\n7"), [])
+        self.assertEqual(self._run("利结业 次"), [])
+
+    def test_normal_long_chunk_is_kept(self):
+        long_text = (
+            "校园卡挂失请到一卡通服务中心办理，携带本人身份证原件，"
+            "工本费按学校现行标准收取，办理时间为工作日 9:00-17:00。"
+        )
+        self.assertEqual(self._run(long_text), [long_text])
+
+    def test_normal_long_chunk_containing_watermark_word_is_not_misdropped(self):
+        """不误杀：一个正常长分块里恰好含有"扫描全能王"字样（比如水印和正文
+        一起被扫描进了同一段），去掉水印后剩余内容仍然远超阈值，必须保留
+        原始（未去水印的）文本，不能因为命中了水印模式就连正文一起丢掉。"""
+        long_text = (
+            "本文档使用扫描全能王扫描生成。校园卡挂失请到一卡通服务中心办理，"
+            "携带本人身份证原件，工本费按学校现行标准收取，办理时间为工作日 9:00-17:00。"
+        )
+        self.assertEqual(self._run(long_text), [long_text])
+
+    def test_mixed_batch_keeps_only_valid_nodes(self):
+        long_text = "校园卡挂失请到一卡通服务中心办理，携带本人身份证原件，工本费按学校现行标准收取。"
+        kept = self._run("", "扫描全能王 创建", "7\n7", long_text, "   ")
+        self.assertEqual(kept, [long_text])
+
+    def test_custom_min_length_is_respected(self):
+        short_filter = NoiseNodeFilter(min_length=3)
+        nodes = [TextNode(text="7\n7")]
+        kept = short_filter(nodes)
+        self.assertEqual(len(kept), 1, "阈值调低后，之前不够 30 字的碎片可能达标，不应该被丢")
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@
 每个用例都对应一个**已经复现过**的真实故障，注释里写清楚"不修会怎样"，
 避免以后有人觉得某段防御性代码多余而顺手删掉。
 """
+import json
 import unittest
 from io import BytesIO
 from pathlib import Path
@@ -197,6 +198,41 @@ class CrawlStatsThreadSafetyTest(unittest.TestCase):
         with ThreadPoolExecutor(max_workers=8) as pool:
             list(pool.map(lambda _: stats.bump("failed"), range(n)))
         self.assertEqual(stats.failed, n)
+
+
+class AgentToolScoreSerializationTest(unittest.TestCase):
+    """Agent 工具返回值必须能被 json.dumps 序列化。
+
+    重排器（SentenceTransformerRerank）是 `node.score = <numpy 值>` 直接赋值的，
+    而 Pydantic v2 默认不校验赋值，numpy.float32 会原样留在 score 上 ->
+    json.dumps 抛 "Object of type float32 is not JSON serializable" ->
+    工具调用返回 is_error=True。
+
+    这不是边角情况：只要召回数多于 RERANK_TOP_N 重排就会执行，也就是说 Agent
+    的知识库检索工具在真实查询下基本每次都会踩到。自动路由把低置信度问题升级到
+    Agent 之后，这条路径正是"查不到就深入查证"的兜底，坏掉等于兜底失效。
+    """
+
+    def test_numpy_score_is_coerced_to_python_float(self):
+        import numpy as np
+        from agents.tools import _node_to_source_dict
+        from llama_index.core.schema import NodeWithScore, TextNode
+
+        nws = NodeWithScore(node=TextNode(text="内容", id_="n1"), score=0.5)
+        nws.score = np.float32(0.87)  # 复刻重排器的赋值方式
+
+        payload = _node_to_source_dict(nws)
+        self.assertIs(type(payload["score"]), float)
+        json.dumps(payload)  # 不抛异常即为通过
+
+    def test_none_score_stays_none(self):
+        from agents.tools import _node_to_source_dict
+        from llama_index.core.schema import NodeWithScore, TextNode
+
+        nws = NodeWithScore(node=TextNode(text="内容", id_="n2"), score=None)
+        payload = _node_to_source_dict(nws)
+        self.assertIsNone(payload["score"])
+        json.dumps(payload)
 
 
 if __name__ == "__main__":

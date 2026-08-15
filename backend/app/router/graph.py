@@ -6,7 +6,9 @@ from collections import OrderedDict
 
 from fastapi import APIRouter, Depends, Form, Request, WebSocket, WebSocketDisconnect
 from handlers.index_crud import format_source_nodes_list
+from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
+from llama_index.core.schema import NodeWithScore, QueryBundle, TextNode
 from models.response import QueryResponse, QuerySourcesResponse
 from starlette import status
 from starlette.responses import JSONResponse, StreamingResponse
@@ -59,6 +61,40 @@ def _client_id(request: Request) -> str:
 
 _chat_histories: TTLCache = TTLCache()
 _last_query_response: TTLCache = TTLCache()
+
+
+def _source_file_name(sn: NodeWithScore) -> str | None:
+    """从来源节点 metadata 里取 file_name，防御性判型。
+
+    正常路径 ``metadata['file_name']`` 是字符串（documents_from_file 写入），
+    但节点 metadata 本质是任意 dict——非字符串值（或缺失）不该让整个
+    ``/query_sources`` 响应序列化炸掉，一律降级成 None 由前端兜底展示
+    "未知来源"。
+    """
+    raw = (sn.node.metadata or {}).get('file_name')
+    return raw if isinstance(raw, str) else None
+
+
+class _PrefetchedNodesRetriever(BaseRetriever):
+    """占位 retriever：原样返回 auto_router 已经算好的 nodes，不重新检索。
+
+    ``/ask_stream`` 的 standard 分支复用 ``handlers.auto_router.route_query()``
+    路由判定时已经跑完的"压缩问题 -> 检索 -> 重排"结果——``QAWorkflow`` 支持
+    注入 ``retriever=``（见 ``handlers/qa_workflow.py``），这里传一个忽略传入
+    query、直接吐出预先算好的 nodes 的假 retriever，让 ``QAWorkflow.retrieve``
+    step 走完它原有的（此时会因为 ``len(nodes) <= RERANK_TOP_N`` 而快速跳过
+    的）rerank 分支，但不会真的对同一个问题重复打一次向量/混合检索。
+    """
+
+    def __init__(self, nodes: list[NodeWithScore]) -> None:
+        self._nodes = nodes
+        super().__init__()
+
+    def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+        return self._nodes
+
+    async def _aretrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+        return self._nodes
 
 
 @graph_app.post("/create")
@@ -131,6 +167,9 @@ async def query_sources(request: Request):
             'id': sn.node.id_,
             'text': sn.node.text,
             'score': sn.score,
+            # 前端引用来源列表直接展示文件名（如"图书馆借阅规则.pdf"），
+            # 检索/QA 路径的 node metadata 里由 documents_from_file 写入。
+            'file_name': _source_file_name(sn),
         }
         for sn in source_nodes
     ])
@@ -394,3 +433,298 @@ async def agent_chat_stream(request: Request, query: str = Form(max_length=5000)
             _chat_histories.set(client_id, history)
 
     return StreamingResponse(_event_gen(), media_type="application/x-ndjson")
+
+
+# ---------------------------------------------------------------------------
+# 自动路由端点：把"标准问答 vs Agent 模式"这个架构决策从用户界面上收回来，
+# 由 handlers/auto_router.py 按检索置信度自动判定。学生问一句话，不需要先
+# 弄懂"我这个问题算不算复杂"才能选对按钮。
+#
+# 不改动上面任何既有端点——/chat_stream、/agent_chat_stream 等继续保留原样
+# （有测试覆盖，也是面试展示两条链路各自能力的入口），这里只是新增一个
+# 统一入口，内部按需分发到 QAWorkflow 或 FunctionAgent。
+# ---------------------------------------------------------------------------
+
+
+@graph_app.post("/ask_stream")
+async def ask_stream(request: Request, query: str = Form(max_length=5000)):
+    """自动路由的统一流式问答入口。
+
+    NDJSON（跟 ``/agent_chat_stream`` 同一套协议），事件类型：
+
+    - ``route``：路由判定一算完立刻发出的第一个事件，``{"mode": "standard"
+      |"agent"|"cache", "reason": "..."}``——前端用它展示"这次走了哪条路"。
+      ``mode`` 多一个 ``cache``：语义缓存（``handlers/qa_cache.py``）命中，
+      直接复用历史答案，连路由判定都没跑。
+    - ``token``：答案增量文本，``{"content": "..."}``；standard/agent 两个
+      分支统一用这个字段名（agent 分支本身就是这么发的，standard 分支这里
+      特意把 ``QAWorkflow.TokenEvent.token`` 也包成同名字段，前端只需要
+      一个解析器）。缓存命中分支同样发一个完整的 token 事件。
+    - ``tool_call``/``tool_result``：只有 agent 分支会有（standard 分支走的
+      ``QAWorkflow`` 没有工具调用），跟 ``/agent_chat_stream`` 语义一致，
+      前端复用同一套"工具调用轨迹"展示逻辑。
+    - ``done``：本轮回答结束，带最终 ``response``（agent 分支还带
+      ``truncated``）。
+    - ``suggestions``：``{"suggestions": [...]}``，在 ``done`` 之后单独发出。
+      追问建议是答案讲完之后才生成的（见
+      ``handlers.auto_router.generate_followup_suggestions`` docstring），
+      失败/超时会拿到空数组，不代表这轮回答本身失败了。缓存命中分支不发
+      追问建议（命中就是冲着"快"去的，不再搭一次最多 8 秒的 LLM 调用），
+      直接发空数组。
+    - ``error``：出错兜底，跟其余端点用同一个 ``_FALLBACK_ANSWER`` 系兜底
+      文案。
+
+    会话历史/来源记录跟 ``/agent_chat_stream`` 保持同样的处理方式：出错时
+    不写空的 assistant 消息进历史（避免下一轮 condense/agent 请求带着一条
+    空消息，见 ``/agent_chat_stream`` 里那段注释）。
+    """
+    from agents.agent_workflow import ToolCallTrace, extract_source_nodes, stream_agent_events
+    from handlers.auto_router import MODE_AGENT, generate_followup_suggestions, route_query
+    from handlers.qa_cache import CachedEntry
+    from handlers.qa_workflow import QAWorkflow, TokenEvent
+
+    client_id = _client_id(request)
+    history: list[ChatMessage] = list(_chat_histories.get(client_id) or [])
+    query = query.strip()
+    query_logger.info(f"ask_stream: {query}")
+
+    async def _event_gen():
+        # 语义缓存优先：命中直接回答案，跳过路由判定/检索/LLM 生成（本地嵌入
+        # 毫秒级成本，miss 也不亏）。lookup 自己保证不抛异常，这里不再包 try。
+        from handlers import qa_cache
+
+        cached: CachedEntry | None = await qa_cache.lookup(query)
+        if cached is not None:
+            kind_label = "人工沉淀" if cached.kind == "curated" else "历史问答"
+            yield json.dumps(
+                {
+                    "type": "route",
+                    "mode": "cache",
+                    "reason": f"命中语义缓存（{kind_label}），已跳过检索与生成",
+                },
+                ensure_ascii=False,
+            ) + "\n"
+            yield json.dumps(
+                {"type": "token", "content": cached.answer}, ensure_ascii=False
+            ) + "\n"
+            yield json.dumps(
+                {
+                    "type": "done",
+                    "response": cached.answer,
+                    "tool_call_count": 0,
+                    "truncated": False,
+                },
+                ensure_ascii=False,
+            ) + "\n"
+            yield json.dumps({"type": "suggestions", "suggestions": []}, ensure_ascii=False) + "\n"
+
+            # 缓存条目里存的来源片段重建一个占位来源节点：命中时 /query_sources
+            # 仍然有东西可显示，前端引用列表不空。
+            if cached.source_text:
+                source_node = NodeWithScore(
+                    node=TextNode(
+                        text=cached.source_text,
+                        metadata={"file_name": cached.source_file or None},
+                    ),
+                    score=1.0,
+                )
+                _last_query_response.set(client_id, [source_node])
+            history.append(ChatMessage(role=MessageRole.USER, content=query))
+            history.append(ChatMessage(role=MessageRole.ASSISTANT, content=cached.answer))
+            _chat_histories.set(client_id, history)
+            return
+
+        try:
+            decision = await route_query(query, chat_history=history)
+        except Exception as e:
+            error_logger.error(f"ask_stream route_query error: {e}")
+            yield json.dumps({"type": "error", "message": "出错了，请稍后在试一下吧"}, ensure_ascii=False) + "\n"
+            return
+
+        yield json.dumps(
+            {"type": "route", "mode": decision.mode, "reason": decision.reason}, ensure_ascii=False
+        ) + "\n"
+
+        final_response = ""
+        errored = False
+        source_nodes: list[NodeWithScore] = []
+
+        if decision.mode == MODE_AGENT:
+            token_parts: list[str] = []
+            tool_calls: list[ToolCallTrace] = []
+            try:
+                # agent 分支用原始 query（不是路由判定阶段压缩好的
+                # decision.query_str）——理由见 handlers/auto_router.py 模块
+                # docstring"agent 分支为什么不传压缩后的问题"一节。
+                async for event in stream_agent_events(query, chat_history=history):
+                    if event["type"] == "token":
+                        token_parts.append(event["content"])
+                    elif event["type"] == "tool_result":
+                        tool_calls.append(
+                            ToolCallTrace(
+                                tool_name=event["tool_name"],
+                                tool_kwargs={},
+                                output=event["output"],
+                                is_error=event["is_error"],
+                            )
+                        )
+                    elif event["type"] == "done":
+                        final_response = event["response"]
+                    elif event["type"] == "error":
+                        # 同 /agent_chat_stream：错误发生时不能让"用拼接
+                        # token 兜底"的逻辑往会话历史里写一条空 assistant
+                        # 消息，见下面的说明。
+                        errored = True
+                    yield json.dumps(event, ensure_ascii=False) + "\n"
+            except Exception as e:
+                error_logger.error(f"ask_stream agent branch error: {e}")
+                yield json.dumps(
+                    {"type": "error", "message": "出错了，请稍后在试一下吧"}, ensure_ascii=False
+                ) + "\n"
+                return
+
+            if not final_response:
+                final_response = "".join(token_parts)
+            source_nodes = extract_source_nodes(tool_calls)
+        else:
+            # standard 分支：复用 route_query 已经算好的 nodes + 压缩后的
+            # query_str，不重复检索、不重复压缩问题——见
+            # handlers/auto_router.py 模块 docstring"避免重复计算"一节。
+            retriever = _PrefetchedNodesRetriever(decision.nodes)
+            workflow = QAWorkflow(retriever=retriever, timeout=60)
+            handler = workflow.run(
+                query=decision.query_str,
+                chat_history=history,
+                streaming=True,
+                skip_condense=True,
+            )
+            try:
+                async for ev in handler.stream_events():
+                    if isinstance(ev, TokenEvent):
+                        yield json.dumps({"type": "token", "content": ev.token}, ensure_ascii=False) + "\n"
+                result = await handler
+            except Exception as e:
+                error_logger.error(f"ask_stream standard branch error: {e}")
+                yield json.dumps(
+                    {"type": "error", "message": "出错了，请稍后在试一下吧"}, ensure_ascii=False
+                ) + "\n"
+                return
+
+            final_response = result.response
+            source_nodes = result.source_nodes
+            yield json.dumps(
+                {"type": "done", "response": final_response, "tool_call_count": 0, "truncated": False},
+                ensure_ascii=False,
+            ) + "\n"
+
+        _last_query_response.set(client_id, source_nodes)
+        if not errored and final_response.strip():
+            history.append(ChatMessage(role=MessageRole.USER, content=query))
+            history.append(ChatMessage(role=MessageRole.ASSISTANT, content=final_response))
+            _chat_histories.set(client_id, history)
+
+        # 成功回答后写入自动语义缓存（best-effort，store_auto 自己不抛异常）。
+        # 下次问同样的问题直接命中，跳过检索 + LLM 生成。
+        await qa_cache.store_auto(query, final_response, source_nodes)
+
+        # 追问建议：必须在答案已经流式吐完之后才开始生成，不能拖慢用户看到
+        # 答案的时间；生成函数自己已经把所有失败路径都降级成空列表，这里的
+        # try/except 是双保险，防止调用方式本身出现意外（比如未来传参改动）
+        # 导致这一步的异常反过来炸穿已经成功完成的主回答。
+        try:
+            suggestions = await generate_followup_suggestions(decision.query_str, source_nodes)
+        except Exception:
+            error_logger.error("ask_stream: 生成追问建议异常，降级为空列表", exc_info=True)
+            suggestions = []
+        yield json.dumps({"type": "suggestions", "suggestions": suggestions}, ensure_ascii=False) + "\n"
+
+    return StreamingResponse(_event_gen(), media_type="application/x-ndjson")
+
+
+# ---------------------------------------------------------------------------
+# 反馈闭环：把"用户对回答的评价"接回知识库。这是生产级知识库平台（Dify 的
+# annotation reply 等）都有的"最后一公里"——回答质量不能靠开发自己猜，用户
+# 👍/👎 的每一下都在告诉系统哪条问答值得沉淀、哪条该删掉。缓存操作全部
+# best-effort（handlers/qa_cache.py 不抛异常），反馈落库失败也不影响主流程。
+# ---------------------------------------------------------------------------
+
+
+@graph_app.post("/qa_feedback")
+async def qa_feedback(
+    request: Request,
+    query: str = Form(max_length=5000),
+    response: str = Form(max_length=20000),
+    vote: str = Form(...),
+):
+    """回答质量反馈——反馈闭环的入口。
+
+    - ``vote=up``（👍）：把这条问答**沉淀**进语义缓存（``kind=curated``），
+      后续相似问题（同义改写级别，阈值 0.82）直接复用这份人工背过书的答案，
+      跳过检索 + LLM 生成。
+    - ``vote=down``（👎）：删除该问题的缓存条目（不让坏答案继续被命中），
+      并把反馈写入反馈表，管理页可见。
+
+    前端在每条回答底部放 👍/👎 两个按钮，点击即调这里（轻量 JSON，无页面
+    跳转）。
+
+    **防投毒校验**：curated 条目会被**所有用户**以 0.82 的宽松阈值复用，所以
+    这里不接受任意 response——必须等于本会话历史里最后一条 assistant 消息
+    （前端发的本来就是那条回答原文，校验不增加任何合法路径的成本）。历史被
+    清空/过期、或者传入的是编造的问答对时直接 400，不会把垃圾写进共享缓存。
+    """
+    from handlers import qa_cache
+    from models.user import Feedback
+    from utils.file import save_feedback
+    from utils.security import get_client_ip
+
+    query = query.strip()[:2000]
+    response = response.strip()[:8000]
+    if vote not in ("up", "down"):
+        return JSONResponse(
+            content={"status": "detail", "message": "vote must be 'up' or 'down'"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if not query:
+        return JSONResponse(
+            content={"status": "detail", "message": "query is required"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # 防投毒：response 必须等于本会话最后一条 assistant 消息（归一化到端点
+    # 同样的 8000 字符截断再比，避免超长答案被截断后误拒）。
+    history: list[ChatMessage] = list(_chat_histories.get(_client_id(request)) or [])
+    last_assistant = next(
+        (m.content for m in reversed(history) if m.role == MessageRole.ASSISTANT), None
+    )
+    if not last_assistant or last_assistant.strip()[:8000] != response:
+        return JSONResponse(
+            content={"status": "detail", "message": "response does not match the session's last answer"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    source_nodes: list[NodeWithScore] = list(_last_query_response.get(_client_id(request)) or [])
+    if vote == "up":
+        await qa_cache.store_curated(query, response, source_nodes)
+    else:
+        await qa_cache.delete_by_question(query)
+
+    # 反馈进反馈表（管理页 /manage/feedback 可见），复用既有 Feedback 模型与
+    # 落库函数，不给反馈体系另开一条存储。
+    try:
+        feedback = Feedback(
+            message=f"[{('👍 沉淀' if vote == 'up' else '👎 差评')}] Q: {query}\nA: {response}"
+        )
+        await save_feedback(get_client_ip(request), feedback)
+    except Exception:
+        error_logger.error("qa_feedback: 反馈落库失败（不影响缓存操作）", exc_info=True)
+
+    return {"status": "ok", "vote": vote}
+
+
+@graph_app.post("/cache_stats")
+async def cache_stats():
+    """语义缓存统计：总量 + auto/curated 分类计数。演示/运维时一眼看到"沉淀
+    了多少人工问答、缓存了多大规模"。"""
+    from handlers import qa_cache
+
+    return await qa_cache.stats()

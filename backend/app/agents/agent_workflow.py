@@ -90,6 +90,16 @@ from llama_index.core.settings import Settings
 from llama_index.core.workflow import WorkflowRuntimeError, WorkflowTimeoutError
 
 logger = logging.getLogger(__name__)
+_RUN_FAILED_MESSAGE = "刚才没能查完，请稍后再试一次。"
+"""运行失败（超时 / LLM 调用异常 / 服务商限流等）时给用户的话。
+
+刻意**不复用** ``_FALLBACK_ANSWER``（"我还不知道，请反馈给我吧"）：那句话的
+语义是"知识库里没有这个内容"，而这里是"这次请求没跑完"——两者对用户意味着
+完全不同的下一步（前者别再问了、换个渠道；后者过一会儿重试就行）。实测中
+连续提问打爆了 LLM 服务商的 rpm 配额（429），界面显示的却是"我还不知道"，
+会让人以为知识库缺内容，其实只要等一会儿重试即可。
+"""
+
 
 DEFAULT_MAX_TOOL_ROUNDS = 6
 """最大工具调用轮数（对应 FunctionAgent.run 的 max_iterations）。6 是"给够
@@ -343,11 +353,11 @@ async def stream_agent_events(
         output: AgentOutput = await handler
     except (WorkflowTimeoutError, WorkflowRuntimeError):
         logger.warning("Agent 流式运行超时或撞到运行时错误，降级返回兜底文案。", exc_info=True)
-        yield {"type": "error", "message": _FALLBACK_ANSWER}
+        yield {"type": "error", "message": _RUN_FAILED_MESSAGE}
         return
     except Exception:
         logger.exception("Agent 流式运行失败（决策 LLM 调用异常等），降级返回兜底文案。")
-        yield {"type": "error", "message": _FALLBACK_ANSWER}
+        yield {"type": "error", "message": _RUN_FAILED_MESSAGE}
         return
 
     truncated = _detect_truncation(agent_output_events, max_iterations)

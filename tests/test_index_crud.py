@@ -4,6 +4,9 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import handlers.index_crud as index_crud
+from llama_index.core.embeddings import MockEmbedding
+from llama_index.core.storage.docstore import SimpleDocumentStore
+from llama_index.core.vector_stores.simple import SimpleVectorStore
 
 import tests._pathsetup  # noqa: F401
 
@@ -427,6 +430,14 @@ class FormatSourceNodesListTest(unittest.TestCase):
 
 
 class EmbeddingQATest(unittest.IsolatedAsyncioTestCase):
+    """embeddingQA 现在和文件上传路径（insert_into_index）走同一条
+    IngestionPipeline 链路，而不是直接 index.insert_nodes——见
+    handlers/index_crud.py:_embed_qa_and_persist 的 docstring。这里跟
+    InsertIntoIndexTest 一样 mock 掉 build_pipeline/load_or_create_docstore/
+    persist_docstore，只验证 embeddingQA 自己的编排逻辑（doc_id 怎么生成、
+    传给 pipeline 的是什么）；UPSERTS 去重的端到端行为见下面的
+    EmbeddingQADedupTest（用真实 pipeline）。"""
+
     def setUp(self):
         self.fake_index = FakeIndex(index_id="qa_test")
         self._orig_get_or_create_collection = index_crud.get_or_create_collection
@@ -436,34 +447,137 @@ class EmbeddingQATest(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         index_crud.get_or_create_collection = self._orig_get_or_create_collection
 
-    async def test_embeds_qa_pairs_and_inserts(self):
+    @patch("handlers.vector_store.persist_docstore")
+    @patch("handlers.vector_store.load_or_create_docstore")
+    @patch("handlers.ingestion_pipeline.build_pipeline")
+    async def test_embeds_qa_pairs_via_pipeline_with_content_hash_doc_ids(
+        self, mock_build_pipeline, mock_load_docstore, mock_persist_docstore
+    ):
+        from handlers.ingestion_pipeline import content_hash
+
+        mock_docstore = MagicMock()
+        mock_load_docstore.return_value = mock_docstore
+        mock_pipeline = MagicMock()
+        mock_build_pipeline.return_value = mock_pipeline
+
         qa_pairs = ["question1", "answer1", "question2", "answer2"]
 
         await index_crud.embeddingQA(self.fake_index, qa_pairs, id="test_id")
 
-        self.assertEqual(len(self.fake_index.inserted_docs), 2)
-        self.assertEqual(self.fake_index.inserted_docs[0].id_, "test_id_0")
-        self.assertIn("question1", self.fake_index.inserted_docs[0].text)
-        self.assertIn("answer1", self.fake_index.inserted_docs[0].text)
-        self.assertEqual(self.fake_index.inserted_docs[1].id_, "test_id_1")
-        self.assertIn("question2", self.fake_index.inserted_docs[1].text)
-        self.assertIn("answer2", self.fake_index.inserted_docs[1].text)
+        mock_load_docstore.assert_called_once_with("qa_test")
+        mock_build_pipeline.assert_called_once_with(
+            vector_store=self.fake_index.vector_store, docstore=mock_docstore
+        )
+        mock_pipeline.run.assert_called_once()
+        docs = mock_pipeline.run.call_args.kwargs["documents"]
+        self.assertEqual(len(docs), 2)
+        # doc_id 是内容 hash，不再是 f"{id}_{i//2}" 这种自增序号——同样的问答对
+        # 无论 id 传什么、无论第几次导入，doc_id 都必须一样，这是去重生效的前提。
+        self.assertEqual(docs[0].id_, content_hash("question1 answer1"))
+        self.assertIn("question1", docs[0].text)
+        self.assertIn("answer1", docs[0].text)
+        self.assertEqual(docs[1].id_, content_hash("question2 answer2"))
+        self.assertIn("question2", docs[1].text)
+        self.assertIn("answer2", docs[1].text)
+        mock_persist_docstore.assert_called_once_with("qa_test", mock_docstore)
 
-    async def test_embeds_qa_without_id_generates_uuid(self):
-        qa_pairs = ["q1", "a1"]
+    @patch("handlers.vector_store.persist_docstore")
+    @patch("handlers.vector_store.load_or_create_docstore")
+    @patch("handlers.ingestion_pipeline.build_pipeline")
+    async def test_same_qa_pair_gets_same_doc_id_regardless_of_id_param(
+        self, mock_build_pipeline, mock_load_docstore, mock_persist_docstore
+    ):
+        """id 参数不再参与 doc_id 生成（保留只是为了不改调用方签名）：同一对
+        问答传不同的 id 也必须落到同一个 doc_id，这样 UPSERTS 才能认出"这是
+        重复内容"。"""
+        mock_pipeline = MagicMock()
+        mock_build_pipeline.return_value = mock_pipeline
 
-        await index_crud.embeddingQA(self.fake_index, qa_pairs)
+        await index_crud.embeddingQA(self.fake_index, ["q1", "a1"], id="id-A")
+        first_doc_id = mock_pipeline.run.call_args.kwargs["documents"][0].id_
 
-        self.assertEqual(len(self.fake_index.inserted_docs), 1)
-        self.assertIsNotNone(self.fake_index.inserted_docs[0].id_)
+        await index_crud.embeddingQA(self.fake_index, ["q1", "a1"], id="id-B-completely-different")
+        second_doc_id = mock_pipeline.run.call_args.kwargs["documents"][0].id_
 
-    async def test_embeds_handles_odd_number_of_qa_pairs(self):
-        qa_pairs = ["q1", "a1", "orphan"]
+        self.assertEqual(first_doc_id, second_doc_id)
 
-        await index_crud.embeddingQA(self.fake_index, qa_pairs, id="odd")
+    @patch("handlers.vector_store.persist_docstore")
+    @patch("handlers.vector_store.load_or_create_docstore")
+    @patch("handlers.ingestion_pipeline.build_pipeline")
+    async def test_embeds_handles_odd_number_of_qa_pairs(
+        self, mock_build_pipeline, mock_load_docstore, mock_persist_docstore
+    ):
+        mock_pipeline = MagicMock()
+        mock_build_pipeline.return_value = mock_pipeline
 
-        self.assertEqual(len(self.fake_index.inserted_docs), 1)
-        self.assertEqual(self.fake_index.inserted_docs[0].id_, "odd_0")
+        await index_crud.embeddingQA(self.fake_index, ["q1", "a1", "orphan"], id="odd")
+
+        docs = mock_pipeline.run.call_args.kwargs["documents"]
+        self.assertEqual(len(docs), 1, "落单的最后一条（没有配对答案）应该被丢弃，不进 pipeline")
+
+    @patch("handlers.vector_store.persist_docstore")
+    @patch("handlers.vector_store.load_or_create_docstore")
+    @patch("handlers.ingestion_pipeline.build_pipeline")
+    async def test_empty_qa_pairs_skips_pipeline_entirely(
+        self, mock_build_pipeline, mock_load_docstore, mock_persist_docstore
+    ):
+        await index_crud.embeddingQA(self.fake_index, [], id="empty")
+
+        mock_build_pipeline.assert_not_called()
+        mock_persist_docstore.assert_not_called()
+
+
+class EmbeddingQADedupTest(unittest.IsolatedAsyncioTestCase):
+    """缺口 1 的端到端回归测试：QA 生成导入现在必须和文件上传路径一样具备
+    去重能力——同一批问答对重复导入，第二次不应该产生新节点。修复前
+    embeddingQA 直接 index.insert_nodes、doc_id 用自增序号，无法识别重复，
+    这正是 campus 索引 1537 个 chunk 里 716 个（46.6%）是完全重复内容的成因。
+
+    用真实的 IngestionPipeline（MockEmbedding，不碰真实模型/网络）而不是
+    mock 掉 build_pipeline，才能验证 UPSERTS 策略真的生效，不是只验证
+    "调用了某个函数"。"""
+
+    def setUp(self):
+        self.fake_index = FakeIndex(index_id="qa_dedup_test")
+        self.fake_index.vector_store = SimpleVectorStore()
+        self._orig_get_or_create_collection = index_crud.get_or_create_collection
+        index_crud.get_or_create_collection = MagicMock(return_value=MagicMock())
+        # 用同一个内存态 docstore 模拟"落盘 -> 下次导入重新加载"的效果，两次
+        # embeddingQA 调用共享同一份"doc_id -> 内容 hash"记忆，不用真的碰磁盘。
+        self._shared_docstore = SimpleDocumentStore()
+
+    def tearDown(self):
+        index_crud.get_or_create_collection = self._orig_get_or_create_collection
+
+    async def test_reimporting_same_qa_pairs_adds_no_new_nodes(self):
+        from handlers.ingestion_pipeline import build_pipeline as real_build_pipeline
+
+        qa_pairs = [
+            "校园卡丢失之后应该如何补办，需要准备哪些材料？",
+            "请携带本人身份证到一卡通服务中心办理挂失和补办手续，工本费按学校现行标准收取。",
+        ]
+
+        def _build_pipeline_with_mock_embed(**kwargs):
+            kwargs.setdefault("embed_model", MockEmbedding(embed_dim=8))
+            return real_build_pipeline(**kwargs)
+
+        with patch(
+            "handlers.vector_store.load_or_create_docstore", return_value=self._shared_docstore
+        ), patch("handlers.vector_store.persist_docstore"), patch(
+            "handlers.ingestion_pipeline.build_pipeline", side_effect=_build_pipeline_with_mock_embed
+        ):
+            await index_crud.embeddingQA(self.fake_index, list(qa_pairs), id="dup_test")
+            nodes_after_first_import = len(self.fake_index.vector_store.data.embedding_dict)
+
+            await index_crud.embeddingQA(self.fake_index, list(qa_pairs), id="dup_test")
+            nodes_after_second_import = len(self.fake_index.vector_store.data.embedding_dict)
+
+        self.assertGreater(nodes_after_first_import, 0, "首次导入应该写入至少一个节点")
+        self.assertEqual(
+            nodes_after_second_import,
+            nodes_after_first_import,
+            "同一批问答对重复导入，第二次不应该新增任何节点",
+        )
 
 
 class GetIndexByNameAsyncTest(unittest.IsolatedAsyncioTestCase):

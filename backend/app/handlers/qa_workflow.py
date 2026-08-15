@@ -112,6 +112,15 @@ query_str``）会同时用于检索和生成阶段的 prompt，这跟老链路�
   不让异常网上传播炸穿整个 workflow——记一条 warning 日志，降级用原始
   ``query`` 顶上去。压缩是让追问检索更准的加分项，不是回答问题的必要条件，
   不能因为它挂了导致用户连兜底答案都拿不到。
+
+压缩逻辑本身是模块级函数 ``condense_query()``，``condense_question`` step
+只是套了一层"从 StartEvent 取参数、产出 CondenseEvent"的壳——
+``handlers/auto_router.py`` 的自动路由判定需要在决定走哪条链路之前就先拿到
+压缩后的问题（路由信号是检索/重排分数，压缩没做好会直接污染判断），复用
+这个函数而不是另写一份 prompt 拼接逻辑。``StartEvent`` 支持一个
+``skip_condense=True`` 开关：auto_router 已经用 ``condense_query()`` 压缩过、
+并且拿压缩结果检索过一次，这时再压缩一遍是纯浪费的重复 LLM 调用，
+``QAWorkflow`` 走 ``/graph/ask_stream`` 的 standard 分支时会带上这个开关。
 """
 from __future__ import annotations
 
@@ -158,6 +167,48 @@ def safe_format(template: str, **kwargs) -> str:
     import string
     converted = re.sub(r'\{(\w+)\}', r'$\1', template)
     return string.Template(converted).safe_substitute(**kwargs)
+
+
+async def condense_query(query_str: str, chat_history: list[ChatMessage], llm: LLM | None = None) -> str:
+    """把"追问 + 历史"压缩成一个独立问题，供检索和生成阶段共用。
+
+    从 ``QAWorkflow.condense_question`` step 里抽出来的模块级函数——
+    ``handlers/auto_router.py`` 的路由判定同样需要先拿到压缩后的问题才能做
+    有意义的检索（路由信号本身就是检索/重排分数，问题没压缩好会直接污染
+    路由判断），如果不抽出来，两处各写一份 prompt 拼接逻辑，以后改
+    ``CONDENSE_QUESTION_PROMPT`` 容易漏改一处。
+
+    行为跟原来内联在 step 里时完全一致（这是重构、不是改行为）：
+    - ``chat_history`` 为空时零 LLM 调用，直接透传 ``query_str``——单轮问答
+      主路径不为压缩多付一次往返延迟。``llm=None`` 时也不会去解析
+      ``Settings.llm``（这一步在没有全局 LLM 配置的场景下也不该报错），
+      解析放在这个提前返回之后才做，保证"零 LLM 调用"名副其实、不只是
+      "不调用 acomplete"而是"连 Settings.llm 这个可能有副作用的解析都不碰"。
+    - 压缩这次 LLM 调用失败（网络抖动、超时等）时不向上抛异常，记一条
+      warning 日志后降级返回原始 ``query_str``——压缩是让检索更准的加分项，
+      不是回答问题的必要条件。
+    """
+    if not chat_history:
+        return query_str
+
+    resolved_llm = llm if llm is not None else Settings.llm
+    history_str = "\n".join(f"{m.role.value}: {m.content}" for m in chat_history)
+    prompt_str = safe_format(
+        Prompts.CONDENSE_QUESTION_PROMPT.value.template,
+        chat_history=history_str,
+        question=query_str,
+    )
+
+    try:
+        completion = await resolved_llm.acomplete(prompt_str)
+        condensed = str(completion).strip()
+        if not condensed:
+            condensed = query_str
+    except Exception:
+        logger.warning("问题压缩（condense_question）调用 LLM 失败，降级使用原始 query。", exc_info=True)
+        condensed = query_str
+
+    return condensed
 
 
 _FALLBACK_ANSWER = "我还不知道，请反馈给我吧"
@@ -302,32 +353,21 @@ class QAWorkflow(Workflow):
         query_str: str = ev.query
         chat_history: list[ChatMessage] = list(getattr(ev, "chat_history", None) or [])
         streaming: bool = bool(getattr(ev, "streaming", False))
+        # skip_condense：调用方（目前只有 handlers/auto_router.py）已经用同一个
+        # condense_query() 压缩过一次问题、并且拿压缩后的问题做过检索决策，这里
+        # 传进来的 ev.query 就是那个压缩结果——再压缩一遍是重复的 LLM 调用，
+        # 也可能因为二次改写导致跟路由阶段用的检索 query 对不上。默认 False，
+        # 不影响其余端点（/chat_stream 等）的既有行为。
+        skip_condense: bool = bool(getattr(ev, "skip_condense", False))
 
-        if not chat_history:
-            # 单轮问答主路径：零额外 LLM 调用，直接透传原始 query。见模块
-            # docstring"多轮对话"一节。
+        if skip_condense:
             return CondenseEvent(query_str=query_str, chat_history=chat_history, streaming=streaming)
 
-        history_str = "\n".join(f"{m.role.value}: {m.content}" for m in chat_history)
-        prompt_str = safe_format(
-            Prompts.CONDENSE_QUESTION_PROMPT.value.template,
-            chat_history=history_str,
-            question=query_str,
-        )
-
-        llm = self._llm if self._llm is not None else Settings.llm
-        try:
-            completion = await llm.acomplete(prompt_str)
-            condensed = str(completion).strip()
-            if not condensed:
-                condensed = query_str
-        except Exception:
-            # 压缩是加分项，不是必需项：LLM 调用失败时降级用原始 query，
-            # 不能让整个 workflow 因为压缩这一步挂掉。见模块 docstring。
-            logger.warning("问题压缩（condense_question）调用 LLM 失败，降级使用原始 query。", exc_info=True)
-            condensed = query_str
-
-        return CondenseEvent(query_str=condensed, chat_history=chat_history, streaming=streaming)
+        # 不在这里预先解析 Settings.llm——self._llm 可能是 None，交给
+        # condense_query() 自己判断：chat_history 为空时它连 Settings.llm 都
+        # 不会碰，跟原来内联实现"零 LLM 调用"的承诺完全一致，见该函数 docstring。
+        query_str = await condense_query(query_str, chat_history, self._llm)
+        return CondenseEvent(query_str=query_str, chat_history=chat_history, streaming=streaming)
 
     @step
     async def retrieve(self, ctx: Context, ev: CondenseEvent) -> RetrieveEvent:

@@ -30,6 +30,7 @@ from unittest.mock import patch
 
 import pytest
 from agents.agent_workflow import (
+    _RUN_FAILED_MESSAGE,
     DEFAULT_MAX_TOOL_ROUNDS,
     ToolCallTrace,
     build_agent,
@@ -416,7 +417,12 @@ async def test_stream_agent_events_yields_error_event_on_timeout():
 
     events = [ev async for ev in stream_agent_events("问题", agent=fake_agent)]
 
-    assert events == [{"type": "error", "message": _FALLBACK_ANSWER}]
+    # 刻意不是 _FALLBACK_ANSWER（"我还不知道"）：那句话的语义是"知识库里没有
+    # 这个内容"，而超时/限流是"这次请求没跑完"，对用户意味着完全不同的下一步。
+    # 实测里连续提问打爆 LLM 服务商 rpm 配额（429）时显示"我还不知道"，会让人
+    # 误以为知识库缺内容。
+    assert events == [{"type": "error", "message": _RUN_FAILED_MESSAGE}]
+    assert _RUN_FAILED_MESSAGE != _FALLBACK_ANSWER
 
 
 # ── extract_source_nodes ─────────────────────────────────────────────

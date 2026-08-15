@@ -61,10 +61,13 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
+import configs.load_env as load_env
 from handlers.chunking import TableAwareSentenceSplitter
 from handlers.parsers import ParseStatus, parse_path
 from handlers.parsers.front_matter import promoted_metadata, split_front_matter
@@ -72,10 +75,11 @@ from handlers.parsers.types import DocumentParseError, ParserUnavailableError
 from llama_index.core import Settings
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core.ingestion import DocstoreStrategy, IngestionPipeline
-from llama_index.core.schema import Document
+from llama_index.core.schema import BaseNode, Document, TransformComponent
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.storage.docstore.types import BaseDocumentStore
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
+from utils.logger import customer_logger
 
 # 上传时（router/index.py: f"{uuid.uuid4()}_{filename}"）加的 uuid4 前缀。
 # 摄取管道内部按"逻辑文件名"（去掉这个前缀）识别"这其实是同一份文档"，
@@ -321,12 +325,90 @@ def documents_from_file(file_path: Path, logical_name: str | None = None) -> lis
     return out
 
 
+# OCR 软件在扫描件底部/角落打的水印文字，和真实文档内容毫无关系。列表刻意
+# 保持"可维护的一小串已知模式"而不是试图穷举所有 OCR app——见 NoiseNodeFilter
+# docstring，误杀的代价（丢真实内容）远大于漏杀（留一条噪声）。
+_OCR_WATERMARK_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"扫描全能王"),
+    re.compile(r"camscanner", re.IGNORECASE),
+]
+
+
+class NoiseNodeFilter(TransformComponent):
+    """摄取管道里的"检索价值过滤器"：丢弃空白块、纯 OCR 水印块、碎片化短块。
+
+    动机（有实测数据支撑，不是臆想）：``campus`` 索引 1537 个 chunk 里，42 个
+    （2.7%）``text`` 完全为空/纯空白，38 个（2.5%）内容只剩"扫描全能王 创建"
+    这类 OCR 软件水印，62 个（4.0%）不足 30 字的碎片（比如 ``"7\\n7"``、
+    ``"利结业 次"``）。这些块照样被向量化、参与召回——空白块检索不到任何
+    信息，水印块和碎片块命中了也答不出什么有用内容，纯粹是检索噪声，还额外
+    浪费一次 embedding 调用。
+
+    放在 splitter 之后、embed_model 之前（见 ``build_pipeline`` 的
+    ``transformations`` 顺序）：在切块产出、真正花算力做 embedding 之前拦下，
+    而不是嵌入完了再删——过滤掉的块完全不需要过一遍 embedding 模型。
+
+    判定规则，按顺序：
+
+    1. 去除首尾空白后为空 -> 丢弃（空白块）。
+    2. 依次尝试去掉已知的 OCR 水印模式（``_OCR_WATERMARK_PATTERNS``），得到
+       "去水印后的内容"。如果去水印后剩余内容仍然达到 ``min_length``，说明
+       这只是一个正常长 chunk 里恰好含有水印软件名字（比如水印和正文一起被
+       扫描进了同一段），**不误杀**，保留原始（未去水印的）内容。
+    3. 去水印后剩余内容不足 ``min_length`` 才真正丢弃：如果确实命中过水印
+       模式，记为"水印块"；否则就是普通的碎片化短块，记为"碎片过短"。
+
+    过滤结果（丢了多少块、什么原因）会记一条 ``customer_logger`` 日志，
+    不静默丢数据——见类里的 ``__call__``。
+    """
+
+    min_length: int = 30
+
+    def __call__(self, nodes: Sequence[BaseNode], **kwargs: Any) -> Sequence[BaseNode]:
+        kept: list[BaseNode] = []
+        dropped_blank = 0
+        dropped_watermark = 0
+        dropped_short = 0
+
+        for node in nodes:
+            stripped = node.get_content().strip()
+            if not stripped:
+                dropped_blank += 1
+                continue
+
+            cleaned = stripped
+            watermark_hit = False
+            for pattern in _OCR_WATERMARK_PATTERNS:
+                if pattern.search(cleaned):
+                    watermark_hit = True
+                    cleaned = pattern.sub("", cleaned).strip()
+
+            if len(cleaned) < self.min_length:
+                if watermark_hit:
+                    dropped_watermark += 1
+                else:
+                    dropped_short += 1
+                continue
+
+            kept.append(node)
+
+        total_dropped = dropped_blank + dropped_watermark + dropped_short
+        if total_dropped:
+            customer_logger.info(
+                "噪声块过滤：本批 %d 块，丢弃 %d 块（空白 %d、OCR 水印 %d、碎片过短 %d），保留 %d 块",
+                len(nodes), total_dropped, dropped_blank, dropped_watermark, dropped_short, len(kept),
+            )
+
+        return kept
+
+
 def build_pipeline(
     vector_store: BasePydanticVectorStore,
     docstore: BaseDocumentStore | None = None,
     docstore_strategy: DocstoreStrategy = DocstoreStrategy.UPSERTS,
     chunk_size: int | None = None,
     embed_model: BaseEmbedding | None = None,
+    min_chunk_length: int | None = None,
 ) -> IngestionPipeline:
     """构建增量摄取用的 IngestionPipeline。
 
@@ -350,6 +432,12 @@ def build_pipeline(
         它去尝试解析 OpenAI embedding 报错）。不传则在调用时读取
         ``Settings.embed_model``（线上/评测脚本走这条路，与
         ``configs/llm_predictor.py:init_settings`` 配置的 bge-m3 一致）。
+    :param min_chunk_length: 噪声块过滤（``NoiseNodeFilter``）的最小保留长度。
+        不传则读取 ``MIN_CHUNK_LENGTH`` 环境变量（默认 30，见
+        ``configs/load_env.py`` 里的校准依据）。用 ``load_env.X`` 属性访问
+        而不是在模块顶部 ``from...import``，是为了不吃到"热重载改了源模块的
+        值、这里已经拷贝过一份感知不到"的坑（同样的坑见
+        ``handlers/vector_store.py`` 的注释）。
     """
     splitter = (
         TableAwareSentenceSplitter.from_defaults(chunk_size=chunk_size)
@@ -357,8 +445,14 @@ def build_pipeline(
         else TableAwareSentenceSplitter.from_defaults()
     )
     resolved_embed_model = embed_model if embed_model is not None else Settings.embed_model
+    resolved_min_chunk_length = min_chunk_length if min_chunk_length is not None else load_env.MIN_CHUNK_LENGTH
+    noise_filter = NoiseNodeFilter(min_length=resolved_min_chunk_length)
     return IngestionPipeline(
-        transformations=[splitter, resolved_embed_model],
+        # 顺序很重要：splitter 先把 Document 切成 chunk，noise_filter 在真正
+        # 花算力做 embedding 之前把没有检索价值的 chunk 拦下，embed_model 只
+        # 处理留下来的。文件上传（index_crud._ingest_and_persist）和 QA 导入
+        # （index_crud.embeddingQA）都走这一个 build_pipeline，两条路都覆盖。
+        transformations=[splitter, noise_filter, resolved_embed_model],
         docstore=docstore if docstore is not None else SimpleDocumentStore(),
         vector_store=vector_store,
         docstore_strategy=docstore_strategy,

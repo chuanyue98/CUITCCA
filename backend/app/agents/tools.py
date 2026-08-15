@@ -92,7 +92,16 @@ def _node_to_source_dict(node_with_score: NodeWithScore) -> dict:
     text, truncated = _truncate(node.get_content())
     return {
         "node_id": node.id_,
-        "score": node_with_score.score,
+        # 必须显式转成 Python float：重排器（SentenceTransformerRerank）是直接
+        # `node.score = <numpy 值>` 赋值的，而 Pydantic v2 默认**不校验赋值**，
+        # 所以 numpy.float32 会原样留在 score 上，后面 json.dumps 直接抛
+        # "Object of type float32 is not JSON serializable"，整个工具调用返回
+        # is_error=True。
+        #
+        # 这条路径几乎必然被踩到：只要召回数多于 RERANK_TOP_N，重排就会执行
+        # （见 utils/rerank.py 里关于"条件触发实际上恒为真"的说明），也就是说
+        # Agent 的知识库检索工具在真实查询下基本每次都会失败。
+        "score": float(node_with_score.score) if node_with_score.score is not None else None,
         "file_name": metadata.get("file_name"),
         "source_url": metadata.get("source_url"),
         "text": text,

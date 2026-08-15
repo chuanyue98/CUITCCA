@@ -57,6 +57,21 @@ class ConditionalRerankPostprocessor(BaseNodePostprocessor):
         if not nodes:
             return nodes
 
+        # 已知问题（2026-08，实现 handlers/auto_router.py 自动路由时在真实语料
+        # 上测出来的，如实记录、这次不改）：这里的 top1_score 是**融合后**的
+        # RRF 分数（混合检索 BM25+dense 的 RRF 融合结果），不是 cross-encoder
+        # 重排分数。campus-corpus 实测下来，RRF top1 无论问题是否被语料覆盖都
+        # 落在 0.026~0.033 这个极窄区间——完全没有区分度，恒小于
+        # RERANK_SCORE_THRESHOLD=0.75，也就是"top1 >= 阈值时跳过 rerank"这个
+        # 条件分支在生产环境里事实上从未被触发过，rerank 其实一直在无条件
+        # 触发（等价于 RERANK_ENABLED 打开后 always-on，只是顶着"条件触发"的
+        # 名字）。这不是这次改动引入的新问题，是在验证自动路由分数区分度时
+        # 顺带发现的既有行为；不在这次改动里修（改这个阈值/触发逻辑会直接
+        # 影响线上检索质量基线和已归档的评测数据，需要单独一轮评测验证，
+        # 不应该夹在"去掉模式切换器"这个不相关的改动里悄悄改掉）。真正有
+        # 区分度的是重排*之后*的 cross-encoder 分数，用于路由判断见
+        # handlers/auto_router.py 和 configs/load_env.py 的 AUTO_ROUTE_
+        # SCORE_THRESHOLD 注释。
         top1_score = nodes[0].score or 0.0
         if top1_score >= load_env.RERANK_SCORE_THRESHOLD:
             logger.debug(
