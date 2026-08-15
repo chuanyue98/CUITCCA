@@ -148,3 +148,75 @@ def test_get_reranker_lazily_constructs_and_caches_instance(monkeypatch):
     mock_cls.assert_called_once_with(model="fake/model", top_n=4)
     assert first is fake_reranker
     assert second is fake_reranker
+
+
+# ── rerank_nodes 的 did_rerank 标志 ──────────────────────────────────────
+# ConditionalRerankPostprocessor 丢掉这个标志，但 handlers/auto_router.py 靠它
+# 判断 nodes[0].score 到底是 cross-encoder 分数还是没有区分度的 RRF 融合分。
+# 标志报错了会让自动路由拿 0.03 去比 0.6 恒定判负，见 auto_router 模块 docstring。
+
+
+def test_rerank_nodes_reports_false_when_disabled(monkeypatch):
+    monkeypatch.setattr(load_env, "RERANK_ENABLED", False)
+    monkeypatch.setattr(load_env, "RERANK_TOP_N", 3)
+    nodes = [_make_node(f"n{i}", 1.0 - i * 0.1) for i in range(8)]
+
+    result, did_rerank = rerank_module.rerank_nodes(nodes)
+
+    assert result == nodes[:3]
+    assert did_rerank is False
+
+
+def test_rerank_nodes_reports_false_for_empty_nodes(monkeypatch):
+    monkeypatch.setattr(load_env, "RERANK_ENABLED", True)
+
+    result, did_rerank = rerank_module.rerank_nodes([])
+
+    assert result == []
+    assert did_rerank is False
+
+
+def test_rerank_nodes_reports_false_when_top1_above_threshold(monkeypatch):
+    monkeypatch.setattr(load_env, "RERANK_ENABLED", True)
+    monkeypatch.setattr(load_env, "RERANK_SCORE_THRESHOLD", 0.75)
+    monkeypatch.setattr(load_env, "RERANK_TOP_N", 3)
+    nodes = [_make_node(f"n{i}", score) for i, score in enumerate([0.9, 0.6, 0.5, 0.4])]
+
+    with patch.object(rerank_module, "_get_reranker") as mock_get_reranker:
+        result, did_rerank = rerank_module.rerank_nodes(nodes)
+
+    assert result == nodes[:3]
+    assert did_rerank is False
+    mock_get_reranker.assert_not_called()
+
+
+def test_rerank_nodes_reports_false_when_recall_too_small(monkeypatch):
+    """生产里最容易触发的一条跳过路径，也是自动路由那个 bug 的直接成因。"""
+    monkeypatch.setattr(load_env, "RERANK_ENABLED", True)
+    monkeypatch.setattr(load_env, "RERANK_SCORE_THRESHOLD", 0.75)
+    monkeypatch.setattr(load_env, "RERANK_TOP_N", 5)
+    nodes = [_make_node(f"n{i}", score) for i, score in enumerate([0.03, 0.02, 0.01])]
+
+    with patch.object(rerank_module, "_get_reranker") as mock_get_reranker:
+        result, did_rerank = rerank_module.rerank_nodes(nodes)
+
+    assert result == nodes
+    assert did_rerank is False
+    mock_get_reranker.assert_not_called()
+
+
+def test_rerank_nodes_reports_true_when_rerank_actually_runs(monkeypatch):
+    monkeypatch.setattr(load_env, "RERANK_ENABLED", True)
+    monkeypatch.setattr(load_env, "RERANK_SCORE_THRESHOLD", 0.75)
+    monkeypatch.setattr(load_env, "RERANK_TOP_N", 3)
+    nodes = [_make_node(f"n{i}", score) for i, score in enumerate([0.3, 0.25, 0.2, 0.15, 0.1])]
+    reranked_sentinel = [nodes[2], nodes[0]]
+
+    mock_reranker = MagicMock()
+    mock_reranker.postprocess_nodes.return_value = reranked_sentinel
+
+    with patch.object(rerank_module, "_get_reranker", return_value=mock_reranker):
+        result, did_rerank = rerank_module.rerank_nodes(nodes, QueryBundle("测试查询"))
+
+    assert result is reranked_sentinel
+    assert did_rerank is True

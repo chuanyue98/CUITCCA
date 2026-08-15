@@ -27,17 +27,24 @@ RerankPostprocessor`` 拿 RRF top1 去比 ``RERANK_SCORE_THRESHOLD``，导致"�
 触发"其实一直在无条件触发）——这次不修，只在那边补了如实记录的注释，见该
 文件内的说明。
 
-## 降级：RERANK_ENABLED 关闭时，只看"检索是否为空"
+## 降级：这次没真的重排时，只看"检索是否为空"
 
-``ConditionalRerankPostprocessor`` 在 ``RERANK_ENABLED=False`` 时直通返回
-（截断到 ``RERANK_TOP_N``，不做任何重排），这种情况下 nodes 上的分数还是
-没有区分度的 RRF 融合分——上面那张表已经说明了这一点。如果这时仍然拿
-``nodes[0].score`` 去跟 ``AUTO_ROUTE_SCORE_THRESHOLD`` 比较，比较的两个数字
-一个有意义一个没意义，结果等价于随机路由，比不路由还糟（用户会看到"这题
-明明很简单却随机地被甩给 Agent 多等好几秒"或者反过来）。所以 rerank 关闭
-时这里只用"检索到内容 vs 检索为空"这一个信号：检索为空 -> agent（standard
-反正给不出答案，不如让 agent 去试试换角度检索/查目录）；检索到内容 -> 直接
-standard，不比分数阈值。
+``utils.rerank.rerank_nodes`` 有好几条"不重排、原样返回"的路径，走这些路径时
+nodes 上的分数还是没有区分度的 RRF 融合分——上面那张表已经说明了这一点。
+如果这时仍然拿 ``nodes[0].score`` 去跟 ``AUTO_ROUTE_SCORE_THRESHOLD`` 比较，
+比较的两个数字一个有意义一个没意义，结果等价于随机路由，比不路由还糟（用户
+会看到"这题明明很简单却随机地被甩给 Agent 多等好几秒"或者反过来）。所以这里
+用 ``rerank_nodes`` 返回的 ``did_rerank`` 标志判断：没真重排就只用"检索到内容
+vs 检索为空"这一个信号——检索为空 -> agent（standard 反正给不出答案，不如让
+agent 去试试换角度检索/查目录）；检索到内容 -> 直接 standard，不比分数阈值。
+
+**这里踩过一次**：最初只判了 ``RERANK_ENABLED``，漏了"rerank 开着但候选数
+不够（``len(nodes) <= RERANK_TOP_N``）所以跳过重排"这条路径。那种情况下拿
+0.03 量级的 RRF 分去比 0.6 恒定判负，这类查询无论检索质量如何都被路由到
+Agent。真实症状：同一个问题"图书馆怎么借书？"在两次请求里分别拿到
+top1=0.94（重排过，走 standard 12.5s）和 top1=0.01（没重排，甩给 Agent
+51.8s），而且给用户看的理由"检索置信度不足"是假的。判 ``did_rerank`` 而不是
+判某个具体配置项，就不会再随 ``rerank_nodes`` 新增跳过路径而重新失配。
 
 ## 避免重复计算：问题压缩和检索都只做一次
 
@@ -76,7 +83,7 @@ from llama_index.core.base.llms.types import ChatMessage
 from llama_index.core.llms import LLM
 from llama_index.core.schema import NodeWithScore, QueryBundle
 from llama_index.core.settings import Settings
-from utils.rerank import ConditionalRerankPostprocessor
+from utils.rerank import rerank_nodes
 
 logger = logging.getLogger(__name__)
 
@@ -150,19 +157,26 @@ async def route_query(
         )
 
     # 复用生产环境已有的条件触发式 rerank，不重新实现触发条件/阈值判断。
-    nodes = ConditionalRerankPostprocessor().postprocess_nodes(
-        nodes, query_bundle=QueryBundle(query_str=query_str)
-    )
+    # 要 rerank_nodes 而不是 ConditionalRerankPostprocessor：这里必须知道这次
+    # 到底有没有真的重排，否则可能拿 RRF 分去比 cross-encoder 阈值，见下。
+    nodes, did_rerank = rerank_nodes(nodes, QueryBundle(query_str=query_str))
 
-    if not load_env.RERANK_ENABLED:
-        # rerank 关闭时 nodes[0].score 是没有区分度的 RRF 融合分，不能拿它
-        # 跟 AUTO_ROUTE_SCORE_THRESHOLD 比——见模块 docstring"降级"一节。
-        # 只用"检索到内容"这一个信号，命中就直接走 standard。
+    if not did_rerank:
+        # 没真的重排时 nodes[0].score 是没有区分度的 RRF 融合分（0.026~0.033），
+        # 不能拿它跟按 cross-encoder 标定的 AUTO_ROUTE_SCORE_THRESHOLD（0.6）比
+        # ——见模块 docstring"降级"一节。只用"检索到内容"这一个信号，命中就走
+        # standard。
+        #
+        # 触发这条分支的不只是 RERANK_ENABLED=False：rerank 开着但候选数不够
+        # （len(nodes) <= RERANK_TOP_N）时同样直接返回未重排的节点。早先这里只
+        # 判了 RERANK_ENABLED，于是那种情况下拿 0.03 去比 0.6 恒定判负，这类
+        # 查询无论检索质量如何都被甩给 Agent（实测慢四倍），而且给用户看的路由
+        # 理由"检索置信度不足（top1=0.01）"是假的。
         return RouteDecision(
             mode=MODE_STANDARD,
             nodes=nodes,
             query_str=query_str,
-            reason="已检索到相关内容（rerank 未开启，仅按是否命中路由）",
+            reason="已检索到相关内容（本次未经重排，仅按是否命中路由）",
         )
 
     top1_score = nodes[0].score if nodes[0].score is not None else 0.0

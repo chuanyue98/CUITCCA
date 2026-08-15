@@ -102,7 +102,11 @@ async def test_route_query_retrieval_error_falls_back_to_agent():
 
 @pytest.mark.asyncio
 async def test_route_query_high_confidence_goes_to_standard():
-    """重排后 top1 >= 阈值：走 standard，RouteDecision 带上已经检索好的 nodes。"""
+    """重排后 top1 >= 阈值：走 standard，RouteDecision 带上已经检索好的 nodes。
+
+    patch rerank_nodes 让它报告"真的重排过"——只有这样 top1 才是 cross-encoder
+    分数、才允许拿去比阈值。不 patch 的话 1 个节点会走"候选数不够，跳过重排"
+    那条路径，测到的就不是分数比较逻辑了。"""
     import configs.load_env as load_env
     from handlers.auto_router import MODE_STANDARD, route_query
 
@@ -111,7 +115,8 @@ async def test_route_query_high_confidence_goes_to_standard():
 
     with patch.object(load_env, "RERANK_ENABLED", True), \
          patch.object(load_env, "AUTO_ROUTE_SCORE_THRESHOLD", 0.6), \
-         patch.object(load_env, "RERANK_TOP_N", 5):
+         patch.object(load_env, "RERANK_TOP_N", 5), \
+         patch("handlers.auto_router.rerank_nodes", return_value=(nodes, True)):
         decision = await route_query("图书馆几点开门", retriever=retriever)
 
     assert decision.mode == MODE_STANDARD
@@ -132,12 +137,42 @@ async def test_route_query_low_confidence_goes_to_agent():
 
     with patch.object(load_env, "RERANK_ENABLED", True), \
          patch.object(load_env, "AUTO_ROUTE_SCORE_THRESHOLD", 0.6), \
-         patch.object(load_env, "RERANK_TOP_N", 5):
+         patch.object(load_env, "RERANK_TOP_N", 5), \
+         patch("handlers.auto_router.rerank_nodes", return_value=(nodes, True)):
         decision = await route_query("一个语料没覆盖的问题", retriever=retriever)
 
     assert decision.mode == MODE_AGENT
     assert decision.nodes == nodes
     assert "0.30" in decision.reason or "置信度" in decision.reason
+
+
+@pytest.mark.asyncio
+async def test_route_query_skipped_rerank_does_not_compare_rrf_score():
+    """回归：rerank 开着但这次**没真的重排**时，不能拿分数去比阈值。
+
+    rerank_nodes 有多条"不重排、原样返回"的路径，候选数不够
+    （len(nodes) <= RERANK_TOP_N）是最容易在生产触发的一条。走这条路径时
+    nodes 上还是 RRF 融合分（0.026~0.033 量级），拿它比按 cross-encoder 标定的
+    阈值 0.6 会恒定判负——这类查询于是无论检索质量如何都被甩给 Agent（实测慢
+    四倍），而且展示给用户的理由"检索置信度不足（top1=0.01）"是假的。
+
+    这里不 patch rerank_nodes，走真实的跳过路径：1 个节点 < RERANK_TOP_N=5，
+    分数 0.03 远低于阈值，但因为没重排过，应该判 standard 而不是 agent。"""
+    import configs.load_env as load_env
+    from handlers.auto_router import MODE_STANDARD, route_query
+
+    nodes = [_make_node("其实很相关的内容", score=0.03)]
+    retriever = FakeRetriever(nodes=nodes)
+
+    with patch.object(load_env, "RERANK_ENABLED", True), \
+         patch.object(load_env, "AUTO_ROUTE_SCORE_THRESHOLD", 0.6), \
+         patch.object(load_env, "RERANK_TOP_N", 5):
+        decision = await route_query("图书馆怎么借书", retriever=retriever)
+
+    assert decision.mode == MODE_STANDARD
+    assert decision.nodes == nodes
+    # 理由里不能出现那个没有意义的分数，否则等于把假信息展示给用户
+    assert "0.03" not in decision.reason
 
 
 @pytest.mark.asyncio
