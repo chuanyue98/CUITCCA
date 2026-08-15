@@ -13,7 +13,7 @@ test: ## 运行测试
 	python -m pytest tests/ -v
 
 lint: ## 代码风格检查
-	ruff check backend/ tests/
+	ruff check backend/ tests/ scripts/
 
 typecheck: ## 类型检查
 	mypy backend/app/ tests/ --ignore-missing-imports
@@ -23,7 +23,7 @@ security: ## 安全扫描
 	bandit -r backend/app/ -ll
 
 format: ## 自动格式化
-	ruff check --fix backend/ tests/
+	ruff check --fix backend/ tests/ scripts/
 	ruff format backend/ tests/
 
 clean: ## 清理缓存

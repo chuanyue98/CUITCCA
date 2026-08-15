@@ -33,7 +33,7 @@ jobs:
         run: uv sync --frozen --python ${{ matrix.python-version }}
 
       - name: Lint with ruff
-        run: uv run ruff check backend/ tests/
+        run: uv run ruff check backend/ tests/ scripts/
 
       - name: Type check with mypy
         run: uv run mypy backend/app/ tests/ --ignore-missing-imports

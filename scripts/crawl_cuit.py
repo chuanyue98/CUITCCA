@@ -34,7 +34,14 @@ if str(BACKEND_APP_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_APP_DIR))
 
 from connectors.base import SourceRef  # noqa: E402
-from connectors.config import ConfigError, ConnectorsConfig, CrawlDefaults, SiteConfig, effective_value, load_config  # noqa: E402
+from connectors.config import (  # noqa: E402
+    ConfigError,
+    ConnectorsConfig,
+    CrawlDefaults,
+    SiteConfig,
+    effective_value,
+    load_config,
+)
 from connectors.markdown_io import write_markdown_file  # noqa: E402
 from connectors.state import CrawlState  # noqa: E402
 from connectors.web_connector import CrawlStats, WebConnector  # noqa: E402
@@ -83,7 +90,8 @@ def _select_sites(config: ConnectorsConfig, requested: list[str] | None) -> list
         for name in requested:
             site = config.get_site(name)
             if site is None:
-                raise ConfigError(f"未知站点: {name!r}，配置里没有这个 name（可选值: {[s.name for s in config.sites]}）")
+                available = [s.name for s in config.sites]
+                raise ConfigError(f"未知站点: {name!r}，配置里没有这个 name（可选值: {available}）")
             sites.append(site)
         return sites
     return list(config.sites)
@@ -184,7 +192,10 @@ def main(argv: list[str] | None = None) -> int:
     out_dir = Path(args.out_dir)
     state_path = Path(args.state_file) if args.state_file else out_dir / ".crawl_state.json"
     state = CrawlState.load(state_path)
-    history_desc = f"已加载 {len(state)} 条历史记录" if state.loaded_from_disk else "无历史记录（全新状态文件/首次运行）"
+    if state.loaded_from_disk:
+        history_desc = f"已加载 {len(state)} 条历史记录"
+    else:
+        history_desc = "无历史记录（全新状态文件/首次运行）"
     print(f"[crawl] 增量状态文件: {state_path} ({history_desc})")
 
     total_stats = CrawlStats()

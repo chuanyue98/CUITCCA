@@ -5,19 +5,24 @@ name: E2E (Playwright)
 # 真实问答 spec（test-chat-e2e.spec.ts）需要后端能调用 LLM，因此必须在仓库
 # Settings → Secrets and variables → Actions 中配置：
 #   - OPENAI_API_KEY  : LLM API Key
-#   - LLM_BASE_URL    : 兼容 OpenAI 的接入点（如不配置则后端走默认值）
+#   - OPENAI_API_BASE : 兼容 OpenAI 的接入点（如不配置则后端走默认值）。
+#                       注意必须叫这个名字——后端 load_env.py 只读
+#                       OPENAI_API_BASE（曾误配成 LLM_BASE_URL，后端不读，
+#                       真实问答会静默走默认 api.openai.com）。
 #
 # 若未配置上述 Secret，本流水线会自动跳过真实问答 spec，仅运行 UI 结构/交互类用例，
 # 避免因 CI 环境无 LLM 而误报失败。
 # CUITCCA_API_KEY 留空使后端跳过 API Key 认证，便于 CI 环境。
 #
-# 触发条件：手动运行，或 PR 改动前端 / 后端路由 / Playwright 用例 / 本工作流时运行。
+# 触发条件：手动运行，或 PR 改动前端 / 后端路由 / 处理逻辑（handlers，含自动
+# 路由、语义缓存、反馈闭环）/ Playwright 用例 / 本工作流时运行。
 on:
   workflow_dispatch: {}
   pull_request:
     paths:
       - 'frontend/**'
       - 'backend/app/router/**'
+      - 'backend/app/handlers/**'
       - 'backend/app/main.py'
       - 'tests/playwright/**'
       - '.github/workflows/e2e.yml'
@@ -33,7 +38,7 @@ jobs:
     env:
       CUITCCA_API_KEY: ''
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      OPENAI_API_BASE: ${{ secrets.OPENAI_API_BASE }}
     steps:
       - uses: actions/checkout@v4
 
@@ -87,7 +92,13 @@ jobs:
 
       - name: Start backend
         run: |
-          PYTHONPATH=backend/app uv run uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
+          # python -m uvicorn 而不是 uv run uvicorn：不依赖 console script 是否
+          # 生成（本地实测 .venv/bin 可能只有 python 极简脚本），python -m
+          # 只要模块可导入即可，与 Makefile 的 dev/run 目标同一写法。
+          # PYTHONPATH=backend/app 让 app.main / handlers / configs 都能从仓库
+          # 根直接导入，不 cd 进 backend 也保证 backend.log/backend.pid 落在
+          # 仓库根——与下面 Wait / Stop / Upload 步骤的相对路径保持一致。
+          PYTHONPATH=backend/app uv run python -m uvicorn app.main:app --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
           echo $! > backend.pid
 
       - name: Wait for backend ready
