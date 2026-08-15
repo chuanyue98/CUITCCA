@@ -52,6 +52,36 @@ def load_backend_env() -> None:
     load_dotenv(REPO_ROOT / "backend" / ".env", override=False)
 
 
+async def load_indexes_or_fail(script: str) -> None:
+    """把索引注册表加载起来，加载不出东西就直接报错退出。
+
+    生成阶段的评测（拒答 / 回答质量）走的是 QAWorkflow，而 QAWorkflow 的
+    ``_build_retriever()`` 读的是 handlers.index_crud 里的模块级 ``indexes``
+    列表。这个列表由 ``loadAllIndexes()`` 填充，FastAPI 在启动时会调用它——
+    但评测脚本是独立进程，不走 FastAPI 启动流程，之前谁都没调用过它。
+
+    后果很隐蔽：``indexes`` 为空时 ``_build_retriever()`` 返回 ``_EmptyRetriever``，
+    每道题都检索到 0 条内容，QAWorkflow 于是对所有问题都回兜底文案"我还不知道"。
+    这时候拒答评测会给出满分（兜底文案含"不知道"，天然算承认边界，也永远不会
+    命中禁止信号），回答质量评测则全线最低分——两个指标都是假的，而且脚本不会
+    报任何错。2026-08-15 第一次归档基线时就踩了这个坑，结果作废。
+
+    所以这里跟 run_retrieval_eval.py 的"collection 是空的就拒跑"守卫对齐：
+    宁可明确失败，也不要产出一份看起来很漂亮的无效数据。
+    """
+    from handlers.index_crud import indexes, loadAllIndexes
+
+    await loadAllIndexes()
+    if not indexes:
+        raise SystemExit(
+            f"[{script}] 索引注册表是空的，没有可评测的知识库。\n"
+            "  生成阶段的评测必须有真实索引，否则每道题都会回兜底文案，\n"
+            "  指标看着漂亮但完全无效。请先确认 data/chroma_db 下有数据\n"
+            "  （uv run python evals/ingest_corpus.py 可以导入语料）。"
+        )
+    print(f"[{script}] 已加载 {len(indexes)} 个索引: {[i.index_id for i in indexes]}", flush=True)
+
+
 def strip_uuid_prefix(file_name: str) -> str:
     """去掉上传时自动加的 uuid4 前缀，还原成原始文件名。"""
     if not file_name:

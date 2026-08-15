@@ -51,7 +51,13 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from evals._common import EVALS_DIR, bootstrap_backend_path, load_backend_env, load_jsonl  # noqa: E402
+from evals._common import (  # noqa: E402
+    EVALS_DIR,
+    bootstrap_backend_path,
+    load_backend_env,
+    load_indexes_or_fail,
+    load_jsonl,
+)
 
 DEFAULT_GOLDEN = EVALS_DIR / "golden.refusal.jsonl"
 DEFAULT_RESULTS_DIR = EVALS_DIR / "results"
@@ -102,6 +108,7 @@ async def _answer(query: str, endpoint: str) -> str:
 
 
 async def run_eval(golden_path: Path, endpoint: str, limit: int | None) -> dict:
+    await load_indexes_or_fail("run_refusal_eval")
     items = load_jsonl(golden_path)
     if limit:
         items = items[:limit]
