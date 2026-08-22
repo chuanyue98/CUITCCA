@@ -25,6 +25,7 @@ def load_router_module(subpath: str):
     spec = importlib.util.spec_from_file_location(
         unique_name, os.path.join(_APP_DIR, 'router', subpath)
     )
+    assert spec is not None and spec.loader is not None, f'无法加载 router 子模块: {subpath}'
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

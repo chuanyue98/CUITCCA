@@ -9,10 +9,13 @@
 !/frontend/package-lock.json
 !/frontend/tsconfig.json
 !/frontend/vite.config.ts
+!/frontend/vitest.config.ts
 !/frontend/index.html
 !/frontend/manage.html
 !/frontend/use_function.html
 !/frontend/feed_back.html
+!/frontend/config.html
+!/frontend/tests/
 !/frontend/style.css
 !/frontend/icon.png
 !/frontend/logo.png
