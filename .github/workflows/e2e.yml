@@ -92,13 +92,14 @@ jobs:
 
       - name: Start backend
         run: |
-          # python -m uvicorn 而不是 uv run uvicorn：不依赖 console script 是否
-          # 生成（本地实测 .venv/bin 可能只有 python 极简脚本），python -m
-          # 只要模块可导入即可，与 Makefile 的 dev/run 目标同一写法。
-          # PYTHONPATH=backend/app 让 app.main / handlers / configs 都能从仓库
-          # 根直接导入，不 cd 进 backend 也保证 backend.log/backend.pid 落在
-          # 仓库根——与下面 Wait / Stop / Upload 步骤的相对路径保持一致。
-          PYTHONPATH=backend/app uv run python -m uvicorn app.main:app --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
+          # 与 Makefile 的 dev/run 目标同一写法：python -m uvicorn（不依赖
+          # console script 是否生成）+ --app-dir backend/app（uvicorn 会把它
+          # 插进 sys.path，main/handlers/configs 顶层导入都能解析）。
+          # 不 cd 进 backend，保证 backend.log/backend.pid 落在仓库根——与
+          # 下面 Wait / Stop / Upload 步骤的相对路径保持一致。
+          # 注意：模块名是 main 不是 app.main——backend/app 不是包，PYTHONPATH
+          # 写法解析不到 `app` 包（2026-08-15 起 e2e 全挂的根因）。
+          uv run python -m uvicorn main:app --app-dir backend/app --host 127.0.0.1 --port 8522 > backend.log 2>&1 &
           echo $! > backend.pid
 
       - name: Wait for backend ready
