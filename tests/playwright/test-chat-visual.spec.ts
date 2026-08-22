@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 
 test('聊天页面最终截图', async ({ page }) => {
-  await page.goto('http://localhost:8522/web/', { waitUntil: 'networkidle', timeout: 15000 });
+  await page.goto('http://localhost:8522/', { waitUntil: 'networkidle', timeout: 15000 });
   await page.waitForTimeout(1500);
   await page.screenshot({ path: './screenshots/chat-final.png' });
 });

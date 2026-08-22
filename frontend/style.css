@@ -1645,40 +1645,41 @@ input:focus, select:focus, textarea:focus {
    ====================================================================== */
 /* ===== Editorial Operations Console (manage.html) ===== */
 
-/* — Design tokens, scoped to .console-page — */
+/* — Design tokens, scoped to .console-page —
+   曾经是一套独立的"编辑纸感"配色（米黄纸底 + IBM Plex + 藏蓝），导致管理台
+   和全站其余页面（蓝色玻璃渐变风）完全像两个产品。现在全部别名到全局主题
+   token：跟随 :root 与 [data-theme="dark"] 自动切换，观感与主页/反馈页一致。
+   保留 --ed-* 变量名是为了不动 122 处引用这些 token 的既有规则。 */
 .console-page {
-  --ed-paper: #FAF8F3;
-  --ed-paper-alt: #F4F1E8;
-  --ed-surface: #FFFDF7;
-  --ed-ink: #1f1c16;
-  --ed-ink-2: #6b6358;
-  --ed-ink-3: #9a9388;
-  --ed-rule: #ddd5c6;
-  --ed-rule-2: #c4ba9f;
-  --ed-accent: #1b3a5f;
-  --ed-accent-2: #2c5680;
-  --ed-accent-soft: rgba(27, 58, 95, 0.06);
-  --ed-success: #3d6b3d;
-  --ed-danger: #8b2c2c;
-  --ed-warning: #8a5a1a;
+  --ed-paper: var(--glass-bg);
+  --ed-paper-alt: var(--primary-softer);
+  --ed-surface: var(--glass-bg);
+  --ed-ink: var(--text-primary);
+  --ed-ink-2: var(--text-secondary);
+  --ed-ink-3: var(--text-secondary);
+  --ed-rule: var(--border-subtle);
+  --ed-rule-2: var(--border-subtle);
+  --ed-accent: var(--primary);
+  --ed-accent-2: var(--primary-light);
+  --ed-accent-soft: var(--primary-soft);
+  --ed-success: var(--success);
+  --ed-danger: var(--danger);
+  --ed-warning: var(--warning);
 
-  background: var(--ed-paper);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
-  color: var(--ed-ink);
+  background: transparent;
+  color: var(--text-primary);
 }
 
 /* — Typography primitives — */
 .eyebrow {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+    font-size: 10px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--ed-ink-3);
   font-weight: 500;
 }
 .section_no {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+    font-size: 11px;
   color: var(--ed-accent);
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -1691,7 +1692,7 @@ input:focus, select:focus, textarea:focus {
   justify-content: space-between;
   padding: 16px 32px;
   background: var(--ed-paper);
-  border-bottom: 1px solid var(--ed-ink);
+  border-bottom: 1px solid var(--ed-rule);
   flex-shrink: 0;
 }
 .masthead_brand {
@@ -1709,7 +1710,7 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   transition: border-color 0.15s, color 0.15s;
 }
 .masthead_toggle:hover {
@@ -1745,15 +1746,13 @@ input:focus, select:focus, textarea:focus {
   gap: 1px;
 }
 .meta_k {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
+    font-size: 9px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ed-ink-3);
 }
 .meta_v {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
+    font-size: 12px;
   color: var(--ed-ink-2);
   font-weight: 500;
 }
@@ -1792,7 +1791,7 @@ input:focus, select:focus, textarea:focus {
   background: var(--ed-surface);
   border: 1px solid var(--ed-rule);
   padding: 22px 24px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 .console_panel + .console_panel {
   margin-top: 20px;
@@ -1825,7 +1824,7 @@ input:focus, select:focus, textarea:focus {
   height: 100%;
   background: var(--ed-surface);
   border: 1px solid var(--ed-rule);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   /* flex 子元素默认 min-width:auto，会被内容固有宽度撑破容器（同
      .index_select 那处注释说的溢出问题）。 */
@@ -1835,7 +1834,7 @@ input:focus, select:focus, textarea:focus {
 /* — Tabs — */
 .tabs_header {
   display: flex;
-  border-bottom: 1px solid var(--ed-ink);
+  border-bottom: 1px solid var(--ed-rule);
   margin-bottom: 18px;
   gap: 0;
 }
@@ -1846,8 +1845,7 @@ input:focus, select:focus, textarea:focus {
   background: none;
   cursor: pointer;
   color: var(--ed-ink-3);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+    font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 500;
@@ -2283,8 +2281,7 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 14px;
 }
 .index_action_row .field_label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+    font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ed-ink-3);
@@ -2298,12 +2295,11 @@ input:focus, select:focus, textarea:focus {
      46px，导致同行的"删除当前"按钮右半边被外层 overflow-y:auto 裁掉。 */
   min-width: 0;
   padding: 8px 12px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--ed-rule);
   background: var(--ed-paper);
   color: var(--ed-ink);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 13px;
+    font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   outline: none;
@@ -2321,59 +2317,16 @@ input:focus, select:focus, textarea:focus {
      min-width:auto，导致这一行在 .panel_left 收窄到 400px 时溢出。 */
   min-width: 0;
   padding: 8px 12px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--ed-rule);
   background: var(--ed-paper);
   color: var(--ed-ink);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 13px;
+    font-size: 13px;
   outline: none;
   transition: border-color 0.15s;
 }
 .new_index_input:focus { border-color: var(--ed-accent); }
 
-/* — Buttons (editorial: flat, hairline, no gradient) — */
-.console-page .btn {
-  padding: 8px 16px;
-  border: 1px solid var(--ed-ink);
-  border-radius: 2px;
-  background: var(--ed-ink);
-  color: var(--ed-paper);
-  cursor: pointer;
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-weight: 500;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.console-page .btn-primary {
-  background: var(--ed-accent);
-  border-color: var(--ed-accent);
-  color: #fff;
-}
-.console-page .btn-primary:hover {
-  background: var(--ed-accent-2);
-  border-color: var(--ed-accent-2);
-}
-.console-page .btn-success {
-  background: transparent;
-  border-color: var(--ed-ink);
-  color: var(--ed-ink);
-}
-.console-page .btn-success:hover {
-  background: var(--ed-ink);
-  color: var(--ed-paper);
-}
-.console-page .btn-danger {
-  background: transparent;
-  border-color: var(--ed-danger);
-  color: var(--ed-danger);
-}
-.console-page .btn-danger:hover {
-  background: var(--ed-danger);
-  color: #fff;
-}
 .btn_save_disk {
   padding: 0 14px;
   display: flex;
@@ -2394,8 +2347,7 @@ input:focus, select:focus, textarea:focus {
   gap: 8px;
 }
 .summary_label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+    font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ed-ink-2);
@@ -2406,8 +2358,7 @@ input:focus, select:focus, textarea:focus {
   font-weight: 400;
 }
 #summary-status-tag {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+    font-size: 10px;
   color: var(--ed-ink-3);
   letter-spacing: 0.08em;
 }
@@ -2423,9 +2374,8 @@ input:focus, select:focus, textarea:focus {
   max-height: none;
   background: var(--ed-paper);
   padding: 10px 12px;
-  border-radius: 2px;
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+    font-size: 13px;
   color: var(--ed-ink);
   line-height: 1.6;
   border: 1px solid var(--ed-rule);
@@ -2438,7 +2388,7 @@ input:focus, select:focus, textarea:focus {
 /* — Drag zone — */
 .drag_zone {
   border: 1px dashed var(--ed-rule-2);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   padding: 28px 20px;
   text-align: center;
   background: var(--ed-paper);
@@ -2460,8 +2410,7 @@ input:focus, select:focus, textarea:focus {
   font-weight: 500;
 }
 .drag_zone_hint_text {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+    font-size: 10px;
   color: var(--ed-ink-3);
   margin-top: 6px;
   letter-spacing: 0.05em;
@@ -2500,8 +2449,7 @@ input:focus, select:focus, textarea:focus {
   align-items: baseline;
   gap: 8px;
   margin-bottom: 6px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+    font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ed-ink-2);
@@ -2516,12 +2464,11 @@ input:focus, select:focus, textarea:focus {
 .form_group input, .form_group textarea {
   width: 100%;
   padding: 8px 12px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--ed-rule);
   background: var(--ed-paper);
   color: var(--ed-ink);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 13px;
+    font-size: 13px;
   outline: none;
   transition: border-color 0.15s;
 }
@@ -2532,11 +2479,10 @@ input:focus, select:focus, textarea:focus {
   width: 100%;
   padding: 10px;
   border: 1px solid var(--ed-ink);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--ed-ink);
   color: var(--ed-paper);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 12px;
+    font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2574,12 +2520,11 @@ input:focus, select:focus, textarea:focus {
 .node_search_input {
   width: 240px;
   padding: 6px 10px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--ed-rule);
   background: var(--ed-surface);
   color: var(--ed-ink);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 13px;
+    font-size: 13px;
   outline: none;
   transition: border-color 0.15s;
 }
@@ -2599,8 +2544,7 @@ input:focus, select:focus, textarea:focus {
   text-align: center;
   color: var(--ed-ink-3);
   margin-top: 48px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+    font-size: 11px;
   letter-spacing: 0.1em;
 }
 .node_empty_hint--primary {
@@ -2615,7 +2559,7 @@ input:focus, select:focus, textarea:focus {
 .node_card {
   background: var(--ed-surface);
   border: 1px solid var(--ed-rule);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -2629,8 +2573,7 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+    font-size: 10px;
   color: var(--ed-ink-3);
   letter-spacing: 0.04em;
   border-bottom: 1px solid var(--ed-rule);
@@ -2645,8 +2588,7 @@ input:focus, select:focus, textarea:focus {
   letter-spacing: 0.04em;
 }
 .node_id_text {
-  font-family: 'IBM Plex Mono', monospace;
-}
+  }
 .node_editor {
   width: 100%;
   /* 80px 装不下：语料分块长度中位数 564 字、最大 3720 字，实测 10/10 的
@@ -2656,12 +2598,11 @@ input:focus, select:focus, textarea:focus {
   min-height: 200px;
   resize: vertical;
   padding: 8px 10px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--ed-rule);
   background: var(--ed-paper);
   color: var(--ed-ink);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 13px;
+    font-size: 13px;
   line-height: 1.6;
   outline: none;
   transition: border-color 0.15s;
@@ -2677,8 +2618,7 @@ input:focus, select:focus, textarea:focus {
   gap: 16px;
 }
 .node_status_tag {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+    font-size: 10px;
   color: var(--ed-ink-3);
   letter-spacing: 0.06em;
 }
@@ -2687,8 +2627,7 @@ input:focus, select:focus, textarea:focus {
   border: none;
   color: var(--ed-danger);
   cursor: pointer;
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 11px;
+    font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.04em;
   padding: 0;
@@ -2712,8 +2651,7 @@ input:focus, select:focus, textarea:focus {
   opacity: 0.4 !important;
 }
 .page_indicator {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+    font-size: 11px;
   color: var(--ed-ink-2);
   letter-spacing: 0.05em;
 }
@@ -2723,13 +2661,12 @@ input:focus, select:focus, textarea:focus {
 }
 .pagination_btn {
   padding: 5px 14px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--ed-rule);
   background: var(--ed-surface);
   color: var(--ed-ink);
   cursor: pointer;
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', sans-serif;
-  font-size: 12px;
+    font-size: 12px;
   font-weight: 500;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -2741,8 +2678,7 @@ input:focus, select:focus, textarea:focus {
 /* — Upload progress — */
 .upload_progress_list {
   margin-top: 14px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+    font-size: 11px;
   color: var(--ed-ink-2);
 }
 .upload_progress_item {
@@ -2778,8 +2714,7 @@ input:focus, select:focus, textarea:focus {
   border-top: 3px solid var(--ed-accent);
 }
 .console-page .loading-text {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
+    font-size: 12px;
   color: var(--ed-accent);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -3091,4 +3026,57 @@ input:focus, select:focus, textarea:focus {
   /* 反馈页在小屏上输入区占满宽度 */
   .feedback_container { padding: 16px; }
   .feedback_card { padding: 20px 16px; }
+}
+
+/* ===== 系统配置页 (config.html) ===== */
+.config_container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+.config_heading {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.config_desc {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary, #666);
+}
+.config_action_row {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+.probe_result {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.probe_result--ok {
+  background: rgba(46, 160, 67, 0.1);
+  color: var(--success, #2ea043);
+  border: 1px solid rgba(46, 160, 67, 0.35);
+}
+.probe_result--error {
+  background: rgba(218, 54, 51, 0.08);
+  color: var(--danger, #da3633);
+  border: 1px solid rgba(218, 54, 51, 0.35);
+}
+.config_notes {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 2.1;
+  color: var(--text-secondary, #666);
 }

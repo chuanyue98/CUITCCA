@@ -98,7 +98,7 @@ class WorkflowQueryEndpointTest(unittest.TestCase):
         mock_instance.run = MagicMock(return_value=FakeHandler())
         mock_workflow_cls.return_value = mock_instance
 
-        with patch("router.graph.error_logger") as mock_error_logger:
+        with patch("router.graph_qa.error_logger") as mock_error_logger:
             response = self.client.post("/graph/workflow_query_stream", data={"query": "会出错的问题"})
 
         self.assertEqual(response.status_code, 200)

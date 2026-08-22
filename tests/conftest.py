@@ -77,3 +77,20 @@ def _reset_rate_limit_store():
     _rate_limit_store.clear()
     yield
     _rate_limit_store.clear()
+
+
+@pytest.fixture(autouse=True)
+def _pin_admin_api_key_unset(monkeypatch):
+    """测试进程内固定"未配置管理密钥"状态。
+
+    ``configs.load_env`` 在导入时会执行 ``load_dotenv(override=True)``，把开发者
+    本机 backend/.env 里的 CUITCCA_API_KEY 灌进 os.environ。一旦本机配了真实
+    密钥（比如为了启用 /manage 配置页），所有不带 Bearer 头的受保护接口请求都会
+    从原来的 503/放行变成 401，几十个对鉴权不敏感的用例集体翻车——失败信息指向
+    被测端点，和真正的原因（本地 .env 内容）毫无关系。
+
+    autouse + monkeypatch 保证每个用例运行时该变量都是空串；需要模拟"已配置"
+    的用例（如 test_manage_env_auth、test_llm_config_router）自己用
+    patch.dict/setenv 覆盖即可，monkeypatch 收尾时恢复。
+    """
+    monkeypatch.setenv('CUITCCA_API_KEY', '')

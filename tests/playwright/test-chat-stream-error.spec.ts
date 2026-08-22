@@ -15,7 +15,7 @@
 
 import { test, expect } from '@playwright/test';
 
-const CHAT_URL = 'http://localhost:8522/web/';
+const CHAT_URL = 'http://localhost:8522/';
 const PARTIAL_TEXT = '我来帮您查询学校有哪些学院。让我先检索校园知识库。';
 const ERROR_TEXT = '刚才没能查完，请稍后再试一次。';
 

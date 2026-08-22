@@ -5,10 +5,10 @@ import { test, expect } from '@playwright/test';
 
 const BASE_URL = 'http://localhost:8522';
 const PAGES = [
-  { name: 'index', url: '/web/', title: '聊天页面' },
-  { name: 'manage', url: '/web/manage.html', title: '知识库管理页面' },
-  { name: 'feedback', url: '/web/feed_back.html', title: '问题反馈页面' },
-  { name: 'use_function', url: '/web/use_function.html', title: '使用指南页面' },
+  { name: 'index', url: '/', title: '聊天页面' },
+  { name: 'manage', url: '/manage.html', title: '知识库管理页面' },
+  { name: 'feedback', url: '/feed_back.html', title: '问题反馈页面' },
+  { name: 'use_function', url: '/use_function.html', title: '使用指南页面' },
 ];
 
 // ===== 通用检查函数 =====

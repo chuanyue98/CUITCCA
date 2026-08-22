@@ -1,5 +1,3 @@
-import importlib.util
-import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -7,16 +5,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
-
-def _load_graph_module(name):
-    """Load router/graph.py standalone, bypassing router/__init__.py
-    (which eagerly instantiates a HuggingFace embedding model on import)."""
-    app_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'app')
-    spec = importlib.util.spec_from_file_location(name, os.path.join(app_dir, 'router', 'graph.py'))
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+from tests._router_loader import load_router_module
 
 
 class FakeSourceNode:
@@ -32,7 +21,7 @@ def _make_workflow_result(node_id):
 
 class QuerySourcesIsolationTest(unittest.TestCase):
     def setUp(self):
-        self.graph = _load_graph_module('router_graph_standalone_sources')
+        self.graph = load_router_module('graph.py')
         self.app = FastAPI()
         self.app.include_router(self.graph.graph_app, prefix='/graph')
         self.client = TestClient(self.app)
@@ -87,7 +76,7 @@ class ChatHistoryIsolationTest(unittest.TestCase):
     compose_graph_chat_egine 换成 handlers.qa_workflow.QAWorkflow。"""
 
     def setUp(self):
-        self.graph = _load_graph_module('router_graph_standalone_chat')
+        self.graph = load_router_module('graph.py')
         self.app = FastAPI()
         self.app.include_router(self.graph.graph_app, prefix='/graph')
         self.client = TestClient(self.app)

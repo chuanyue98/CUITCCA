@@ -21,7 +21,7 @@ test('聊天页面真实收发一轮对话', async ({ page }) => {
     }
   });
 
-  await page.goto('/web/');
+  await page.goto('/');
   await page.fill('#input', '学校有哪些社团？');
   await page.click('#submit');
 

@@ -1,5 +1,4 @@
 import builtins
-import importlib.util
 import os
 import tempfile
 import unittest
@@ -9,23 +8,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
-
-
-def _load_index_module():
-    app_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'app')
-    spec = importlib.util.spec_from_file_location(
-        'router_index_standalone',
-        os.path.join(app_dir, 'router', 'index.py')
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+from tests._router_loader import load_router_module
 
 
 class UploadFileUsesAsyncIoTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.index_module = _load_index_module()
+        cls.index_module = load_router_module('index.py')
 
     def test_uploadFile_does_not_use_blocking_open(self):
         """async def upload_file used plain with open(...) f.write(...), blocking the
@@ -37,8 +26,8 @@ class UploadFileUsesAsyncIoTest(unittest.TestCase):
             os.makedirs(load_dir)
             os.makedirs(save_dir)
 
-            with patch.object(self.index_module, 'LOAD_PATH', load_dir), \
-                 patch.object(self.index_module, 'SAVE_PATH', save_dir), \
+            with patch.object(self.index_module.load_env, 'LOAD_PATH', load_dir), \
+                 patch.object(self.index_module.load_env, 'SAVE_PATH', save_dir), \
                  patch.object(self.index_module, 'insert_into_index'):
 
                 app = FastAPI()
@@ -69,8 +58,8 @@ class UploadFileUsesAsyncIoTest(unittest.TestCase):
             os.makedirs(load_dir)
             os.makedirs(save_dir)
 
-            with patch.object(self.index_module, 'LOAD_PATH', load_dir), \
-                 patch.object(self.index_module, 'SAVE_PATH', save_dir), \
+            with patch.object(self.index_module.load_env, 'LOAD_PATH', load_dir), \
+                 patch.object(self.index_module.load_env, 'SAVE_PATH', save_dir), \
                  patch.object(self.index_module, 'insert_into_index') as mock_insert:
 
                 app = FastAPI()

@@ -22,8 +22,8 @@ def _fallback_message():
     import inspect
     import re
 
-    from router import graph
-    src = inspect.getsource(graph)
+    from router import graph_qa
+    src = inspect.getsource(graph_qa)
     m = re.search(r'send_text\(\s*"([^"]+)"\s*\)', src)
     return m.group(1)
 

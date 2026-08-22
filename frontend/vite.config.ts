@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: '/web/',
+  base: '/',
   root: '.',
   publicDir: 'vendor',
   build: {
@@ -14,6 +14,7 @@ export default defineConfig({
         manage: resolve(__dirname, 'manage.html'),
         use_function: resolve(__dirname, 'use_function.html'),
         feed_back: resolve(__dirname, 'feed_back.html'),
+        config: resolve(__dirname, 'config.html'),
       },
       output: {
         entryFileNames: 'assets/[name].[hash].js',

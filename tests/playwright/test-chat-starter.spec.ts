@@ -4,7 +4,7 @@
 
 import { test, expect } from '@playwright/test';
 
-const CHAT_URL = 'http://localhost:8522/web/';
+const CHAT_URL = 'http://localhost:8522/';
 
 test.describe('聊天页首屏引导', () => {
   test.beforeEach(async ({ page }) => {
