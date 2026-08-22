@@ -3,7 +3,7 @@ import logging
 import os
 from pathlib import Path
 
-from configs.load_env import FILE_PATH
+import configs.load_env as load_env
 from handlers.vector_store import (
     _get_client,
     build_index_from_collection,
@@ -250,9 +250,9 @@ async def get_index_by_name_async(index_name: str) -> VectorStoreIndex | None:
 
 async def convert_index_to_file(index_name: str, file_name: str):
     import aiofiles
-    path = os.path.join(FILE_PATH, file_name)
-    if not os.path.exists(FILE_PATH):
-        os.makedirs(FILE_PATH)
+    path = os.path.join(load_env.FILE_PATH, file_name)
+    if not os.path.exists(load_env.FILE_PATH):
+        os.makedirs(load_env.FILE_PATH)
 
     index = get_index_by_name(index_name)
     if index is None:
@@ -271,9 +271,9 @@ async def convert_index_to_file(index_name: str, file_name: str):
 
 async def citf(index: VectorStoreIndex, name: str):
     import aiofiles
-    path = os.path.join(FILE_PATH, name)
-    if not os.path.exists(FILE_PATH):
-        os.makedirs(FILE_PATH)
+    path = os.path.join(load_env.FILE_PATH, name)
+    if not os.path.exists(load_env.FILE_PATH):
+        os.makedirs(load_env.FILE_PATH)
 
     text_list = []
     for node_id, node_data in index.docstore.docs.items():

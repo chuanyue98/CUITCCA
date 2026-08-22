@@ -69,7 +69,7 @@ class GetFoldersListTest(unittest.TestCase):
 class SaveFeedbackTest(unittest.TestCase):
     def test_save_feedback_persists_to_sqlite(self):
         with patch('utils.file.db.save_feedback') as mock_save, \
-             patch('utils.file.db_path', '/fake/app.db'):
+             patch('utils.file.load_env.db_path', '/fake/app.db'):
             feedback = Feedback(email='a@b.com', message='hello')
             asyncio.run(f.save_feedback('192.168.1.1', feedback))
         mock_save.assert_called_once_with('/fake/app.db', '192.168.1.1', 'a@b.com', 'hello')

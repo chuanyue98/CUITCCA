@@ -1,13 +1,16 @@
 .PHONY: install dev test lint typecheck security clean run format help frontend-install frontend-dev frontend-build
 
+# 优先用仓库根 .venv（uv sync 默认位置），不存在则回退 PATH 里的 python
+PY ?= $(shell test -x .venv/bin/python && echo .venv/bin/python || echo python3)
+
 install: ## 安装依赖
 	python -m pip install -e ".[dev]" || python -m pip install -e . && pip install -r dev-requirements.txt
 
 dev: ## 启动开发服务器（热重载）
-	cd backend && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8522
+	$(PY) -m uvicorn --app-dir backend/app main:app --reload --host 0.0.0.0 --port 8522
 
 run: ## 启动生产服务器
-	cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8522
+	$(PY) -m uvicorn --app-dir backend/app main:app --host 0.0.0.0 --port 8522
 
 test: ## 运行测试
 	python -m pytest tests/ -v

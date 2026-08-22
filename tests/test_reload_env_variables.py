@@ -15,15 +15,12 @@ class ReloadEnvVariablesOverrideTest(unittest.TestCase):
         and calls reload_env_variables() would silently keep serving the old key --
         this must actually pick up the new value."""
         with tempfile.TemporaryDirectory() as tmp_dir:
-            # reload_env_variables() reads os.path.join(os.path.dirname(PROJECT_ROOT), '.env'),
-            # so PROJECT_ROOT must look like <tmp_dir>/app for the file to land at <tmp_dir>/.env.
             env_path = os.path.join(tmp_dir, '.env')
             with open(env_path, 'w') as f:
                 f.write("OPENAI_API_KEY=new-key-from-file\n")
-            fake_root = os.path.join(tmp_dir, 'app')
 
             with patch.dict(os.environ, {'OPENAI_API_KEY': 'stale-key-already-in-environ'}), \
-                 patch.object(env_config, 'PROJECT_ROOT', fake_root):
+                 patch.object(env_config, 'ENV_PATH', env_path):
                 env_config.reload_env_variables()
 
                 self.assertEqual(os.environ['OPENAI_API_KEY'], 'new-key-from-file')

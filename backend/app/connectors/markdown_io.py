@@ -50,7 +50,7 @@ def stable_filename(url: str) -> str:
     的页面寻址不依赖它们，见模块级说明。"""
     parsed = urlparse(url)
     readable = sanitize_filename_component(f"{parsed.netloc}{parsed.path}")
-    digest = hashlib.sha1(url.encode("utf-8")).hexdigest()[:10]
+    digest = hashlib.sha1(url.encode("utf-8"), usedforsecurity=False).hexdigest()[:10]
     return f"{readable}__{digest}.md"
 
 

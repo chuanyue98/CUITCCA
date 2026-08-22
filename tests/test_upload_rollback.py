@@ -1,5 +1,4 @@
 """文件上传回滚测试：覆盖 router/index.py 中上传失败时的文件清理逻辑。"""
-import importlib.util
 import os
 import tempfile
 import unittest
@@ -9,25 +8,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import tests._pathsetup  # noqa: F401
-
-
-def _load_index_module():
-    """Load router/index.py standalone, bypassing router/__init__.py."""
-    app_dir = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'app'
-    )
-    spec = importlib.util.spec_from_file_location(
-        'router_index_rollback', os.path.join(app_dir, 'router', 'index.py')
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+from tests._router_loader import load_router_module
 
 
 class UploadFileRollbackTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.index_module = _load_index_module()
+        cls.index_module = load_router_module('index.py')
 
     def test_uploadFile_rolls_back_save_on_insert_error(self):
         """upload_file 在 insert_into_index 失败时应删除已保存的永久文件"""
@@ -37,8 +24,8 @@ class UploadFileRollbackTest(unittest.TestCase):
             os.makedirs(load_dir)
             os.makedirs(save_dir)
 
-            with patch.object(self.index_module, 'LOAD_PATH', load_dir), \
-                 patch.object(self.index_module, 'SAVE_PATH', save_dir), \
+            with patch.object(self.index_module.load_env, 'LOAD_PATH', load_dir), \
+                 patch.object(self.index_module.load_env, 'SAVE_PATH', save_dir), \
                  patch.object(
                     self.index_module, 'insert_into_index',
                     new_callable=AsyncMock,
@@ -74,8 +61,8 @@ class UploadFileRollbackTest(unittest.TestCase):
             os.makedirs(load_dir)
             os.makedirs(save_dir)
 
-            with patch.object(self.index_module, 'LOAD_PATH', load_dir), \
-                 patch.object(self.index_module, 'SAVE_PATH', save_dir), \
+            with patch.object(self.index_module.load_env, 'LOAD_PATH', load_dir), \
+                 patch.object(self.index_module.load_env, 'SAVE_PATH', save_dir), \
                  patch.object(
                     self.index_module, 'insert_into_index',
                     new_callable=AsyncMock,
@@ -106,8 +93,8 @@ class UploadFileRollbackTest(unittest.TestCase):
 
     def test_uploadFile_rejects_invalid_file_type(self):
         """upload_file 应拒绝不在允许列表中的文件类型"""
-        with patch.object(self.index_module, 'LOAD_PATH', '/tmp'), \
-             patch.object(self.index_module, 'SAVE_PATH', '/tmp'):
+        with patch.object(self.index_module.load_env, 'LOAD_PATH', '/tmp'), \
+             patch.object(self.index_module.load_env, 'SAVE_PATH', '/tmp'):
             app = FastAPI()
             app.include_router(self.index_module.index_app, prefix='/index')
             fake_index = type('FakeIndex', (), {'index_id': 'demo'})()
@@ -129,8 +116,8 @@ class UploadFileRollbackTest(unittest.TestCase):
             os.makedirs(load_dir)
             os.makedirs(save_dir)
 
-            with patch.object(self.index_module, 'LOAD_PATH', load_dir), \
-                 patch.object(self.index_module, 'SAVE_PATH', save_dir), \
+            with patch.object(self.index_module.load_env, 'LOAD_PATH', load_dir), \
+                 patch.object(self.index_module.load_env, 'SAVE_PATH', save_dir), \
                  patch.object(
                     self.index_module, 'insert_into_index',
                     new_callable=AsyncMock,

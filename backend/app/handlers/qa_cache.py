@@ -99,7 +99,9 @@ async def _embed(text: str) -> list[float]:
 def _entry_id(kind: str, question: str) -> str:
     # 稳定 id：同 kind + 同问题重复写入时 upsert 覆盖旧条目（最新答案生效），
     # 不会在 collection 里积累重复问题。
-    return f"{kind}:{hashlib.sha1(question.encode('utf-8')).hexdigest()}"
+    # usedforsecurity=False：非安全用途的去重指纹（bandit B324），且指纹
+    # 算法不能换——换了会让 Chroma 里既有缓存条目的 id 全部对不上。
+    return f"{kind}:{hashlib.sha1(question.encode('utf-8'), usedforsecurity=False).hexdigest()}"
 
 
 def _truncate(text: str, max_chars: int) -> str:

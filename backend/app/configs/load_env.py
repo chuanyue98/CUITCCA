@@ -5,6 +5,10 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# 仓库根的 .env 唯一路径定义：reload_env_variables、utils/llm_config（在线改
+# LLM 配置）和 router/manage（只读脱敏查看）都从这里取，避免各算一份漂移。
+ENV_PATH = os.path.join(os.path.dirname(PROJECT_ROOT), '.env')
+
 index_save_directory = ''
 SAVE_PATH = ''
 LOAD_PATH = ''
@@ -112,7 +116,7 @@ MIN_CHUNK_LENGTH = 30
 
 
 def reload_env_variables():
-    load_dotenv(os.path.join(os.path.dirname(PROJECT_ROOT), '.env'), override=True)
+    load_dotenv(ENV_PATH, override=True)
     global index_save_directory, SAVE_PATH, LOAD_PATH, FEEDBACK_PATH, LOG_PATH, FILE_PATH, access_stats_path, \
         openai_api_key, openai_api_base, openai_model, VERBOSE, COOKIE_SECURE, COOKIE_MAX_AGE, chroma_db_path, \
         db_path, DEFAULT_SIMILARITY_TOP_K, QUERY_ENDPOINT_TOP_K, MULTI_INDEX_FALLBACK_TOP_K, \

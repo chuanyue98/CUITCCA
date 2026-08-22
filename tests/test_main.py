@@ -18,7 +18,7 @@ class TestRoutes(unittest.TestCase):
     def setUp(self):
         self._lifespan_patches = [
             patch('main.loadAllIndexes', new_callable=AsyncMock),
-            patch('main.reload_env_variables'),
+            patch('main.load_env.reload_env_variables'),
             patch('main.init_settings'),
         ]
         for p in self._lifespan_patches:
@@ -38,11 +38,13 @@ class TestRoutes(unittest.TestCase):
             self.assertIn(prefix, found_prefixes,
                           f"No included router found with prefix {prefix}")
 
-    def test_root_endpoint_returns_hello(self):
+    def test_root_serves_chat_page(self):
+        """回归：/ 曾是一个 {"Hello": "CUITCCA"} 的 JSON，用户打开服务根地址
+        看不到产品页面。现在 / 由 StaticFiles(html=True) 直接出聊天主页。"""
         with TestClient(app) as client:
             response = client.get("/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"Hello": "CUITCCA"})
+        self.assertIn("text/html", response.headers["content-type"])
 
     def test_cors_middleware_configured(self):
         cors_middleware = [
@@ -67,18 +69,42 @@ class TestRoutes(unittest.TestCase):
         self.assertTrue(len(cors_middleware) >= 1)
 
     def test_static_files_mount_registered(self):
-        mount_routes = [
+        """/ 由静态挂载接管（主页直出），不再有 /web 前缀挂载。"""
+        root_mounts = [
             r for r in app.router.routes
-            if hasattr(r, 'path') and r.path.startswith('/web')
+            if hasattr(r, 'name') and r.name == 'root'
         ]
-        static_routes = [
+        web_mounts = [
             r for r in app.router.routes
-            if hasattr(r, 'name') and r.name == 'web'
+            if hasattr(r, 'path') and getattr(r, 'path', None) == '/web'
         ]
-        self.assertTrue(
-            len(mount_routes) > 0 or len(static_routes) > 0,
-            "Expected /web static mount to be registered",
-        )
+        self.assertTrue(len(root_mounts) > 0, "Expected root static mount to be registered")
+        self.assertEqual(len(web_mounts), 0, "/web legacy mount should be removed")
+
+    def test_root_mount_registered(self):
+        """/ 必须由静态挂载接管（主页直出），而不是返回 JSON 的路由。"""
+        json_root_routes = [
+            r for r in app.router.routes
+            if hasattr(r, 'endpoint') and getattr(r, 'path', None) == '/'
+        ]
+        self.assertEqual(len(json_root_routes), 0)
+
+    def test_is_static_path(self):
+        """静态判定：/ 恒为静态；/index.html 是页面而 /index 是 API，
+        不能靠前缀反向推断。"""
+        from main import _is_static_path
+        for path in (
+            "/", "/index.html",
+            "/config.html", "/assets/sidebar.abc.js", "/icon.png",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(_is_static_path(path))
+        for path in (
+            "/index", "/index/list", "/graph/ask_stream", "/manage/llm-config",
+            "/docs", "/response/x/query", "/index/campus/query",
+        ):
+            with self.subTest(path=path):
+                self.assertFalse(_is_static_path(path))
 
 
 class TestRateLimit(unittest.IsolatedAsyncioTestCase):
@@ -114,7 +140,7 @@ class TestSessionAndStatsMiddleware(unittest.TestCase):
     def setUp(self):
         self._lifespan_patches = [
             patch('main.loadAllIndexes', new_callable=AsyncMock),
-            patch('main.reload_env_variables'),
+            patch('main.load_env.reload_env_variables'),
             patch('main.init_settings'),
         ]
         for p in self._lifespan_patches:
@@ -134,25 +160,28 @@ class TestSessionAndStatsMiddleware(unittest.TestCase):
         self._stats_patch.stop()
 
     def test_session_cookie_set_on_first_request(self):
+        """/ 是静态主页（不设 cookie，静态路径一律跳过），会话 cookie
+        由第一个 API 请求建立——用 /docs 代表非静态路径验证。"""
         with TestClient(app) as client:
-            response = client.get("/")
+            response = client.get("/docs")
         self.assertIn("session_id", response.cookies)
         self.assertTrue(len(response.cookies["session_id"]) > 0)
 
     def test_session_cookie_not_re_set_when_already_present(self):
         with TestClient(app) as client:
-            first = client.get("/")
+            first = client.get("/docs")
             session_id = first.cookies["session_id"]
-            second = client.get("/", cookies={"session_id": session_id})
+            second = client.get("/docs", cookies={"session_id": session_id})
         set_cookies = second.headers.get_list("set-cookie")
         session_cookies = [c for c in set_cookies if "session_id=" in c]
         self.assertEqual(len(session_cookies), 0)
 
     def test_stats_increment_on_request(self):
+        """统计只记 API 请求，静态页面/资源不计（静态路径豁免）。"""
         with TestClient(app) as client:
-            client.get("/")
-            client.get("/")
-            client.get("/")
+            client.get("/docs")
+            client.get("/docs")
+            client.get("/docs")
         self.assertGreaterEqual(self._stats_dict["total_visits"], 3)
 
 

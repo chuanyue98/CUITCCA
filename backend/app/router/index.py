@@ -11,7 +11,6 @@ import aiofiles
 import configs.load_env as load_env
 from configs.config import Prompts
 from configs.llm_predictor import build_llm
-from configs.load_env import LOAD_PATH, SAVE_PATH
 from dependencies import get_index
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from handlers import delete_collection, list_index_names
@@ -137,9 +136,9 @@ async def upload_file(index=Depends(get_index), file: UploadFile = File(...)):
     try:
         filename = safe_filename(file.filename)
         unique_id = str(uuid.uuid4())
-        os.makedirs(LOAD_PATH, exist_ok=True)
-        filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
-        savepath = os.path.join(SAVE_PATH, index.index_id, filename)
+        os.makedirs(load_env.LOAD_PATH, exist_ok=True)
+        filepath = os.path.join(load_env.LOAD_PATH, f"{unique_id}_{filename}")
+        savepath = os.path.join(load_env.SAVE_PATH, index.index_id, filename)
         os.makedirs(os.path.dirname(savepath), exist_ok=True)
         file_bytes = await file.read()
         async with aiofiles.open(filepath, 'wb') as f:
@@ -173,9 +172,9 @@ async def upload_files(index=Depends(get_index), files: list[UploadFile] = File(
                                     status_code=status.HTTP_400_BAD_REQUEST)
             filename = safe_filename(file.filename)
             unique_id = str(uuid.uuid4())
-            os.makedirs(LOAD_PATH, exist_ok=True)
-            filepath = os.path.join(LOAD_PATH, f"{unique_id}_{filename}")
-            savepath = os.path.join(SAVE_PATH, index.index_id, filename)
+            os.makedirs(load_env.LOAD_PATH, exist_ok=True)
+            filepath = os.path.join(load_env.LOAD_PATH, f"{unique_id}_{filename}")
+            savepath = os.path.join(load_env.SAVE_PATH, index.index_id, filename)
             file_bytes = await file.read()
             async with aiofiles.open(filepath, 'wb') as f:
                 await f.write(file_bytes)

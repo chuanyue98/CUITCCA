@@ -7,12 +7,15 @@ from llama_index.llms.openai_like import OpenAILike
 
 _CONTEXT_WINDOWS = {
     'sensenova-6.7-flash-lite': 262144,
+    'sensenova-6.8-flash-lite': 262144,
     'deepseek-v4-flash': 1048576,
+    'deepseek-ai/deepseek-v4-flash': 1048576,
     'glm-5.2': 1048576,
     'sensenova-u1-fast': 262144,
 }
 _FUNCTION_CALLING_MODELS = frozenset({
     'deepseek-v4-flash',
+    'deepseek-ai/deepseek-v4-flash',
     'glm-5.2',
 })
 _DEFAULT_CONTEXT_WINDOW = 32768

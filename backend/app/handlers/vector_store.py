@@ -3,7 +3,6 @@ import shutil
 
 import chromadb
 import configs.load_env as load_env
-from configs.load_env import chroma_db_path
 from llama_index.core import Settings, VectorStoreIndex
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -14,7 +13,7 @@ _client_instance = None
 def _get_client():
     global _client_instance
     if _client_instance is None:
-        _client_instance = chromadb.PersistentClient(path=chroma_db_path)
+        _client_instance = chromadb.PersistentClient(path=load_env.chroma_db_path)
     return _client_instance
 
 

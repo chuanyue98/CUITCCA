@@ -28,7 +28,7 @@ test.describe('CUITCCA 聊天页面 (index.html) 检查', () => {
 
     // ---- 1. 页面加载 (HTTP 200) ----
     try {
-      const resp = await page.goto(BASE_URL + '/web/', { waitUntil: 'networkidle', timeout: 15000 });
+      const resp = await page.goto(BASE_URL + '/', { waitUntil: 'networkidle', timeout: 15000 });
       const status = resp?.status();
       if (resp && status && status === 200) {
         results.push({ check: '页面加载', status: 'PASS', detail: `HTTP ${status}` });

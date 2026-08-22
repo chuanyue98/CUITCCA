@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="./style.css">
+    <title>成信大校园助手 - 系统配置</title>
+</head>
+<body>
+    <div class="outline">
+        <!-- 左侧边栏（sidebar.ts 注入） -->
+        <nav id="side_left"></nav>
+
+        <!-- 右边 -->
+        <main class="side_right">
+            <header class="headline">
+                <div class="headline_hidemenu">
+                    <button id="button" aria-label="切换侧栏">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                            <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8Zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5Z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="headline_head">系统配置</div>
+                <div class="share"></div>
+            </header>
+
+            <div class="config_container">
+                <!-- 连接配置 -->
+                <div class="glass_card">
+                    <h3 class="config_heading">LLM 连接配置</h3>
+                    <p class="config_desc">OpenAI 兼容端点的 Base URL、API Key 与模型。保存后立即热生效，无需重启服务。</p>
+
+                    <div class="form_group">
+                        <label for="llm-base">Base URL</label>
+                        <input type="text" id="llm-base" placeholder="例如：https://api.openai.com/v1" autocomplete="off" spellcheck="false">
+                        <span class="field_hint">OpenAI 兼容接口地址，以 /v1 结尾</span>
+                    </div>
+
+                    <div class="form_group">
+                        <label for="llm-key">API Key</label>
+                        <input type="password" id="llm-key" placeholder="" autocomplete="new-password">
+                        <span class="field_hint" id="llm-key-hint">留空表示保留现有 Key</span>
+                    </div>
+
+                    <div class="form_group">
+                        <label for="llm-model">模型</label>
+                        <input type="text" id="llm-model" list="llm-model-list" placeholder="例如：deepseek-v4-flash" autocomplete="off" spellcheck="false">
+                        <datalist id="llm-model-list"></datalist>
+                        <span class="field_hint">可点击"测试连接"拉取可用模型列表后选择，也可直接手输</span>
+                    </div>
+
+                    <div class="config_action_row">
+                        <button class="btn" id="btn-probe" type="button">测试连接</button>
+                        <button class="btn btn-primary" id="btn-save" type="button">保存并生效</button>
+                    </div>
+
+                    <div id="probe-result" class="probe_result" hidden></div>
+                </div>
+
+                <!-- 行为说明 -->
+                <div class="glass_card">
+                    <h3 class="config_heading">保存后会发生什么</h3>
+                    <ul class="config_notes">
+                        <li>配置写入后端 .env 文件并立即热生效，无需重启服务。</li>
+                        <li>正在进行的请求会继续使用旧配置完成，新请求使用新配置。</li>
+                        <li>API Key 仅脱敏展示（保留末 4 位），留空保存不会覆盖现有 Key。</li>
+                        <li>本页操作需要后端已配置 CUITCCA_API_KEY（侧边栏 🔑 可设置访问密钥）。</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast 通知浮层 -->
+    <div id="toast-container"></div>
+
+    <script type="module" src="./src/sidebar.ts"></script>
+    <script type="module" src="./src/config.ts"></script>
+</body>
+</html>

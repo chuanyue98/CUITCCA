@@ -36,7 +36,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('页面加载正常 (HTTP 200)', async ({ page }) => {
-    const response = await page.goto('/web/use_function.html');
+    const response = await page.goto('/use_function.html');
     const status = response?.status();
 
     if (status === 200 && response?.ok()) {
@@ -50,7 +50,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('页面标题正确', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     const title = await page.title();
@@ -66,7 +66,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('侧边栏正确渲染且当前菜单项高亮', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     // 等待侧边栏 JS 渲染完成
@@ -116,7 +116,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('指南内容卡片 (.guide_card) 存在', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     const guideCard = await page.$('.guide_card');
@@ -131,7 +131,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('指南内容包含 "欢迎使用成信大校园助手"', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     const text = await page.locator('.guide_card').textContent();
@@ -147,7 +147,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('指南内容包含 3 个主要章节', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     const text = await page.locator('.guide_card').textContent() || '';
@@ -176,7 +176,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('CSS 正确加载', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     // 检查关键 CSS 类是否生效
@@ -211,7 +211,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('sidebar.js 正确加载', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     // 检查脚本是否已执行（通过侧边栏内容存在来验证）
@@ -230,7 +230,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('无控制台错误', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     // 等待一段时间让潜在的异步错误发生
@@ -246,7 +246,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('无未捕获的 JS 错误', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     // 等待一段时间让潜在的异步错误发生
@@ -262,7 +262,7 @@ test.describe('使用指南页面 (use_function.html) 测试', () => {
   });
 
   test('页面布局截图', async ({ page }) => {
-    await page.goto('/web/use_function.html');
+    await page.goto('/use_function.html');
     await page.waitForLoadState('networkidle');
 
     // 确保截图目录存在

@@ -5,16 +5,11 @@ import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
+# load_env.X 属性访问而不是 from...import：reload_env_variables() 热重载改的
+# 是 configs.load_env 模块内的变量，from...import 在导入时就把值拷贝进本模块，
+# 之后 .env 的变化（如 COOKIE_*、路径）永远感知不到。
+import configs.load_env as load_env
 from configs.llm_predictor import init_settings
-from configs.load_env import (
-    COOKIE_MAX_AGE,
-    COOKIE_SECURE,
-    LOAD_PATH,
-    SAVE_PATH,
-    chroma_db_path,
-    db_path,
-    reload_env_variables,
-)
 from configs.observability import init_observability
 from dependencies import access_stats
 from dependencies.manage import access_stats as _mgmt_access_stats
@@ -23,7 +18,10 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from handlers.index_crud import loadAllIndexes
-from router import graph_app, index_app, manage_app, response_app
+from router.graph import graph_app
+from router.index import index_app
+from router.manage import manage_app
+from router.response import response_app
 from starlette.middleware.cors import CORSMiddleware
 from utils import db as stats_db
 from utils.security import get_client_ip
@@ -31,17 +29,17 @@ from utils.security import get_client_ip
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    reload_env_variables()
+    load_env.reload_env_variables()
     init_observability()
     init_settings()
     await loadAllIndexes()
-    for directory in [SAVE_PATH, LOAD_PATH, chroma_db_path]:
+    for directory in [load_env.SAVE_PATH, load_env.LOAD_PATH, load_env.chroma_db_path]:
         if not os.path.exists(directory):
             os.makedirs(directory)
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    await asyncio.to_thread(stats_db.init_db, db_path)
+    os.makedirs(os.path.dirname(load_env.db_path), exist_ok=True)
+    await asyncio.to_thread(stats_db.init_db, load_env.db_path)
 
-    loaded = await asyncio.to_thread(stats_db.load_stats, db_path)
+    loaded = await asyncio.to_thread(stats_db.load_stats, load_env.db_path)
     _mgmt_access_stats["total_visits"] = loaded["total_visits"]
     _mgmt_access_stats["user_visits"] = defaultdict(int, loaded["user_visits"])
     _mgmt_access_stats["endpoint_visits"] = defaultdict(int, loaded["endpoint_visits"])
@@ -56,7 +54,7 @@ async def lifespan(app: FastAPI):
                     "user_visits": dict(_mgmt_access_stats["user_visits"]),
                     "endpoint_visits": dict(_mgmt_access_stats["endpoint_visits"]),
                 }
-            await asyncio.to_thread(stats_db.flush_stats, db_path, snapshot)
+            await asyncio.to_thread(stats_db.flush_stats, load_env.db_path, snapshot)
 
     flush_task = asyncio.create_task(_periodic_flush())
     rate_limit_cleanup_task = asyncio.create_task(_periodic_rate_limit_cleanup())
@@ -75,7 +73,7 @@ async def lifespan(app: FastAPI):
             "user_visits": dict(_mgmt_access_stats["user_visits"]),
             "endpoint_visits": dict(_mgmt_access_stats["endpoint_visits"]),
         }
-    await asyncio.to_thread(stats_db.flush_stats, db_path, final_snapshot)
+    await asyncio.to_thread(stats_db.flush_stats, load_env.db_path, final_snapshot)
 
 
 app = FastAPI(lifespan=lifespan)
@@ -129,7 +127,7 @@ _LLM_GRAPH_PATHS = frozenset({
     "/graph/query", "/graph/query_stream", "/graph/chat_stream", "/graph/agent",
     "/graph/query_router", "/graph/workflow_query", "/graph/workflow_query_stream",
     "/graph/agent_chat", "/graph/agent_chat_stream",
-    # 聊天前端现在的主入口（/web/ 所有提问都走它）：路由判定 + 标准生成或
+    # 聊天前端主入口（/ 主页直出，所有提问都走它）：路由判定 + 标准生成或
     # Agent 多跳工具调用 + 追问建议，一次请求最多好几轮 LLM 调用，是全项目
     # 最贵的路径。曾漏掉它——只有旧端点受保护、主入口反而裸奔（被刷会直接
     # 烧光 LLM 配额，且没有自己的 429 兜底，全靠服务商限流）。
@@ -165,9 +163,28 @@ async def check_rate_limit(client_ip: str) -> None:
         timestamps.append(now)
 
 
+_STATIC_SUFFIXES = frozenset({
+    '.html', '.js', '.css', '.map', '.png', '.jpg', '.jpeg', '.gif',
+    '.svg', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.txt',
+})
+
+
+def _is_static_path(path: str) -> bool:
+    """静态资源判定：主页 / 与带静态后缀的路径。
+
+    不能用"不在 API 前缀清单里就是静态"的反向判断——/index 是知识库 API
+    前缀，而 /index.html 是聊天主页，startswith('/index') 会把主页误判成
+    API。所以这里用正向白名单：根路径、静态文件后缀。
+    """
+    if path == '/':
+        return True
+    dot = path.rfind('.')
+    return dot > path.rfind('/') and path[dot:].lower() in _STATIC_SUFFIXES
+
+
 @app.middleware("http")
 async def session_and_stats_middleware(request, call_next):
-    is_static = request.url.path.startswith("/web")
+    is_static = _is_static_path(request.url.path)
     client_ip = get_client_ip(request)
 
     session_id = request.cookies.get("session_id")
@@ -203,8 +220,8 @@ async def session_and_stats_middleware(request, call_next):
             path="/",
             httponly=True,
             samesite="lax",
-            secure=COOKIE_SECURE,
-            max_age=COOKIE_MAX_AGE,
+            secure=load_env.COOKIE_SECURE,
+            max_age=load_env.COOKIE_MAX_AGE,
         )
     return response
 
@@ -229,14 +246,9 @@ static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'frontend')
 
 if os.path.isdir(static_dir):
-    app.mount("/web", StaticFiles(directory=static_dir, html=True), name="web")
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="root")
 elif os.path.isdir(frontend_dir):
-    app.mount("/web", StaticFiles(directory=frontend_dir, html=True), name="web")
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "CUITCCA"}
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="root")
 
 
 if __name__ == "__main__":

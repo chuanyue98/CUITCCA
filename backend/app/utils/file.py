@@ -1,7 +1,8 @@
 import asyncio
 import os
 
-from configs.load_env import PROJECT_ROOT, db_path
+import configs.load_env as load_env
+from configs.load_env import PROJECT_ROOT
 from fastapi import UploadFile
 from handlers.parsers import ParseStatus, parse_bytes
 from handlers.parsers.types import DocumentParseError, ParserUnavailableError
@@ -29,7 +30,7 @@ def get_folders_list(root_dir: str) -> list:
 
 
 async def save_feedback(client_ip: str, feedback: Feedback):
-    await asyncio.to_thread(db.save_feedback, db_path, client_ip, feedback.email, feedback.message)
+    await asyncio.to_thread(db.save_feedback, load_env.db_path, client_ip, feedback.email, feedback.message)
 
 
 def _read_file_sync(file: UploadFile) -> str:

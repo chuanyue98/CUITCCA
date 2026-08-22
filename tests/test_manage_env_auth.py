@@ -1,4 +1,3 @@
-import importlib.util
 import os
 import unittest
 from unittest.mock import patch
@@ -7,22 +6,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import tests._pathsetup  # noqa: F401  (adds backend/app to sys.path)
+from tests._router_loader import load_router_module
 
-
-def _load_manage_module():
-    """Load router/manage.py standalone, bypassing router/__init__.py
-    (which eagerly instantiates a HuggingFace embedding model on import)."""
-    app_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend', 'app')
-    spec = importlib.util.spec_from_file_location(
-        'router_manage_standalone',
-        os.path.join(app_dir, 'router', 'manage.py')
-    )
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-manage = _load_manage_module()
+manage = load_router_module('manage.py')
 
 
 class ManageEnvAuthTest(unittest.TestCase):
@@ -48,13 +34,13 @@ class ManageEnvAuthTest(unittest.TestCase):
         env_file_values = {
             'OPENAI_API_KEY': 'sk-file-key-123456',
             'OPENAI_API_BASE': 'http://file-base',
-            'OPENAI_API_MODEL': 'gpt-file',
+            'OPENAI_MODEL': 'gpt-file',
         }
         with patch.dict(os.environ, {
             'CUITCCA_API_KEY': 'secret123',
             'OPENAI_API_KEY': 'sk-runtime-key-9999',
             'OPENAI_API_BASE': 'http://runtime-base',
-            'OPENAI_API_MODEL': 'gpt-runtime',
+            'OPENAI_MODEL': 'gpt-runtime',
         }), patch.object(manage, 'dotenv_values', return_value=env_file_values):
             response = self.client.get(
                 '/manage/env',
@@ -68,9 +54,9 @@ class ManageEnvAuthTest(unittest.TestCase):
         # Non-secret config returned as plaintext so operators can confirm
         # which base/model is actually in effect.
         self.assertEqual(body['env_file']['OPENAI_API_BASE'], 'http://file-base')
-        self.assertEqual(body['env_file']['OPENAI_API_MODEL'], 'gpt-file')
+        self.assertEqual(body['env_file']['OPENAI_MODEL'], 'gpt-file')
         self.assertEqual(body['runtime']['OPENAI_API_BASE'], 'http://runtime-base')
-        self.assertEqual(body['runtime']['OPENAI_API_MODEL'], 'gpt-runtime')
+        self.assertEqual(body['runtime']['OPENAI_MODEL'], 'gpt-runtime')
 
     def test_masks_short_keys_as_full_asterisks(self):
         # Keys <=4 chars are fully masked to avoid leaking the entire value.
@@ -93,7 +79,7 @@ class ManageEnvAuthTest(unittest.TestCase):
             'CUITCCA_API_KEY': 'secret123',
             'OPENAI_API_KEY': '',
             'OPENAI_API_BASE': '',
-            'OPENAI_API_MODEL': '',
+            'OPENAI_MODEL': '',
         }), patch.object(manage, 'dotenv_values', return_value={}):
             response = self.client.get(
                 '/manage/env',
